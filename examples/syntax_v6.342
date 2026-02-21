@@ -1,0 +1,403 @@
+// ============================================================
+//  3.42 — Exemples de syntaxe v6.0
+//  "16 verbes, 1 règle : A(B). Tout le reste émerge."
+// ============================================================
+
+// ============================================================
+//  1. BASES — variables, types, spins
+// ============================================================
+
+// Assignation simple
+x = 42;
+name = "Alexis";
+flag = +;                          // spin positif (= true)
+nothing = _;                       // spin void (= rien)
+wildcard = *;                      // spin any (= tout)
+problem = #;                       // spin erreur
+
+// Avec sucre syntaxique (identique)
+flag2 = true;                      // → +
+nothing2 = void;                   // → _
+wildcard2 = any;                   // → *
+
+// Types explicites (sphère + range)
+count: i32 = 0;
+ratio: f64 = 3.14;
+letter: char = 'A';
+
+// Mutable (~ = ondoyer = peut changer d'état)
+~counter = 0;
+counter += 1;
+
+// ============================================================
+//  2. FONCTIONS — des sphères qui transforment
+// ============================================================
+
+// Fonction simple
+add = (a: i32, b: i32) : i32 {
+    << + a + b;                    // return positif
+};
+
+// Multi-spin return
+divide = (a: f64, b: f64) : +f64 | #str {
+    b ? {
+        _ : << # "division par void";
+        _ : << + a / b;
+    };
+};
+
+// Fonction courte (dernière expression = retour implicite)
+double = (x: i32) { x * 2 };
+
+// ============================================================
+//  3. MESURE — ? et ?? (if et while émergents)
+// ============================================================
+
+// Mesure simple (= if)
+result = x ? {
+    + val? : val * 2;              // si x est positif, doubler
+    - : 0;                         // si x est négatif, zéro
+    # err? : {                     // si x est erreur
+        log(err);
+        -1
+    };
+    _ : 0;                         // wildcard (catch-all)
+};
+
+// Mesure avec conditions (= if/else if)
+grade = score ? {
+    (score >= 90) : "A";
+    (score >= 80) : "B";
+    (score >= 70) : "C";
+    _ : "F";
+};
+
+// Mesure continue (= while)
+~i = 0;
+sum = 0;
+i ?? {
+    (i < 10) : {
+        sum += i;
+        i += 1;
+    };
+    _ : ><;                        // break quand condition fausse
+};
+
+// Itération sur range (= for)
+(0..10) ?? {
+    + n? : print(n);              // chaque nombre de 0 à 9
+};
+
+// ============================================================
+//  4. BREAK ET RETURN — émergents, pas hardcodés
+// ============================================================
+
+// Return simple
+compute = (x: i32) {
+    << + x * 2;                    // SORTIR(SORTIR) AFFIRMER = return positif
+};
+
+// Return multi-spin
+validate = (input: str) : +str | #str {
+    input.len ? {
+        (input.len == 0) : << # "vide";
+        _ : << + input;
+    };
+};
+
+// Break simple
+~count = 0;
+count ?? {
+    (count > 100) : >< ;           // ENTRER(SORTIR) FINIR = break
+    _ : count += 1;
+};
+
+// Break avec valeur
+found = items ?? {
+    + item? (item.name == "target") : >< + item;   // break positif avec valeur
+    _ : ><;                                          // break simple si épuisé
+};
+
+// Break avec erreur
+safe_search = data ?? {
+    # err? : >< # err;            // break erreur (propagation)
+    + item? : >< + item;
+    _ : >< - "not found";
+};
+
+// ============================================================
+//  5. PASS-THROUGH (><) vs PIPE (|)
+// ============================================================
+
+// Pipe : async, buffered, green threads
+data | parse | validate | store;
+// → 4 green threads, 3 ring buffers SPSC
+
+// Pass-through : sync, direct, même thread
+data >< parse >< validate >< store;
+// → 1 thread, 0 buffer, appels séquentiels directs
+
+// Mix : pipe les étapes lourdes, pass-through les légères
+raw_data | heavy_parse >< light_validate | heavy_store;
+// → 3 threads : [raw_data] → buffer → [parse→validate] → buffer → [store]
+
+// ============================================================
+//  6. RANGE (.. infixe)
+// ============================================================
+
+// Range basique
+numbers = 0..100;
+
+// Range ouvert (vers any)
+from_five = 5..*;                  // 5 vers l'infini (any)
+
+// Range dans un slice
+sub = list[2..5];                  // éléments 2, 3, 4
+
+// Range dans une boucle
+(1..10) ?? {
+    + i? : print(i);
+};
+
+// ============================================================
+//  7. PARENT ACCESS (..)
+// ============================================================
+
+// .. = remonter au scope parent
+::outer {
+    x = 10;
+    ::inner {
+        y = ..x;                   // accéder au x du scope parent
+        z = .. ;                   // référence au scope parent lui-même
+    };
+};
+
+// Bubble-up : accéder aux variables internes après return
+result = compute(42);
+result.intermediate;               // MOVE la variable interne vers notre scope
+result.debug_info;                 // MOVE le debug aussi
+// Ce qui n'est pas accédé → free automatique avec l'arène
+
+// ============================================================
+//  8. COPY, BORROW, CAST
+// ============================================================
+
+// Copie profonde (** = GÉNÉRALISER(GÉNÉRALISER))
+original = [1, 2, 3];
+clone = ** original;               // deep copy
+
+// Emprunt simple (@ = référence en lecture)
+data = [1, 2, 3];
+ref = data@;                       // emprunt en lecture
+
+// Emprunt exclusif (@@ = EMPRUNTER(EMPRUNTER))
+~data2 = [1, 2, 3];
+excl_ref = data2@@;                // emprunt en écriture (exclusif)
+
+// Cast (:> = LIER(ENTRER) = transformer)
+x: i32 = 200;
+y = x :> u8;                      // renormaliser sur [0, 255]
+z = x :> f64;                     // renormaliser sur float
+
+// ============================================================
+//  9. CONCURRENCE — émergente de | et ~
+// ============================================================
+
+// Spawn un green thread (| + bloc)
+handle = | {
+    heavy_computation()
+};
+
+// Join (attendre le résultat)
+result = handle | ?;               // CONNECTER + MESURER = attendre
+
+// GPU broadcast (~ + bloc)
+results = data ~ (item) {
+    transform(item)                // chaque item en parallèle SIMT
+};
+
+// Yield et resume
+producer = () {
+    <~ 1;                          // SORTIR(ONDULER) = yield 1
+    <~ 2;                          // yield 2
+    <~ 3;                          // yield 3
+};
+
+// Fan-out : 1 producteur → N consommateurs
+source |~ [consumer_a, consumer_b, consumer_c];
+
+// Fan-in : N producteurs → 1 résultat
+[sensor_1, sensor_2, sensor_3] ~| aggregate;
+
+// Memory fence
+!|;                                // INVERSER(CONNECTER) = barrière mémoire
+
+// Compare-and-swap atomique
+old ?= (expected, new_val);        // MESURER(NOMMER) = CAS
+
+// ============================================================
+//  10. MODULES ET TYPES
+// ============================================================
+
+// Module
+::math {
+    pi = 3.14159;
+
+    abs = (x: f64) : f64 {
+        x ? {
+            (x >= 0.0) : x;
+            _ : -x;
+        }
+    };
+};
+
+// Utilisation
+result = math::abs(-42.0);
+
+// Type (struct)
+type Point {
+    x: f64;
+    y: f64;
+};
+
+// Type (enum avec spins)
+type Result = +Ok(i32) | #Err(str);
+
+// Trait
+trait Printable {
+    to_string = () : str;
+};
+
+// Impl
+Point : Printable {
+    to_string = () : str {
+        << + "({self.x}, {self.y})";
+    };
+};
+
+// ============================================================
+//  11. SPHÈRE DE RIEMANN — division par zéro
+// ============================================================
+
+// Division par zéro = pôle sur la sphère (pas un crash)
+a = 1.0 / 0.0;
+// a = sphère avec spin # et valeur ∞ (IEEE 754 Inf)
+// le programme continue
+
+// Le développeur mesure le spin
+a ? {
+    + val? : use(val);             // valeur normale
+    # : print("pôle détecté");     // erreur/pôle
+};
+
+// ============================================================
+//  12. DESTRUCTURING ET SPREAD
+// ============================================================
+
+// Tuple
+(a, b) = get_pair();
+
+// Liste avec rest
+[first, second, ...rest] = get_list();
+
+// Dans un match
+result ? {
+    + Ok(val?) : print(val);
+    # Err(msg?) : print(msg);
+};
+
+// ============================================================
+//  13. BLOCS COMME EXPRESSIONS ({} universel)
+// ============================================================
+
+// Bloc retourne sa dernière expression
+value = {
+    temp = compute();
+    temp * 2
+};
+
+// Bloc dans un return
+<< + {
+    x = prepare();
+    y = transform(x);
+    x + y
+};
+
+// Bloc copié
+backup = ** {
+    data = load();
+    data
+};
+
+// Bloc dans un pipe (green thread)
+result = | {
+    heavy_work()
+} | ? ;                            // spawn + join
+
+// ============================================================
+//  14. ANNOTATIONS ET EXTENSIONS
+// ============================================================
+
+// Comptime
+@comptime
+hash = compute_hash("constant");
+
+// Extension d'un type existant
+@extend Point {
+    distance = (other: Point) : f64 {
+        dx = self.x - other.x;
+        dy = self.y - other.y;
+        << + math::sqrt(dx * dx + dy * dy);
+    };
+};
+
+// ============================================================
+//  15. PATTERN COMPLET — serveur HTTP en 3.42
+// ============================================================
+
+::http_server {
+
+    type Request {
+        method: str;
+        path: str;
+        body: str;
+    };
+
+    type Response = +Ok(str) | #Err(str);
+
+    handle = (req: Request) : Response {
+        req.method ? {
+            + "GET" : req.path ? {
+                + "/" : << + Ok("Hello 3.42!");
+                + "/api" : << + Ok(api::process(req));
+                _ : << # Err("404 Not Found");
+            };
+            + "POST" : {
+                result = req.body >< parse >< validate;
+                result ? {
+                    + data? : << + Ok(store(data));
+                    # err? : << # Err(err);
+                };
+            };
+            _ : << # Err("405 Method Not Allowed");
+        };
+    };
+
+    serve = (port: i32) {
+        listener = net::listen(port);
+        listener ?? {
+            + conn? : | {                // spawn thread par connexion
+                req = conn >< read >< parse_request;
+                resp = handle(req);
+                conn >< write(resp);
+            };
+            # err? : {
+                log::error(err);
+                >< # err;               // break avec erreur
+            };
+        };
+    };
+};
+
+// Lancement
+http_server::serve(3042);

@@ -1,0 +1,511 @@
+// ============================================================
+//  3.42 — Exemples avancés v3
+//  TOUT NATIF — Quantique + Probabilité + Range intégrés
+// ============================================================
+
+
+// === A. SYSTÈME D'AUTHENTIFICATION ===
+
+type User {
+    id: int;
+    name: string;
+    email: string;
+    role: Role;
+    status: trit;
+}
+
+type Role = + admin | + moderator | + user | * guest;
+
+type Session {
+    token: string;
+    user: User;
+    expires: int;
+}
+
+login = (email: string, password: string) : Session {
+    db.find_user(email) {
+        user? : {
+            verify_password(user@, password@) {
+                + : user.status ? {
+                    + : create_session(user);
+                    - : return - "Compte banni";
+                    * : return - "Compte en attente";
+                    # : return # "Compte corrompu";
+                };
+                - : return - "Mot de passe incorrect";
+            };
+        }
+        - : return - "Utilisateur introuvable";
+        # : return # "Erreur base de données";
+    };
+};
+
+login("alexis@42.fr", "password123") {
+    session? : {
+        set_cookie(session.token);
+        redirect("/dashboard");
+    }
+    - err? : show_error(err);
+    # : show_error("Erreur système");
+};
+
+
+// === B. API REST ===
+
+module api {
+
+    auth_middleware = (handler) {
+        (request) {
+            extract_token(request.headers@) {
+                token? : {
+                    validate_token(token@) {
+                        session? : handler(request, session);
+                        - : return - "Token expiré";
+                        # : return # "Token invalide";
+                    };
+                }
+                _ : return - "Token manquant";
+            };
+        };
+    };
+
+    get_users = auth_middleware((req, session) {
+        session.user.role ? {
+            + admin : {
+                db.query("SELECT * FROM users")
+                    .map(row: User.from(row))
+                    .collect() {
+                        users? : send_json(users);
+                        - err? : return - err;
+                    };
+            }
+            _ : return - "Accès refusé";
+        };
+    });
+}
+
+
+// === C. TRAITEMENT PARALLÈLE ===
+
+etl_pipeline = (source: string, dest: string) {
+    read_csv(source) {
+        raw_data? : {
+            @parallel
+            cleaned = raw_data
+                .filter(row: row.is_valid())
+                .map(row: normalize(row))
+                .map(row: enrich(row));
+
+            write_to_db(dest, cleaned) {
+                count? : print("Chargé {count} lignes");
+                - err? : print("Échec: {err}");
+            };
+        }
+        - err? : print("Fichier illisible: {err}");
+        # : print("Fichier corrompu");
+    };
+};
+
+
+// === D. GAME LOOP ===
+
+module game {
+
+    type Entity {
+        pos: (float, float);
+        vel: (float, float);
+        health: int;
+        state: trit;    // + vivant, - mort, * invincible, # buggé
+    }
+
+    update = (entities: list(Entity), dt: float) : list(Entity) {
+        @parallel
+        entities ? {
+            + entity? : {
+                entity.pos = (
+                    entity.pos.0 + entity.vel.0 * dt,
+                    entity.pos.1 + entity.vel.1 * dt
+                );
+                check_collision(entity@, entities@) {
+                    hit? : {
+                        entity.health = entity.health - hit.damage;
+                        (entity.health <= 0) ? {
+                            + : { entity.state = -; }
+                        };
+                    }
+                    _ : entity;
+                };
+            }
+            - entity? : entity;
+            * entity? : entity;
+            # entity? : despawn(entity);
+        };
+    };
+
+    render = (entities: list(Entity)@) {
+        @gpu
+        entities ? {
+            + entity? : draw(entity@);
+            - entity? : draw_death(entity@);
+            * entity? : draw_transparent(entity@);
+        };
+    };
+
+    run = () {
+        mut world = init_world();
+        mut last_time = now();
+
+        (true) ?? {
+            + : {
+                dt = now() - last_time;
+                last_time = now();
+                world.entities = update(world.entities, dt);
+                render(world.entities@);
+                process_input() {
+                    + quit : break;
+                    input? : apply_input(world@@, input);
+                    _ : {};
+                };
+            }
+        };
+    };
+}
+
+
+// === E. TRI FUSION ===
+
+merge_sort = (data: list(int)) : list(int) {
+    (data.length <= 1) ? {
+        + : data;
+        - : {
+            mid = data.length / 2;
+            left = merge_sort(data[..mid]);
+            right = merge_sort(data[mid..]);
+            merge(left, right);
+        }
+    };
+};
+
+merge = (a: list(int), b: list(int)) : list(int) {
+    mut result = [];
+    mut i = 0;
+    mut j = 0;
+
+    (i < a.length && j < b.length) ?? {
+        + : {
+            (a[i] <= b[j]) ? {
+                + : { result.push(a[i]); i = i + 1; }
+                - : { result.push(b[j]); j = j + 1; }
+            };
+        }
+    };
+
+    result + a[i..] + b[j..];
+};
+
+
+// === F. ARBRES ===
+
+type Tree(T) {
+    value: T;
+    children: list(Tree(T));
+    state: trit;
+}
+
+dfs = (tree: Tree(T)@, action) {
+    tree ? {
+        + node? : {
+            action(node.value@);
+            node.children ? {
+                child? : dfs(child@, action);
+            };
+        }
+        - : {};
+        * : {};
+        # : log("Noeud corrompu");
+    };
+};
+
+
+// === G. STREAM PROCESSING ===
+
+@async
+process_stream = (source: Stream) {
+    source ?? {
+        event? : {
+            event.type ? {
+                + "click"    : track_click(event);
+                + "purchase" : {
+                    validate_purchase(event.data@) {
+                        order? : {
+                            @parallel
+                            [
+                                charge_payment(order@),
+                                send_confirmation(order@),
+                                update_inventory(order@)
+                            ] ? {
+                                results? : commit(results);
+                                - err? : rollback(order, err);
+                            };
+                        }
+                        - err? : log_invalid(err);
+                    };
+                }
+                _ : log("Événement inconnu: {event.type}");
+            };
+        }
+        - err? : reconnect(source@@);
+        # : { log_critical("Stream corrompu"); break; };
+    };
+};
+
+
+// === H. RÉSEAU DE NEURONES ===
+
+module nn {
+
+    type Layer {
+        weights: list(list(float));
+        biases: list(float);
+        activation: (float) : float;
+    }
+
+    type Network {
+        layers: list(Layer);
+    }
+
+    forward = (net: Network@, input: list(float)) : list(float) {
+        mut current = input;
+        net.layers ? {
+            layer? : {
+                current = mat_mul(layer.weights@, current)
+                    .zip(layer.biases@)
+                    .map((val?, bias?): layer.activation(val + bias));
+            }
+        };
+        current;
+    };
+
+    train = (net: Network@@, data: list((list(float), list(float)))@, epochs: int) {
+        0..epochs ? {
+            epoch? : {
+                mut total_loss = 0.0;
+                @parallel
+                data ? {
+                    (input?, expected?) : {
+                        output = forward(net@, input);
+                        loss = mse(output, expected@);
+                        total_loss = total_loss + loss;
+                        gradients = backprop(net@, input@, expected@);
+                        apply_gradients(net@@, gradients@);
+                    }
+                };
+                print("Epoch {epoch} — Loss: {total_loss / data.length}");
+            }
+        };
+    };
+}
+
+
+// === I. FINANCE — Monte Carlo ===
+
+module finance {
+
+    type Asset {
+        symbol: string;
+        price: float;
+        volume: int;
+        trend: trit;
+    }
+
+    analyze = (assets: list(Asset)@) {
+        assets ? {
+            asset? : asset.trend ? {
+                + : print("{asset.symbol} ↑ {asset.price}");
+                - : print("{asset.symbol} ↓ {asset.price}");
+                * : print("{asset.symbol} → {asset.price}");
+                # : print("{asset.symbol} ⚠ données corrompues");
+            }
+        };
+    };
+
+    // Monte Carlo avec probabilité NATIVE
+    simulate = (asset: Asset@, days: int, simulations: int) : list(float) {
+        @parallel
+        0..simulations ? {
+            sim? : {
+                mut price = asset.price;
+                0..days ? {
+                    day? : {
+                        change = normal(0.0, 0.02);
+                        price = price * (1.0 + change);
+                    }
+                };
+                price;
+            }
+        };
+    };
+}
+
+
+// === J. BIOINFORMATIQUE ===
+
+@extend biology {
+
+    type Codon = string;
+    type Sequence = list(Codon);
+
+    translate = (seq: Sequence@) : list(string) {
+        seq ? {
+            codon? : codon_table[codon] {
+                amino? : amino;
+                - : "?";
+                # : "X";
+            }
+        };
+    };
+
+    find_motif = (seq: Sequence@, pattern: string) : list(int) {
+        mut positions = [];
+        mut i = 0;
+        seq ? {
+            codon? : {
+                (codon.matches(pattern@)) ? {
+                    + : positions.push(i);
+                };
+                i = i + 1;
+            }
+        };
+        positions;
+    };
+}
+
+@biology
+dna = load_fasta("genome.fasta");
+proteins = translate(dna@);
+atg_positions = find_motif(dna@, "ATG");
+
+
+// === K. ALGORITHME QUANTIQUE — Deutsch-Jozsa ===
+
+// Détermine si une fonction est constante ou balancée
+// En UNE seule évaluation (vs 2^(n-1)+1 en classique)
+
+deutsch_jozsa = (oracle: (qubit, qubit) : (qubit, qubit), n: int) {
+    // Préparer les qubits
+    input = qubit();         // |0⟩
+    output = qubit();        // |0⟩
+    output = X(output);      // |1⟩
+
+    // Hadamard sur tous
+    input = H(input);
+    output = H(output);
+
+    // Appliquer l'oracle
+    (input, output) = oracle(input, output);
+
+    // Hadamard final sur input
+    input = H(input);
+
+    // Mesure
+    input ? {
+        + : print("Fonction CONSTANTE");
+        - : print("Fonction BALANCÉE");
+    };
+};
+
+// Oracle constant (retourne toujours 0)
+constant_oracle = (x: qubit, y: qubit) : (qubit, qubit) {
+    (x, y);    // ne fait rien
+};
+
+// Oracle balancé (retourne x)
+balanced_oracle = (x: qubit, y: qubit) : (qubit, qubit) {
+    CNOT(x, y);
+    (x, y);
+};
+
+deutsch_jozsa(balanced_oracle, 1);
+
+
+// === L. ALGORITHME QUANTIQUE — Recherche de Grover ===
+
+@qpu("ibm_eagle")     // exécuter sur QPU réel
+grover_search = (target: int, n_qubits: int) : int {
+    // Préparer n qubits en superposition
+    mut qubits = [];
+    0..n_qubits ? {
+        i? : {
+            q = qubit();
+            q = H(q);
+            qubits.push(q);
+        }
+    };
+
+    // Nombre d'itérations optimal : ~√N
+    iterations = (pi / 4.0 * sqrt(pow(2.0, n_qubits as float))) as int;
+
+    0..iterations ? {
+        iter? : {
+            // Oracle : marque l'état cible
+            oracle_mark(qubits@@, target);
+
+            // Diffusion : amplifie l'amplitude marquée
+            diffusion(qubits@@);
+        }
+    };
+
+    // Mesure finale
+    mut result = 0;
+    qubits ? {
+        q? : {
+            result = result * 2;
+            q ? {
+                + : { result = result + 1; }
+            };
+        }
+    };
+
+    result;
+};
+
+
+// === M. HYBRIDE CLASSIQUE-QUANTIQUE — Cryptographie ===
+
+// QKD (Quantum Key Distribution) — protocole BB84
+bb84_generate_key = (n_bits: int) : list(int) {
+    mut alice_bits = [];
+    mut alice_bases = [];
+    mut bob_bases = [];
+    mut key = [];
+
+    // Alice prépare des qubits
+    0..n_bits ? {
+        i? : {
+            bit = 0.5p ? { + : 1; - : 0; };     // random bit via prob native
+            base = 0.5p ? { + : 0; - : 1; };     // random base
+
+            q = qubit();
+            (bit == 1) ? { + : { q = X(q); } };  // encode bit
+            (base == 1) ? { + : { q = H(q); } };  // change base
+
+            alice_bits.push(bit);
+            alice_bases.push(base);
+
+            // Bob mesure avec base aléatoire
+            bob_base = 0.5p ? { + : 0; - : 1; };
+            (bob_base == 1) ? { + : { q = H(q); } };
+            bob_bases.push(bob_base);
+
+            // Bob mesure
+            bob_bit = q ? { + : 1; - : 0; };
+
+            // Garder seulement si bases identiques
+            (alice_bases[i] == bob_bases[i]) ? {
+                + : key.push(bob_bit);
+            };
+        }
+    };
+
+    key;
+};

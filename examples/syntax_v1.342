@@ -1,0 +1,337 @@
+// ============================================================
+//  3.42 — Exemples de syntaxe v1
+//  Paradigme : Tout est Sphère, ? est Mesure, Spin = État
+// ============================================================
+
+
+// === 1. HELLO WORLD ===
+
+main = () {
+    print("Hello, 3.42!");
+};
+
+
+// === 2. VARIABLES — nommer des sphères ===
+
+name = "Alexis";           // sphère immutable, spin = +
+age = 23;                  // sphère immutable, spin = +
+mut count = 0;             // sphère mutable (modifiable)
+pi = 3.14159;              // sphère immutable
+
+
+// === 3. FONCTIONS — sphères qui transforment ===
+
+greet = (name: string) : string {
+    "Hello " + name;
+};
+
+add = (a: int, b: int) : int {
+    a + b;
+};
+
+// Appel
+message = greet("Alexis");
+result = add(2, 3);
+
+
+// === 4. CONDITIONNEL — mesure unique ===
+
+// Simple (= if)
+(age > 18) ? {
+    + : welcome();
+};
+
+// Avec négatif (= if/else)
+(age > 18) ? {
+    + : welcome();
+    ~ : refuse();
+};
+
+// Inline après expression (pas besoin de variable intermédiaire)
+check_permission(user) {
+    + : grant_access();
+    ~ : deny_access();
+    # : log_critical();
+};
+
+// Ternaire sur valeur (= match sur spin)
+score ? {
+    + : "gagné";
+    ~ : "perdu";
+    _ : "match nul";
+};
+
+
+// === 5. ITÉRATION — mesure sur collection ===
+
+// Foreach simple (= for item in list)
+users ? {
+    + user : greet(user);
+};
+
+// Avec filtre (= for item in list if condition)
+users ? {
+    + user (user.age > 18) : welcome(user);
+};
+
+// Scan — chaque élément trié par spin
+results ? {
+    + item : process(item);
+    ~ item : recover(item);
+    _ item : skip;
+    # item : quarantine(item);
+};
+
+// Avec index (le compilateur fournit l'index si demandé)
+students ? {
+    + student, i : print(i + ": " + student.name);
+};
+
+
+// === 6. BOUCLE — mesure continue ===
+
+// While (= tant que count > 0)
+mut count = 10;
+(count > 0) ?? {
+    + : {
+        process(count);
+        count = count - 1;
+    }
+};
+
+// Boucle infinie (= loop)
+(true) ?? {
+    + : {
+        sensor.read() {
+            + data : process(data);
+            ~ err  : alert(err);
+            #      : break;
+        };
+    }
+};
+
+// Range (= for i in 0..100)
+range(0, 100) ? {
+    + i : compute(i);
+};
+
+
+// === 7. CHAÎNAGE UFCS + BLOC DE MESURE ===
+
+// Chaîner puis mesurer le résultat final
+data.filter(x: x > 0)
+    .map(x: x * 2)
+    .collect() {
+        + result : save(result);
+        ~ : use_default_data();
+    };
+
+// Propagation auto + mesure à la fin
+user.profile.avatar.url {
+    + url  : display_image(url);
+    ~      : display_placeholder();
+    #      : log("avatar corrompu");
+};
+
+// Chaînage dans une itération
+files ? {
+    + file : file.read()
+                 .parse()
+                 .validate() {
+                     + doc  : index(doc);
+                     ~ err  : log(err);
+                     #      : skip;
+                 };
+};
+
+
+// === 8. PARALLÉLISME — annotation ===
+
+// Auto-parallélisé (immutable = safe)
+@parallel
+big_data ? {
+    + chunk : heavy_compute(chunk);
+};
+
+// GPU
+@gpu
+pixels ? {
+    + px : shade(px);
+};
+
+// Async (réseau, IO)
+@async
+requests ? {
+    + req : handle(req) {
+        + response : send(response);
+        ~ timeout  : retry(req);
+        #          : close_connection();
+    };
+};
+
+
+// === 9. MODULES ===
+
+module math {
+    pi = 3.14159;
+
+    sin = (x: float) : float {
+        // implémentation
+    };
+
+    cos = (x: float) : float {
+        // implémentation
+    };
+
+    circle_area = (r: float) : float {
+        pi * r * r;
+    };
+}
+
+// Utilisation
+area = math::circle_area(5.0);
+angle = math::sin(math::pi / 4.0);
+
+
+// === 10. TYPES — graduel ===
+
+// Sans type (inféré)
+x = 42;
+name = "Alice";
+
+// Avec type explicite
+x: int = 42;
+name: string = "Alice";
+
+// Type personnalisé
+type Point {
+    x: float;
+    y: float;
+}
+
+type Color = + red | + green | + blue | _ none;
+
+// Utilisation
+p = Point { x: 1.0, y: 2.0 };
+c: Color = + red;
+
+c ? {
+    + red   : draw_red();
+    + green : draw_green();
+    + blue  : draw_blue();
+    _       : draw_default();
+};
+
+
+// === 11. GESTION D'ERREURS — native via spin ===
+
+// Lire un fichier — le spin encode succès/échec
+read_file = (path: string) : string {
+    // retourne spin + avec contenu, ou ~ avec erreur, ou # si corrompu
+};
+
+read_file("data.txt") {
+    + content : {
+        parse_json(content) {
+            + data : process(data);
+            ~ err  : print("JSON invalide: " + err);
+        };
+    }
+    ~ err : print("Fichier introuvable: " + err);
+    #     : print("Erreur système critique");
+};
+
+// Version chaînée (propagation auto)
+read_file("data.txt")
+    .parse_json()
+    .validate()
+    .transform() {
+        + result : save(result);
+        ~ err    : print("Erreur: " + err);
+        #        : panic("Corruption détectée");
+    };
+
+
+// === 12. EXEMPLE DOMAINE — Biologie ===
+
+@extend biology {
+    macro mutate(seq, mutation) {
+        seq ? {
+            + codon (codon == mutation.target) : mutation.apply(codon);
+            + codon : codon;
+        };
+    };
+}
+
+@biology
+dna = load_fasta("genome.fasta");
+mutated = mutate(dna, substitution("ATG", "CTG"));
+
+mutated ? {
+    + sequence : analyze(sequence);
+    ~ error    : print("Mutation impossible");
+};
+
+
+// === 13. EXEMPLE DOMAINE — Physique ===
+
+@extend physics {
+    type Particle {
+        position: vec3;
+        velocity: vec3;
+        mass: float;
+        spin: trit;
+    };
+
+    gravity = (a: Particle, b: Particle) : vec3 {
+        G * a.mass * b.mass / distance(a, b).squared();
+    };
+}
+
+@physics
+@parallel
+particles ? {
+    + p : {
+        force = particles
+            .filter(other: other != p)
+            .map(other: gravity(p, other))
+            .reduce(sum);
+        p.velocity = p.velocity + force / p.mass;
+        p.position = p.position + p.velocity;
+    }
+};
+
+
+// === 14. EXEMPLE — Serveur HTTP ===
+
+@async
+server = listen(8080);
+
+server ?? {
+    + request : {
+        route(request.path) {
+            + "/home"  : send_html(home_page());
+            + "/api"   : request.body
+                            .parse_json()
+                            .validate()
+                            .process() {
+                                + data : send_json(data);
+                                ~ err  : send_error(400, err);
+                            };
+            _          : send_error(404, "Not found");
+        };
+    }
+    ~ err : log("Connexion échouée: " + err);
+};
+
+
+// === 15. FIZZBUZZ — test classique ===
+
+range(1, 101) ? {
+    + n : {
+        (n % 15 == 0) ? { + : print("FizzBuzz"); }
+        (n % 3 == 0)  ? { + : print("Fizz"); }
+        (n % 5 == 0)  ? { + : print("Buzz"); }
+        _             : print(n);
+    }
+};

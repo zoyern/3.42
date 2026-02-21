@@ -1,0 +1,1045 @@
+// ============================================================
+//  3.42 — Exemples avancés v4
+//  ÉMERGENCE TOTALE — | pipe SPSC, ~ broadcast SPMC
+//  Zéro annotation d'exécution
+//  Gates quantiques → module quantum
+//  Distributions → module math
+// ============================================================
+
+use quantum;
+use math;
+
+
+// ============================================================
+//  1. SYSTÈME D'AUTHENTIFICATION
+// ============================================================
+
+type User {
+    id: int;
+    name: string;
+    email: string;
+    role: string;
+    active: bool;
+}
+
+type Session {
+    user_id: int;
+    token: string;
+    expires: int;
+}
+
+type AuthResult = + Authenticated(Session) | - Denied(string) | # Locked(string);
+
+authenticate = (email: string, password: string) : AuthResult {
+    find_user(email) {
+        user? : {
+            (user.active) ? {
+                - : return # "Compte verrouillé: {email}";
+            };
+            verify_password(password, user@) {
+                + : {
+                    session = create_session(user@);
+                    return + Authenticated(session);
+                }
+                - : return - Denied("Identifiants invalides");
+            };
+        }
+        - : return - Denied("Utilisateur introuvable: {email}");
+    };
+};
+
+// Middleware — chaîne UFCS séquentielle (même thread, critique pour la sécurité)
+authorize = (request@, required_role: string) {
+    request.session
+        .validate_token()
+        .check_expiry()
+        .verify_role(required_role) {
+            + : request;
+            - err? : send_error(403, err);
+            # : send_error(500, "Token corrompu");
+        };
+};
+
+
+// ============================================================
+//  2. API REST — ROUTEUR
+// ============================================================
+
+type Request {
+    method: string;
+    path: string;
+    body: string;
+    headers: [string : string];
+}
+
+type Response {
+    status: int;
+    body: string;
+    headers: [string : string];
+}
+
+// Pattern matching émergent via ? imbriqué
+router = (req: Request) : Response {
+    req.method ? {
+        + "GET" : req.path ? {
+            + "/users"     : list_users();
+            + "/users/"    : req.path.split("/")[2] {
+                id? : get_user(id);
+                - : respond(400, "ID manquant");
+            };
+            + "/health"    : respond(200, "OK");
+            _              : respond(404, "Not found");
+        }
+        + "POST" : req.path ? {
+            + "/users" : req.body.parse_json() {
+                data? : create_user(data);
+                - err? : respond(400, "JSON invalide: {err}");
+            };
+            + "/auth" : req.body.parse_json() {
+                data? : authenticate(data["email"], data["password"]) {
+                    + Authenticated(session?) : respond_json(200, session);
+                    - Denied(msg?) : respond(401, msg);
+                    # Locked(msg?) : respond(423, msg);
+                };
+                - : respond(400, "Body invalide");
+            };
+            _ : respond(404, "Not found");
+        }
+        + "DELETE" : authorize(req@, "admin") {
+            + : delete_resource(req);
+            - : respond(403, "Accès refusé");
+        };
+        _ : respond(405, "Méthode non supportée");
+    };
+};
+
+// Serveur — le scheduler détecte I/O → non-blocking automatique
+serve = (port: int) {
+    server = listen(port);
+    print("Serveur démarré sur :{port}");
+
+    server ?? {
+        conn? : conn;
+    } | parse_request | router | send_response;
+    // Pipeline : chaque étage sur son green thread
+    // Le scheduler voit I/O → io_uring/kqueue auto
+};
+
+
+// ============================================================
+//  3. GAME LOOP — rendu temps réel
+// ============================================================
+
+type Vec3 {
+    x: float;
+    y: float;
+    z: float;
+}
+
+type Entity {
+    pos: Vec3;
+    vel: Vec3;
+    mesh_id: int;
+    active: bool;
+}
+
+type GameState {
+    entities: list(Entity);
+    dt: float;
+    frame: int;
+}
+
+update_physics = (state: GameState@@) {
+    // Pipe → le scheduler voit collection large + fonction pure → parallélise CPU
+    state.entities
+        | filter(e: e.active)
+        | (e: Entity) {
+            e.pos.x = e.pos.x + e.vel.x * state.dt@;
+            e.pos.y = e.pos.y + e.vel.y * state.dt@;
+            e.pos.z = e.pos.z + e.vel.z * state.dt@;
+            e;
+        };
+};
+
+render = (state: GameState@) {
+    // Pipe → le scheduler voit render_entity fait du GPU → batch GPU auto
+    state.entities
+        | filter(e: e.active)
+        | render_entity;
+};
+
+game_loop = () {
+    mut state = init_game();
+
+    (true) ?? {
+        + : {
+            state.dt = calculate_dt();
+            state.frame = state.frame + 1;
+
+            // Chaque frame : physics séquentiel, puis render
+            update_physics(state@@);
+            render(state@);
+        }
+    };
+};
+
+
+// ============================================================
+//  4. TRAITEMENT DE DONNÉES PIPELINE
+// ============================================================
+
+type LogEntry {
+    timestamp: int;
+    level: string;
+    message: string;
+    source: string;
+}
+
+// Pipeline de traitement de logs — parallélisme 100% émergent
+process_logs = (source: string) {
+    // Lire → Parser → Filtrer → Enrichir → Sauvegarder
+    // Chaque | = green thread séparé, SPSC ring buffer entre eux
+    read_lines(source)
+        | parse_log_entry
+        | filter(entry: entry.level != "DEBUG")
+        | enrich_with_geo
+        | write_to_db;
+};
+
+// Broadcast — un flux de logs distribué à plusieurs consommateurs
+monitor_logs = (source: string) {
+    log_stream = read_lines(source) | parse_log_entry;
+
+    // Chaque consommateur reçoit TOUS les logs
+    log_stream ~ [
+        filter(e: e.level == "ERROR") | alert_team,
+        filter(e: e.level == "WARN")  | dashboard_update,
+        archive_to_s3
+    ];
+};
+
+
+// ============================================================
+//  5. ARBRE BINAIRE — structure récursive
+// ============================================================
+
+type Tree(T) = + Node(T, Tree(T), Tree(T)) | * Leaf;
+
+insert = (tree: Tree(int), value: int) : Tree(int) {
+    tree ? {
+        + Node(val?, left?, right?) : {
+            (value < val) ? {
+                + : + Node(val, insert(left, value), right);
+                - : + Node(val, left, insert(right, value));
+            };
+        }
+        * Leaf : + Node(value, * Leaf, * Leaf);
+    };
+};
+
+// Recherche récursive avec TCO
+search = (tree: Tree(int)@, target: int) : bool {
+    tree ? {
+        + Node(val?, left?, right?) : {
+            (val == target) ? {
+                + : true;
+                - : (target < val) ? {
+                    + : search(left@, target);
+                    - : search(right@, target);
+                };
+            };
+        }
+        * Leaf : false;
+    };
+};
+
+// Inorder traversal → renvoie liste triée
+inorder = (tree: Tree(int)@) : list(int) {
+    tree ? {
+        + Node(val?, left?, right?) : {
+            inorder(left@) ++ [val] ++ inorder(right@);
+        }
+        * Leaf : [];
+    };
+};
+
+
+// ============================================================
+//  6. ALGORITHMES DE TRI
+// ============================================================
+
+// Quicksort — récursif, émergent
+quicksort = (arr: list(int)) : list(int) {
+    (len(arr) <= 1) ? {
+        + : arr;
+        - : {
+            pivot = arr[0];
+            less = arr[1..].filter(x: x < pivot);
+            greater = arr[1..].filter(x: x >= pivot);
+            quicksort(less) ++ [pivot] ++ quicksort(greater);
+        };
+    };
+};
+
+// Mergesort parallèle — le parallélisme ÉMERGE du pipe
+merge = (left: list(int)@, right: list(int)@) : list(int) {
+    mut result = [];
+    mut i = 0;
+    mut j = 0;
+
+    (i < len(left@) && j < len(right@)) ?? {
+        + : {
+            (left@[i] <= right@[j]) ? {
+                + : { result.push(left@[i]); i = i + 1; }
+                - : { result.push(right@[j]); j = j + 1; }
+            };
+        }
+    };
+
+    result ++ left@[i..] ++ right@[j..];
+};
+
+mergesort = (arr: list(int)) : list(int) {
+    (len(arr) <= 1) ? {
+        + : arr;
+        - : {
+            mid = len(arr) / 2;
+            // Les deux moitiés PEUVENT être triées en parallèle
+            // Le pipe crée 2 green threads, le scheduler optimise
+            left = mergesort(arr[..mid]);
+            right = mergesort(arr[mid..]);
+            merge(left@, right@);
+        };
+    };
+};
+
+
+// ============================================================
+//  7. WORKER POOL PATTERN
+// ============================================================
+
+type Job {
+    id: int;
+    payload: string;
+}
+
+type JobResult {
+    job_id: int;
+    output: string;
+}
+
+// Worker pool avec pipe
+// Le scheduler distribue les jobs entre les green threads du pipe
+worker_pool = (jobs: list(Job), num_workers: int) {
+    // runtime::config pour contrôle fin si nécessaire
+    runtime::config(threads: num_workers);
+
+    jobs | process_job | collect_results {
+        results? : {
+            print("Traités: {len(results)} jobs");
+            save_results(results);
+        }
+        - err? : print("Erreur pool: {err}");
+    };
+
+    runtime::config();  // reset auto
+};
+
+process_job = (job: Job) : JobResult {
+    output = heavy_computation(job.payload);
+    JobResult { job_id: job.id, output: output };
+};
+
+
+// ============================================================
+//  8. STATE MACHINE — machine à états émergente
+// ============================================================
+
+type ConnectionState
+    = + Disconnected
+    | + Connecting(string)
+    | + Connected(Socket)
+    | - Failed(string)
+    | # Timeout;
+
+// La machine à états ÉMERGE du pattern matching + mesure continue
+connection_manager = (host: string) {
+    mut state: ConnectionState = + Disconnected;
+    mut retries = 0;
+    max_retries = 5;
+
+    (retries < max_retries) ?? {
+        + : state ? {
+            + Disconnected : {
+                state = + Connecting(host);
+            }
+            + Connecting(h?) : {
+                tcp_connect(h) {
+                    socket? : state = + Connected(socket);
+                    - err? : {
+                        retries = retries + 1;
+                        state = - Failed(err);
+                    }
+                    # : state = # Timeout;
+                };
+            }
+            + Connected(socket?) : {
+                // Connecté — écouter les données
+                socket ?? {
+                    data? : process_data(data);
+                    - : {
+                        state = + Disconnected;
+                        retries = retries + 1;
+                    }
+                };
+                break;
+            }
+            - Failed(msg?) : {
+                print("Échec #{retries}: {msg}");
+                sleep(retries * 1000);
+                state = + Disconnected;
+            }
+            # Timeout : {
+                print("Timeout #{retries}");
+                retries = retries + 1;
+                state = + Disconnected;
+            }
+        }
+    };
+};
+
+
+// ============================================================
+//  9. PRODUCTEUR / CONSOMMATEUR CLASSIQUE
+// ============================================================
+
+// SPSC via pipe
+producer_consumer = () {
+    // Producteur | Consommateur — un green thread chaque, SPSC ring buffer
+    generate_items(1000) | consume_item;
+};
+
+generate_items = (count: int) {
+    0..count ? {
+        i? : {
+            item = create_item(i);
+            item;  // valeur produite, envoyée dans le pipe
+        }
+    };
+};
+
+consume_item = (item@) {
+    process(item@);
+    save(item@);
+};
+
+// SPMC via broadcast
+fan_out_pattern = () {
+    // Un producteur, 3 consommateurs — chacun reçoit tous les items
+    generate_items(1000) ~ [consumer_a, consumer_b, consumer_c];
+};
+
+
+// ============================================================
+//  10. PATTERN MATCHING AVANCÉ
+// ============================================================
+
+type Shape
+    = + Circle(float)
+    | + Rectangle(float, float)
+    | + Triangle(float, float, float)
+    | * Empty;
+
+area = (shape: Shape@) : float {
+    shape ? {
+        + Circle(r?) : math::pi * r * r;
+        + Rectangle(w?, h?) : w * h;
+        + Triangle(a?, b?, c?) : {
+            s = (a + b + c) / 2.0;
+            math::sqrt(s * (s - a) * (s - b) * (s - c));
+        }
+        * Empty : 0.0;
+    };
+};
+
+describe = (shape: Shape@) : string {
+    shape ? {
+        + Circle(r?) (r > 100.0) : "Grand cercle (r={r})";
+        + Circle(r?)              : "Petit cercle (r={r})";
+        + Rectangle(w?, h?) (w == h?) : "Carré ({w}x{h})";
+        + Rectangle(w?, h?)           : "Rectangle ({w}x{h})";
+        + Triangle(a?, b?, c?)        : "Triangle ({a}, {b}, {c})";
+        * Empty                        : "Vide";
+    };
+};
+
+
+// ============================================================
+//  11. CLOSURES ET HIGHER-ORDER FUNCTIONS
+// ============================================================
+
+// Closure capture par move (défaut)
+make_counter = () : () : int {
+    mut count = 0;
+    () : int {
+        count = count + 1;
+        count;
+    };
+};
+
+counter = make_counter();
+print(counter());  // 1
+print(counter());  // 2
+
+// Closure capture par emprunt
+apply_all = (items: list(int)@, f: (int) : int) : list(int) {
+    items ? {
+        item? : f(item);
+    };
+};
+
+doubled = apply_all(numbers@, (x) { x * 2; });
+
+// Composition de fonctions
+compose = (f: (T) : U, g: (U) : V) : (T) : V {
+    (x: T) : V { g(f(x)); };
+};
+
+double = (x: int) : int { x * 2; };
+inc = (x: int) : int { x + 1; };
+double_then_inc = compose(double, inc);
+
+
+// ============================================================
+//  12. COMPTIME — exécution à la compilation
+// ============================================================
+
+// Table de lookup calculée à la compilation
+@comptime
+sin_table = 0..360 ? {
+    deg? : math::sin(deg * math::pi / 180.0);
+};
+
+// Constantes compilées
+@comptime
+MAX_ENTITIES = 10000;
+
+@comptime
+FIB_20 = fib(20);
+
+fib = (n: int) : int {
+    (n <= 1) ? {
+        + : n;
+        - : fib(n - 1) + fib(n - 2);
+    };
+};
+
+
+// ============================================================
+//  13. EXTEND — domaine personnalisé
+// ============================================================
+
+@extend sql {
+    // Définir un DSL pour les requêtes SQL
+    select = (fields: list(string), table: string) {
+        query = "SELECT {fields.join(', ')} FROM {table}";
+        execute_query(query);
+    };
+}
+
+// Utilisation du domaine
+result = sql::select(["name", "email"], "users");
+
+
+// ============================================================
+//  14. TRAIT AVANCÉ — operator overloading
+// ============================================================
+
+trait Add(T) {
+    add = (other: T@) : T;
+}
+
+trait Mul(T) {
+    mul = (other: T@) : T;
+}
+
+trait Display {
+    to_string = () : string;
+}
+
+Vec3 : Add(Vec3) {
+    add = (other: Vec3@) : Vec3 {
+        Vec3 {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        };
+    };
+}
+
+Vec3 : Mul(float) {
+    mul = (scalar: float@) : Vec3 {
+        Vec3 {
+            x: self.x * scalar,
+            y: self.y * scalar,
+            z: self.z * scalar,
+        };
+    };
+}
+
+Vec3 : Display {
+    to_string = () : string {
+        "({self.x}, {self.y}, {self.z})";
+    };
+}
+
+// Utilisation
+v1 = Vec3 { x: 1.0, y: 2.0, z: 3.0 };
+v2 = Vec3 { x: 4.0, y: 5.0, z: 6.0 };
+v3 = v1.add(v2@);      // operator overloading via trait
+v4 = v1.mul(2.0@);     // Vec3 * float
+
+
+// ============================================================
+//  15. ALGORITHME QUANTIQUE — Deutsch-Jozsa
+// ============================================================
+// Détermine si f est constante ou balancée en UNE mesure
+// (classiquement : 2^(n-1)+1 évaluations nécessaires)
+
+deutsch_jozsa = (oracle: (list(qubit)) : list(qubit), n: int) : string {
+    // Préparer les qubits
+    mut qubits = [];
+    0..n ? {
+        i? : qubits.push(quantum::H(qubit()));
+    };
+
+    // Appliquer l'oracle
+    qubits = oracle(qubits);
+
+    // Appliquer Hadamard à nouveau
+    qubits = qubits | quantum::H;
+
+    // Mesurer — PAS de @qpu, le compilateur détecte qubit → route auto
+    mut all_zero = true;
+    qubits ? {
+        q? : q ? {
+            - : all_zero = false;
+        };
+    };
+
+    (all_zero) ? {
+        + : "Constante";
+        - : "Balancée";
+    };
+};
+
+
+// ============================================================
+//  16. ALGORITHME QUANTIQUE — Recherche de Grover
+// ============================================================
+
+grover_search = (oracle: (list(qubit)) : list(qubit), n: int) : int {
+    iterations = (math::pi / 4.0 * math::sqrt(math::pow(2.0, n))).round();
+
+    // Préparer superposition uniforme
+    mut qubits = [];
+    0..n ? { i? : qubits.push(quantum::H(qubit())); };
+
+    // Itérations de Grover
+    0..iterations ? {
+        iter? : {
+            // Appliquer oracle (marque l'élément cible)
+            qubits = oracle(qubits);
+
+            // Diffusion de Grover
+            qubits = qubits | quantum::H;
+            qubits = qubits | quantum::X;
+
+            // Phase flip sur |0...0⟩
+            quantum::controlled_z(qubits);
+
+            qubits = qubits | quantum::X;
+            qubits = qubits | quantum::H;
+        }
+    };
+
+    // Mesurer tous les qubits
+    mut result = 0;
+    qubits ? {
+        q? : {
+            result = result << 1;
+            q ? {
+                + : result = result + 1;
+            };
+        }
+    };
+
+    result;
+};
+
+
+// ============================================================
+//  17. PROTOCOLE QUANTIQUE — BB84 (distribution de clés)
+// ============================================================
+
+bb84_key_exchange = (n_bits: int) : list(int) {
+    // Alice prépare
+    mut alice_bits = [];
+    mut alice_bases = [];
+    0..n_bits ? {
+        i? : {
+            bit = 0.5p ? { + : 1; - : 0; };   // bit aléatoire natif
+            base = 0.5p ? { + : 1; - : 0; };   // base aléatoire natif
+            alice_bits.push(bit);
+            alice_bases.push(base);
+        }
+    };
+
+    // Alice encode dans des qubits
+    mut qubits = [];
+    0..n_bits ? {
+        i? : {
+            q = qubit();
+            (alice_bits[i] == 1) ? { + : q = quantum::X(q); };
+            (alice_bases[i] == 1) ? { + : q = quantum::H(q); };
+            qubits.push(q);
+        }
+    };
+
+    // Bob mesure avec ses bases aléatoires
+    mut bob_bases = [];
+    mut bob_results = [];
+    qubits ? {
+        q? : {
+            base = 0.5p ? { + : 1; - : 0; };
+            bob_bases.push(base);
+            (base == 1) ? { + : q = quantum::H(q); };
+            q ? {
+                + : bob_results.push(1);
+                - : bob_results.push(0);
+            };
+        }
+    };
+
+    // Réconciliation : garder les bits où les bases correspondent
+    mut shared_key = [];
+    0..n_bits ? {
+        i? (alice_bases[i] == bob_bases[i]) : {
+            shared_key.push(bob_results[i]);
+        }
+    };
+
+    shared_key;
+};
+
+
+// ============================================================
+//  18. SIMULATION QUANTIQUE SUR GPU (émergent)
+// ============================================================
+
+// Le scheduler détecte :
+// 1. Type qubit → simulation quantique
+// 2. Pipeline | sur collection → parallélise
+// 3. Opérations matricielles homogènes → batch GPU automatique
+// → AUCUNE annotation nécessaire
+
+quantum_simulation = (n_qubits: int) {
+    mut qubits = [];
+    0..n_qubits ? { i? : qubits.push(qubit()); };
+
+    // Pipeline quantique — chaque étage potentiellement sur GPU
+    qubits
+        | quantum::H                           // Hadamard sur chaque qubit → GPU batch auto
+        | (q: qubit) { quantum::Rz(q, 0.1); } // Rotation Z (lambda car 2 args) → GPU batch auto
+        | quantum::H;                          // Hadamard → GPU batch auto
+
+    // Mesure finale
+    results = qubits ? {
+        q? : q ? { + : 1; - : 0; };
+    };
+
+    print("Résultats: {results}");
+};
+
+
+// ============================================================
+//  19. RÉSEAU DE NEURONES MINIMAL
+// ============================================================
+
+type Layer {
+    weights: list(list(float));
+    biases: list(float);
+}
+
+type Network {
+    layers: list(Layer);
+}
+
+relu = (x: float) : float {
+    (x > 0.0) ? { + : x; - : 0.0; };
+};
+
+forward = (network: Network@, input: list(float)) : list(float) {
+    mut current = input;
+
+    network.layers ? {
+        layer? : {
+            mut output = [];
+            0..len(layer.biases@) ? {
+                j? : {
+                    mut sum = layer.biases@[j];
+                    0..len(current@) ? {
+                        i? : sum = sum + current@[i] * layer.weights@[j][i];
+                    };
+                    output.push(relu(sum));
+                }
+            };
+            current = output;
+        }
+    };
+
+    current;
+};
+
+// Entraînement — le pipe parallélise le batch
+train_batch = (network: Network@@, batch: list((list(float), list(float)))) {
+    // Chaque exemple du batch traité en parallèle
+    gradients = batch | (example) {
+        (input, target) = example;
+        output = forward(network@, input);
+        compute_gradient(network@, output@, target@);
+    };
+
+    // Agrégation et mise à jour
+    avg_gradient = average_gradients(gradients);
+    apply_gradient(network@@, avg_gradient@);
+};
+
+
+// ============================================================
+//  20. WEBSOCKET BIDIRECTIONNEL
+// ============================================================
+
+type WSMessage {
+    type: string;
+    payload: string;
+    sender_id: int;
+}
+
+ws_handler = (connection) {
+    // Réception continue
+    connection ?? {
+        msg? : msg.type ? {
+            + "text"  : broadcast_to_room(msg);
+            + "ping"  : connection.send("pong");
+            + "close" : {
+                cleanup(msg.sender_id);
+                break;
+            }
+            _ : log("Type inconnu: {msg.type}");
+        }
+        - err? : {
+            log("Erreur WS: {err}");
+            break;
+        }
+    };
+};
+
+// Chat room avec broadcast
+chat_room = () {
+    mut connections = [];
+
+    // Chaque nouvelle connexion → handler séparé (émergent via ??)
+    accept_connections() ?? {
+        conn? : {
+            connections.push(conn);
+            // Broadcast : chaque message envoyé à tous
+            conn ?? { msg? : msg; } ~ connections;
+        }
+    };
+};
+
+
+// ============================================================
+//  21. CONTRÔLE FIN DU RUNTIME (quand nécessaire)
+// ============================================================
+
+// Par défaut : scheduler auto-optimise
+default_pipeline = () {
+    data | process | save;  // scheduler choisit threads/séquentiel
+};
+
+// Contrôle du nombre de threads
+controlled_pipeline = () {
+    runtime::config(threads: 8, buffer: 8192);
+    data | process | save;  // forcé 8 threads, buffer 8KB
+    runtime::config();      // reset auto
+};
+
+// Forcer séquentiel : utiliser UFCS (.)
+sequential_pipeline = () {
+    data.process().save();  // garanti même thread, pas de pipe
+};
+
+// Introspection du pipe via .?
+debug_pipeline = () {
+    task = data | process;
+    task.? {
+        threads? : print("threads utilisés: {threads}");
+        buffer?  : print("taille buffer: {buffer}");
+        latency? : print("latence: {latency}ms");
+    };
+};
+
+
+// ============================================================
+//  22. PARSEUR COMBINATOIRE
+// ============================================================
+
+type ParseResult(T) = + Ok(T, string) | - Err(string);
+
+// Parseur = fonction string → ParseResult
+char_parser = (expected: string) : (string) : ParseResult(string) {
+    (input: string) : ParseResult(string) {
+        (len(input) > 0 && input[0] == expected) ? {
+            + : + Ok(expected, input[1..]);
+            - : - Err("Attendu '{expected}', trouvé '{input[0]}'");
+        };
+    };
+};
+
+// Séquence de parseurs — composés via pipe conceptuel
+sequence = (parsers: list((string) : ParseResult)) {
+    (input: string) {
+        mut remaining = input;
+        mut results = [];
+
+        parsers ? {
+            parser? : {
+                parser(remaining) {
+                    + Ok(val?, rest?) : {
+                        results.push(val);
+                        remaining = rest;
+                    }
+                    - Err(msg?) : return - Err(msg);
+                };
+            }
+        };
+
+        + Ok(results, remaining);
+    };
+};
+
+
+// ============================================================
+//  23. PROBABILITÉS AVANCÉES
+// ============================================================
+
+// Simulation Monte Carlo avec pipe
+monte_carlo_pi = (n_samples: int) : float {
+    mut inside = 0;
+
+    0..n_samples ? {
+        sample? : {
+            x = math::uniform(0.0, 1.0);
+            y = math::uniform(0.0, 1.0);
+            (x * x + y * y <= 1.0) ? {
+                + : inside = inside + 1;
+            };
+        }
+    };
+
+    4.0 * inside / n_samples;
+};
+
+// Markov chain — transition probabiliste
+type MarkovState = + sunny | + cloudy | + rainy;
+
+markov_step = (state: MarkovState) : MarkovState {
+    state ? {
+        + sunny : {
+            transition = math::uniform(0.0, 1.0);
+            transition ? {
+                (transition < 0.7) : + sunny;
+                (transition < 0.9) : + cloudy;
+                _                  : + rainy;
+            };
+        }
+        + cloudy : {
+            transition = math::uniform(0.0, 1.0);
+            transition ? {
+                (transition < 0.3) : + sunny;
+                (transition < 0.6) : + cloudy;
+                _                  : + rainy;
+            };
+        }
+        + rainy : {
+            transition = math::uniform(0.0, 1.0);
+            transition ? {
+                (transition < 0.2) : + sunny;
+                (transition < 0.5) : + cloudy;
+                _                  : + rainy;
+            };
+        }
+    };
+};
+
+// Simuler la chaîne
+simulate_markov = (initial: MarkovState, steps: int) : list(MarkovState) {
+    mut state = initial;
+    mut history = [state];
+
+    0..steps ? {
+        step? : {
+            state = markov_step(state);
+            history.push(state);
+        }
+    };
+
+    history;
+};
+
+
+// ============================================================
+//  24. SYSTÈME DE FICHIERS VIRTUEL
+// ============================================================
+
+type FSNode
+    = + File(string, string)
+    | + Dir(string, list(FSNode))
+    | * Empty;
+
+find_file = (root: FSNode@, name: string) : FSNode {
+    root ? {
+        + File(n?, content?) : {
+            (n == name) ? {
+                + : root;
+                - : * Empty;
+            };
+        }
+        + Dir(dir_name?, children?) : {
+            children ? {
+                child? : {
+                    result = find_file(child@, name);
+                    result ? {
+                        + : return result;
+                    };
+                }
+            };
+            * Empty;
+        }
+        * Empty : * Empty;
+    };
+};
+
+// Walk avec pipe — le scheduler parallélise le parcours
+walk_tree = (root: FSNode@) {
+    root ? {
+        + File(name?, content?) : print("  {name} ({len(content)} bytes)");
+        + Dir(name?, children?) : {
+            print("{name}/");
+            children | walk_tree;
+        }
+        * Empty : {};
+    };
+};

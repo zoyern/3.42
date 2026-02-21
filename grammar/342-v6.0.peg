@@ -1,0 +1,590 @@
+# ============================================================
+#  3.42 — Grammaire PEG Formelle v6.0
+#  "16 verbes, 1 règle : A(B). Tout le reste émerge."
+#
+#  PARADIGME : FRACTAL COMPOSITION
+#    3 types de nœuds AST : Atom, Compose, Sphere
+#    16 atomes-verbes, combinables à profondeur N
+#    Sens émergent (pas hardcodé)
+#
+#  KEYWORDS : 2 base + 4 sucre
+#    base  : type, trait
+#    sucre : true(+), false(-), void(_), any(*)
+#
+#  CHANGEMENTS v5.1 → v6.0 :
+#    break     : >> → >< (entrer dans sortir = quitter contexte)
+#    >> libéré : réservé futur (continue? enter scope?)
+#    * sens    : neutre/void → any/tout (wildcard)
+#    _ sens    : wildcard → void/rien
+#    _ literal : ajouté à SpinLiteral
+#    any       : nouveau sucre syntaxique pour *
+#    void      : maps to _ (plus *)
+#    >< expr   : pass-through en expression (a >< b = a traverse b)
+#    ..        : parent access ajouté (accéder au scope parent)
+#    break     : supporte spin + valeur (>< # err;)
+#
+#  HÉRITAGE v4.1 → v5.0 → v5.1 :
+#    module → ::name {}
+#    return → <<
+#    mut    → ~
+#    copy() → ** (préfixe)
+#    as     → :>
+#    {} conteneur universel (BlockExpr)
+#    true/false/void sucre syntaxique
+# ============================================================
+#
+#  Convention PEG :
+#    /     = choix ordonné (essaie gauche d'abord)
+#    *     = zéro ou plus
+#    +     = un ou plus
+#    ?     = optionnel
+#    !     = négation (lookahead négatif)
+#    &     = lookahead positif
+#    'x'   = terminal littéral
+#    [a-z] = classe de caractères
+#    <- ou = = définition de règle
+#
+
+# ============================================================
+#  PROGRAMME
+# ============================================================
+
+Program          <- Spacing (Statement Spacing)* EOF
+
+# ============================================================
+#  STATEMENTS (instructions)
+# ============================================================
+
+Statement        <- ModuleDecl
+                  / TypeDecl
+                  / TraitDecl
+                  / ImplDecl
+                  / ExtendDecl
+                  / AnnotatedStatement
+                  / DestructAssign
+                  / MutDecl
+                  / ReturnStmt
+                  / BreakStmt
+                  / Assignment
+                  / ExpressionStmt
+
+# v5.0 : module → ::name {}
+# '::' en début de statement = déclaration module
+# '::' entre identifiers (a::b) = chemin (expression)
+ModuleDecl       <- '::' Spacing Identifier Spacing
+                    '{' Spacing (Statement Spacing)* '}'
+
+TypeDecl         <- 'type' Spacing Identifier GenericParams? Spacing TypeBody
+
+GenericParams    <- '(' Spacing GenericParam (Spacing ',' Spacing GenericParam)* Spacing ')'
+GenericParam     <- Identifier (Spacing ':' Spacing TraitBound)?
+TraitBound       <- TypePath (Spacing '+' Spacing TypePath)*
+
+TypeBody         <- '{' Spacing (FieldDecl Spacing)* '}'
+                  / '=' Spacing VariantList
+                  / ':' Spacing TraitBound Spacing '{' Spacing (Statement Spacing)* '}'
+
+FieldDecl        <- Identifier Spacing ':' Spacing TypeExpr Semicolon
+
+VariantList      <- Variant (Spacing '|' Spacing Variant)*
+Variant          <- SpinPattern? Spacing Identifier
+                    ('(' Spacing TypeList? Spacing ')')?
+
+# --- TRAITS (interfaces / contrats de comportement) ---
+
+TraitDecl        <- 'trait' Spacing Identifier GenericParams? Spacing
+                    '{' Spacing (TraitMethod Spacing)* '}'
+
+TraitMethod      <- Identifier Spacing '=' Spacing
+                    '(' Spacing ParamList? Spacing ')'
+                    (Spacing ':' Spacing TypeExpr)? Semicolon
+
+# --- IMPL (implémentation de trait pour un type) ---
+# self = binding implicite (le compilateur l'injecte comme @ à l'instance)
+
+ImplDecl         <- Identifier Spacing ':' Spacing TypePath Spacing
+                    '{' Spacing (Statement Spacing)* '}'
+
+# --- DESTRUCTURING ---
+
+DestructAssign   <- TupleDestructure / ListDestructure
+
+TupleDestructure <- '(' Spacing Identifier (Spacing ',' Spacing Identifier)* Spacing ')'
+                    Spacing '=' Spacing Expression Semicolon
+
+ListDestructure  <- '[' Spacing Identifier (Spacing ',' Spacing Identifier)*
+                    (Spacing ',' Spacing '...' Identifier)? Spacing ']'
+                    Spacing '=' Spacing Expression Semicolon
+
+ExtendDecl       <- '@extend' Spacing Identifier Spacing
+                    '{' Spacing (Statement Spacing)* '}'
+
+# Annotations : UNIQUEMENT @extend et @comptime
+AnnotatedStatement <- Annotation+ Spacing Statement
+Annotation       <- '@' Identifier ('(' Spacing ArgList? Spacing ')')? Spacing
+
+# Assignment APRÈS MutDecl dans l'ordre des alternatives
+# car MutDecl <- '~' Spacing Assignment et ~ ne matche pas Assignment
+Assignment       <- Identifier Spacing (':' Spacing TypeExpr Spacing)?
+                    '=' Spacing Expression Semicolon
+
+# ~ remplace mut
+MutDecl          <- '~' Spacing Assignment
+
+# << remplace return
+# En début de statement = return
+# SpinReturn optionnel : << + expr; (retourne spin +)
+ReturnStmt       <- '<<' Spacing SpinReturn? Spacing Expression? Semicolon
+SpinReturn       <- SpinPattern !'='
+
+# v6.0 : >< remplace >> pour break
+# >< = ENTRER(SORTIR) = entrer dans la sortie = quitter le contexte
+# Supporte spin + valeur (comme return) :
+#   >< ;           → break simple
+#   >< + result ;  → break avec valeur positive
+#   >< # err ;     → break avec erreur
+#   >< expr ;      → break avec valeur (spin + par défaut)
+# >> libéré pour usage futur (continue? enter scope? dive?)
+BreakStmt        <- '><' Spacing SpinReturn? Spacing Expression? Semicolon
+
+ExpressionStmt   <- Expression Semicolon
+
+# ============================================================
+#  EXPRESSIONS
+# ============================================================
+
+Expression       <- PipeExpr
+
+# --- PIPE SPSC : parallélisme émergent (async, buffered) ---
+PipeExpr         <- PassThroughExpr (Spacing '|' !'|' Spacing PassThroughExpr)*
+
+# v6.0 NOUVEAU — pass-through : a >< b (sync, direct, sans buffer)
+# >< en expression = ENTRER(SORTIR) = traverser
+# Différence avec | :
+#   a | b  = connecter a et b (async, SPSC ring buffer, green threads)
+#   a >< b = a traverse b (sync, direct, même thread, transformation)
+# Précédence : juste en-dessous de | (pipe)
+PassThroughExpr  <- RangeExpr (Spacing '><' Spacing RangeExpr)*
+
+# v6.0 FIX — range comme opérateur infixe (plus dans PrimaryExpr)
+# a..b = range de a à b (optionnel, pas chaînable)
+# Précédence basse : au-dessus de broadcast, en-dessous de pass-through
+# Pour open ranges : a..* (a vers any), *..b (any vers b, rare)
+# SliceAccess gère les ranges dans [] : list[a..b]
+RangeExpr        <- BroadcastExpr (Spacing '..' Spacing BroadcastExpr)?
+
+# --- BROADCAST SPMC : diffusion 1→N ---
+BroadcastExpr    <- MeasureExpr (Spacing '~' Spacing MeasureExpr)?
+
+# --- MESURE : ? et ?? (le cœur du langage) ---
+MeasureExpr      <- LogicalOrExpr (Spacing MeasureSuffix)?
+
+MeasureSuffix    <- ContinuousMeasure
+                  / SingleMeasure
+                  / MeasureBlock
+
+# Mesure anonyme (? sans bloc) autorisée
+SingleMeasure    <- '?' !'?' Spacing MeasureBlock?
+
+ContinuousMeasure <- '??' Spacing MeasureBlock
+
+MeasureBlock     <- '{' Spacing MeasureBranch+ Spacing '}'
+
+MeasureBranch    <- SpinBranch
+                  / ConditionBranch
+                  / WildcardBranch
+
+# SpinBranch avec MatchBody (destructuring de variants)
+SpinBranch       <- SpinPattern Spacing MatchBody? Spacing
+                    FilterExpr? Spacing ':' Spacing BranchBody
+                  / Binding Spacing FilterExpr? Spacing ':'
+                    Spacing BranchBody
+
+MatchBody        <- VariantMatch
+                  / StringLiteral
+                  / NumberLiteral
+                  / Binding
+
+VariantMatch     <- Identifier ('(' Spacing BindingList? Spacing ')')?
+
+BindingList      <- Binding (Spacing ',' Spacing Binding)*
+
+ConditionBranch  <- '(' Spacing Expression Spacing ')' Spacing ':'
+                    Spacing BranchBody
+
+WildcardBranch   <- '_' Spacing ':' Spacing BranchBody
+
+SpinPattern      <- '+' / '-' / '*' / '#'
+
+Binding          <- Identifier '?'
+
+FilterExpr       <- '(' Spacing Expression Spacing ')'
+
+# BranchBody utilise BlockExpr
+# Permet : + : { y = 5; y + 1 }  (statements + expression finale)
+# Et aussi : + : expr;            (expression simple avec ;)
+BranchBody       <- BlockExpr / Expression Semicolon
+
+# Block = alias pour BlockExpr (compatibilité interne)
+Block            <- BlockExpr
+
+# ============================================================
+#  OPÉRATEURS (par précédence croissante)
+# ============================================================
+
+LogicalOrExpr    <- LogicalAndExpr (Spacing '||' Spacing LogicalAndExpr)*
+LogicalAndExpr   <- BitwiseXorExpr (Spacing '&&' Spacing BitwiseXorExpr)*
+# | est le pipe, pas bitwise OR → bitwise OR via bits::or()
+BitwiseXorExpr   <- BitwiseAndExpr (Spacing '^' Spacing BitwiseAndExpr)*
+BitwiseAndExpr   <- EqualityExpr (Spacing '&' !'&' Spacing EqualityExpr)*
+EqualityExpr     <- ComparisonExpr (Spacing EqOp Spacing ComparisonExpr)*
+ComparisonExpr   <- ShiftExpr (Spacing CmpOp Spacing ShiftExpr)*
+ShiftExpr        <- AdditiveExpr (Spacing ShiftOp Spacing AdditiveExpr)*
+AdditiveExpr     <- MultiplicativeExpr (Spacing AddOp Spacing MultiplicativeExpr)*
+MultiplicativeExpr <- UnaryExpr (Spacing MulOp Spacing UnaryExpr)*
+
+# Ordre de précédence unaire :
+#   1. UnaryOp (!, -, +) → classique
+#   2. CopyExpr (**) → deep copy
+#   3. SpinExpr (*, #) → constructeur variant
+#   4. PostfixExpr → tout le reste
+UnaryExpr        <- UnaryOp Spacing UnaryExpr
+                  / CopyExpr
+                  / SpinExpr
+                  / PostfixExpr
+
+# ** pour copie profonde (remplace copy())
+CopyExpr         <- '**' Spacing UnaryExpr
+
+# Expressions avec spin préfixe (constructeurs de variantes)
+# * Leaf → variante any
+# # Error("msg") → variante erreur
+# + et - sont gérés par UnaryOp
+SpinExpr         <- ('*' !'=' !'*' / '#') Spacing PostfixExpr
+
+PostfixExpr      <- PrimaryExpr (Spacing Postfix)*
+
+Postfix          <- DotAccess
+                  / DotMeasure
+                  / FunctionCall
+                  / IndexAccess
+                  / SliceAccess
+                  / InlineMeasureBlock
+                  / CompoundAssign
+                  / CastExpr
+                  / BorrowSuffix
+
+DotAccess        <- '.' !'.' !'?' Identifier
+# v6.0 NOTE : ParentAccess (..) est dans PrimaryExpr (prefix), pas Postfix
+# Car en Postfix, a..b serait ambigu avec range (a..b)
+# Solution : ..field est un PrimaryExpr (prefix), a..b est RangeExpr (infix)
+DotMeasure       <- '.?' Spacing MeasureBlock?
+FunctionCall     <- '(' Spacing ArgList? Spacing ')'
+IndexAccess      <- '[' Spacing Expression Spacing ']'
+SliceAccess      <- '[' Spacing Expression? Spacing '..' Spacing Expression? Spacing ']'
+InlineMeasureBlock <- MeasureBlock
+CompoundAssign   <- AssignOp Spacing Expression
+
+# :> remplace 'as'
+CastExpr         <- Spacing ':>' Spacing TypeExpr
+
+# ============================================================
+#  EXPRESSIONS PRIMAIRES
+# ============================================================
+
+# BlockExpr en premier — {} comme expression universelle
+# Un bloc retourne la valeur de sa dernière expression
+# Combinable avec tout : << {}, ** {}, x = {}, | {} etc.
+PrimaryExpr      <- BlockExpr
+                  / GroupExpr
+                  / FunctionLiteral
+                  / ListLiteral
+                  / MapLiteral
+                  / ParentAccessExpr
+                  / ProbLiteral
+                  / NumberLiteral
+                  / StringLiteral
+                  / StructLiteral
+                  / CopyExprParen
+                  / ModulePath
+                  / SpinLiteral
+                  / Identifier
+
+# Bloc comme expression (conteneur universel)
+# Le bloc retourne la valeur de sa dernière expression
+# Si la dernière instruction n'est pas une expression, retourne _ (void)
+BlockExpr        <- '{' Spacing (Statement Spacing)* Expression? Spacing '}'
+
+GroupExpr        <- '(' Spacing Expression Spacing ')'
+
+FunctionLiteral  <- '(' Spacing ParamList? Spacing ')'
+                    (Spacing ':' Spacing TypeExpr)?
+                    Spacing Block
+
+ParamList        <- Param (Spacing ',' Spacing Param)*
+Param            <- Identifier Spacing (':' Spacing TypeExpr)?
+
+ListLiteral      <- '[' Spacing (Expression (Spacing ',' Spacing Expression)*)? Spacing ']'
+
+MapLiteral       <- '[' Spacing MapEntry (Spacing ',' Spacing MapEntry)* Spacing ']'
+MapEntry         <- Expression Spacing ':' Spacing Expression
+
+# v6.0 NOUVEAU — ..field = accéder au scope parent
+# Prefix uniquement (pas postfix, pour éviter le conflit avec range a..b)
+# .. seul (sans identifier) = l'objet parent lui-même
+# ..field = le champ 'field' du scope parent
+# Analogue à 'cd ..' dans un filesystem
+ParentAccessExpr <- '..' Identifier?
+
+ProbLiteral      <- FloatLiteral 'p'
+
+# **(expr) aussi valide comme alternative fonctionnelle
+CopyExprParen    <- '**' '(' Spacing Expression Spacing ')'
+
+# v6.0 — spin comme valeur littérale + sucre syntaxique
+# Atomes spin (les 5 spins possibles) :
+#   + = positif (true, succès)
+#   - = négatif (false, échec)
+#   * = any/tout (wildcard, tout est possible)
+#   # = erreur (corruption, overflow)
+#   _ = void (rien, vide, ignorer)
+# Sucre optionnel :
+#   true  → +
+#   false → -
+#   any   → *   (v6.0 NOUVEAU)
+#   void  → _   (v6.0 : maps to _ maintenant, plus *)
+SpinLiteral      <- '+' !'+'
+                  / '-' !'-'
+                  / '*' !'*'
+                  / '#'
+                  / '_' ![a-zA-Z0-9_]
+                  / 'true' ![a-zA-Z0-9_]
+                  / 'false' ![a-zA-Z0-9_]
+                  / 'void' ![a-zA-Z0-9_]
+                  / 'any' ![a-zA-Z0-9_]
+
+# Struct literal : Type { champ: valeur, ... }
+StructLiteral    <- TypePath Spacing '{' Spacing FieldInit
+                    (Spacing ',' Spacing FieldInit)* Spacing '}'
+FieldInit        <- Identifier Spacing ':' Spacing Expression
+
+# ============================================================
+#  TYPES
+# ============================================================
+
+TypeExpr         <- FunctionType / TupleType / SpinReturnType / SimpleType / BorrowType
+SimpleType       <- TypePath GenericArgs?
+GenericArgs      <- '(' Spacing TypeList Spacing ')'
+FunctionType     <- '(' Spacing TypeList? Spacing ')' Spacing ':' Spacing TypeExpr
+TupleType        <- '(' Spacing TypeExpr Spacing ',' Spacing TypeList Spacing ')'
+TypePath         <- Identifier ('::' Identifier)*
+TypeList         <- TypeExpr (Spacing ',' Spacing TypeExpr)*
+
+# Type de retour multi-spin
+# Déclare les spins possibles : +Result | -Error | #Critical
+SpinReturnType   <- SpinPattern? SimpleType (Spacing '|' Spacing SpinPattern? SimpleType)*
+
+# Type avec emprunt pour les signatures
+BorrowType       <- SimpleType ('@@' / '@')
+
+# ============================================================
+#  OPÉRATEURS — TERMINAUX
+# ============================================================
+
+EqOp             <- '==' / '!='
+CmpOp            <- '<=' / '>=' / '<' !'<' / '>' !'>'
+# ShiftOp : << (shift left) et >> (shift right)
+# v6.0 : << en statement = return (ReturnStmt, testé AVANT ExpressionStmt)
+#         >> n'est PLUS break (break = ><)
+#         >> en statement seul = réservé futur (ne matche aucun Statement)
+#         >> en expression = shift right (inchangé)
+ShiftOp          <- '<<' / '>>'
+# ++ pour concaténation, testé avant + et -
+AddOp            <- '++' / '+' !'+' / '-' !'-'
+# * ne matche PAS ** (pour ne pas confondre avec copy)
+MulOp            <- '*' !'=' !'*' / '/' / '%'
+# Unaire : !, -, + (spin + et - aussi via UnaryOp, le type system résout)
+UnaryOp          <- '!' / '-' !'-' / '+' !'+'
+AssignOp         <- '+=' / '-=' / '*=' / '/=' / '%='
+                  / '&=' / '^=' / '<<=' / '>>='
+
+# ============================================================
+#  LEXÈMES (tokens)
+# ============================================================
+
+# v6.0 : Keywords = 2 base + 4 sucre (+ any)
+Identifier       <- !Keyword [a-zA-Z_] [a-zA-Z0-9_]*
+
+# Keywords protégés :
+#   type, trait = fondamentaux (concepts math universels, irremplaçables)
+#   true, false, void, any = sucre (alias pour +, -, _, *)
+Keyword          <- ('type' / 'trait' / 'true' / 'false' / 'void' / 'any') ![a-zA-Z0-9_]
+
+ModulePath       <- Identifier ('::' Identifier)*
+
+IdentList        <- Identifier (Spacing ',' Spacing Identifier)*
+
+# Arguments avec support des arguments nommés
+ArgList          <- Arg (Spacing ',' Spacing Arg)*
+Arg              <- NamedArg / Expression
+NamedArg         <- Identifier Spacing ':' Spacing Expression
+
+BorrowSuffix     <- '@@' / '@'
+
+# ============================================================
+#  LITTÉRAUX
+# ============================================================
+
+NumberLiteral    <- HexLiteral / BinLiteral / TernLiteral / FloatLiteral / IntLiteral
+
+IntLiteral       <- [0-9] [0-9_]*
+FloatLiteral     <- [0-9] [0-9_]* '.' [0-9] [0-9_]*
+HexLiteral       <- '0x' [0-9a-fA-F] [0-9a-fA-F_]*
+BinLiteral       <- '0b' [01] [01_]*
+TernLiteral      <- '0t' [012] [012_]*
+
+StringLiteral    <- '"' StringChar* '"'
+StringChar       <- '\\' EscapeChar
+                  / '{' Expression '}'
+                  / !'"' .
+
+EscapeChar       <- 'n' / 't' / 'r' / '\\' / '"' / '0' / '{' / '}'
+
+# ============================================================
+#  ESPACES ET COMMENTAIRES
+# ============================================================
+
+Spacing          <- (Whitespace / Comment)*
+Whitespace       <- [ \t\r\n]+
+Comment          <- LineComment / BlockComment
+LineComment      <- '//' (![\\r\\n] .)* [\\r\\n]?
+BlockComment     <- '/*' (!'*/' .)* '*/'
+
+Semicolon        <- Spacing ';'
+EOF              <- !.
+
+# ============================================================
+#  NOTES DE DESIGN v6.0
+# ============================================================
+#
+#  PARADIGME : Fractal Composition
+#  ================================
+#
+#  Le langage 3.42 n'a PAS de syntaxe traditionnelle.
+#  Il a 16 verbes (atomes) et UNE règle : A(B) = "A appliqué à B".
+#  Tout le reste — return, break, if, while, pipe, thread — ÉMERGE.
+#
+#  AST = 3 types de nœuds :
+#    Atom(symbol)               — un seul atome
+#    Compose(ASTNode, ASTNode)  — A appliqué à B
+#    Sphere(spin, value, children) — une sphère avec état
+#
+#  DISAMBIGUATION v6.0 :
+#
+#  1. << (return vs shift left)
+#     Statement level : ReturnStmt <- '<<' ... essayé AVANT ExpressionStmt
+#     Expression level : ShiftOp <- '<<' (entre deux expressions)
+#     Clé : PEG ordered choice dans Statement alternatives
+#
+#  2. >< (break vs pass-through)
+#     Statement level : BreakStmt <- '><' SpinReturn? Expression? Semicolon
+#     Expression level : PassThroughExpr <- a >< b (infixe entre expressions)
+#     Clé : BreakStmt essayé AVANT ExpressionStmt.
+#           En début de statement, >< suivi de ; ou spin = break.
+#           En expression (entre deux valeurs), >< = pass-through.
+#     Note : PipeExpr contient PassThroughExpr, donc a >< b est parsé
+#            comme expression avant d'atteindre Statement level.
+#
+#  3. >> (shift right — plus break)
+#     v5.1 : >> = break. v6.0 : >> libéré.
+#     >> n'apparaît plus dans aucun Statement spécial.
+#     >> = ShiftOp seulement (en expression entre deux valeurs).
+#     >> en statement seul (>> ;) = ExpressionStmt qui échouera
+#     (>> n'est pas un opérateur unaire valide) → erreur de contexte.
+#
+#  4. ~ (mut vs broadcast)
+#     Statement level : MutDecl <- '~' Spacing Assignment
+#     Expression level : BroadcastExpr <- MeasureExpr '~' MeasureExpr (infixe)
+#     Clé : MutDecl essayé avant ExpressionStmt. ~ en début + Assignment = mut.
+#
+#  5. + - (spin literal vs unaire vs addition)
+#     Primaire (seul) : SpinLiteral <- '+' !'+'  (dans PrimaryExpr)
+#     Préfixe : UnaryOp <- '+' !'+' (dans UnaryExpr, essayé AVANT PostfixExpr)
+#     Infixe : AddOp <- '+' !'+' (dans AdditiveExpr, ENTRE deux expressions)
+#     Clé : UnaryOp échoue si + n'est pas suivi d'expression → fallback SpinLiteral
+#
+#  6. * (any vs multiplication vs copy vs variant)
+#     ** expr : CopyExpr <- '**' (essayé en premier dans UnaryExpr)
+#     * expr : SpinExpr <- '*' !'=' !'*' (essayé après CopyExpr)
+#     a * b : MulOp <- '*' !'=' !'*' (infixe, ENTRE deux expressions)
+#     * seul : SpinLiteral <- '*' !'*' (dans PrimaryExpr, dernier recours)
+#     *= : CompoundAssign (postfixe, '*=' testé comme AssignOp)
+#
+#  7. _ (void literal vs wildcard)
+#     En MeasureBranch : WildcardBranch <- '_' ':' ... (catch-all dans ? {})
+#     En Expression : SpinLiteral <- '_' ![a-zA-Z0-9_] (void value)
+#     Clé : contextes différents (MeasureBranch vs PrimaryExpr)
+#     Note : _foo reste un identifiant valide (_ suivi de chars = pas SpinLiteral)
+#
+#  8. :: (module decl vs path)
+#     Statement : ModuleDecl <- '::' Identifier '{' ... (début de statement)
+#     Expression : ModulePath <- Identifier '::' Identifier (ENTRE identifiers)
+#
+#  9. . vs .. (access vs parent vs range)
+#     DotAccess <- '.' !'.' !'?' Identifier (Postfix, un seul point)
+#     ParentAccessExpr <- '..' Identifier? (PrimaryExpr, prefix)
+#     RangeExpr <- expr '..' expr (infixe, entre PassThrough et Broadcast)
+#     Clé : DotAccess négate '..' via !'.' → pas d'ambiguïté.
+#           ParentAccessExpr est PrimaryExpr (prefix, pas de left operand).
+#           RangeExpr est infixe (a left operand, entre deux BroadcastExpr).
+#           Donc ..field = parent access, a..b = range. Zéro conflit.
+#
+#  10. :> (cast — aucun conflit)
+#     Postfixe : CastExpr <- ':>' TypeExpr
+#     Aucun autre opérateur ne commence par :>
+#
+#  MULTI-SPIN RETURN & BREAK :
+#  ============================
+#
+#  ReturnStmt <- '<<' SpinReturn? Expression?
+#  BreakStmt  <- '><' SpinReturn? Expression?
+#  SpinReturn <- SpinPattern !'='
+#
+#  << + expr;  → retourne expr avec spin + (succès)
+#  << - expr;  → retourne expr avec spin - (échec)
+#  << _ ;      → retourne void (spin _)
+#  << # expr;  → retourne expr avec spin # (erreur)
+#  << expr;    → retourne expr avec spin + (défaut)
+#
+#  >< ;        → break simple (quitter le contexte)
+#  >< + val;   → break avec valeur positive
+#  >< # err;   → break avec erreur
+#
+#  SPIN LITERALS v6.0 :
+#  ======================
+#
+#  + = positif (true, success)
+#  - = négatif (false, failure)
+#  * = any/tout (wildcard, everything)     ← CHANGÉ (était neutre/void)
+#  # = erreur (error, corrupt, overflow)
+#  _ = void (rien, vide, ignorer)          ← NOUVEAU
+#
+#  Sucre : true(+), false(-), any(*), void(_)
+#
+#  x = +;     → x est positif
+#  y = _;     → y est void
+#  z = *;     → z est any (wildcard)
+#  flag = -;  → flag est négatif (false)
+#
+#  PASS-THROUGH vs PIPE :
+#  =======================
+#
+#  a | b   = CONNECTER(a, b) = pipe async, buffered, green threads
+#  a >< b  = ENTRER(SORTIR)(a, b) = pass-through sync, direct, même thread
+#
+#  Pipe crée un canal SPSC avec ring buffer entre deux green threads.
+#  Pass-through appelle directement, transformation synchrone.
+#
+#  data | transform | output;      // 3 green threads, 2 buffers
+#  data >< transform >< output;   // 1 thread, 0 buffer, appels directs
+#

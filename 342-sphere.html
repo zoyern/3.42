@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>3.42 — Sphère des Particules v2</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#08080f;color:#ddd;font-family:'Courier New',monospace;overflow:hidden}
+canvas{display:block}
+#ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+#ui>div{pointer-events:auto}
+#info{position:absolute;top:10px;left:10px;background:rgba(8,8,15,0.92);padding:14px;border-radius:10px;border:1px solid #333;max-width:300px;font-size:12px}
+#info h2{color:#ff6b35;font-size:15px;margin-bottom:6px}
+.leg{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.leg span{padding:2px 7px;border-radius:3px;font-size:10px}
+#detail{position:absolute;bottom:10px;left:10px;background:rgba(8,8,15,0.95);padding:14px;border-radius:10px;border:1px solid #ff6b35;max-width:500px;font-size:12px;display:none}
+#detail h3{color:#4fc3f7;font-size:14px;margin-bottom:4px}
+#detail .t{color:#888;font-size:11px}
+#detail .c{color:#ff6b35;margin-top:6px}
+#detail .r{color:#66bb6a;margin-top:4px;font-size:11px}
+#ctrl{position:absolute;top:10px;right:10px;background:rgba(8,8,15,0.92);padding:12px;border-radius:10px;border:1px solid #333;font-size:11px;max-width:200px}
+#ctrl button{background:#1a1a2e;color:#ccc;border:1px solid #444;padding:4px 10px;border-radius:4px;cursor:pointer;margin:2px;font-family:inherit;font-size:11px}
+#ctrl button:hover{background:#2a2a4e;color:#fff}
+#ctrl button.on{background:#ff6b35;color:#000;border-color:#ff6b35}
+#srch{background:#111;color:#fff;border:1px solid #444;padding:4px 8px;border-radius:4px;width:100%;margin-bottom:6px;font-family:inherit;font-size:11px}
+#legend-panel{position:absolute;bottom:10px;right:10px;background:rgba(8,8,15,0.92);padding:12px;border-radius:10px;border:1px solid #333;font-size:11px;max-width:260px}
+#legend-panel h4{color:#ff6b35;margin-bottom:6px}
+#legend-panel .rule{color:#aaa;margin:3px 0;line-height:1.4}
+#legend-panel code{color:#4fc3f7;background:#1a1a2e;padding:1px 4px;border-radius:2px}
+</style>
+</head>
+<body>
+<div id="ui">
+<div id="info">
+  <h2>3.42 — Sphère v2</h2>
+  <div>19 bosons · 5 gluons · 4 spins · 1 règle</div>
+  <div style="margin-top:4px;color:#666">Clic = détails · Molette = zoom · Glisser = rotation</div>
+  <div class="leg">
+    <span style="background:#ff6b35;color:#000">Bosons</span>
+    <span style="background:#4fc3f7;color:#000">Gluons</span>
+    <span style="background:#66bb6a;color:#000">Spins</span>
+    <span style="background:#ab47bc;color:#000">Trio</span>
+  </div>
+</div>
+<div id="ctrl">
+  <input type="text" id="srch" placeholder="Chercher...">
+  <div>
+    <button class="on" data-v="sphere">Sphère</button>
+    <button data-v="helix">Hélice</button>
+    <button data-v="orbital">Orbitales</button>
+  </div>
+  <div style="margin-top:4px">
+    <button id="btn-conn">Liaisons</button>
+    <button id="btn-lbl" class="on">Labels</button>
+    <button id="btn-rot" class="on">Rotation</button>
+    <button id="btn-gluon" class="on">Conteneurs</button>
+  </div>
+</div>
+<div id="detail">
+  <h3 id="d-name"></h3>
+  <div class="t" id="d-type"></div>
+  <div id="d-desc"></div>
+  <div id="d-cpu"></div>
+  <div class="c" id="d-comp"></div>
+  <div class="r" id="d-rules"></div>
+</div>
+<div id="legend-panel">
+  <h4>Règles d'émergence</h4>
+  <div class="rule"><code>A B</code> = A appliqué à B (composition)</div>
+  <div class="rule"><code>A A</code> = amplification (diagonale)</div>
+  <div class="rule"><code>; _</code> = gaz noble (mort, décay)</div>
+  <div class="rule">Fermion + Fermion = interdit (Pauli)</div>
+  <div class="rule">Gluon = conteneur entre 2 bornes</div>
+  <div class="rule" style="margin-top:6px;color:#ff6b35">Trio : <code>|</code> CPU · <code>~</code> GPU · <code>^</code> QPU</div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// === DATA ===
+const B = 'boson', G = 'gluon', S = 'spin';
+const P = [
+  // 19 bosons
+  {s:'<',n:'SORTIR',t:B,g:'io',cpu:'RET/POP',d:'Retourner, sortir du contexte',
+   c:['<< return','<> I/O','<! assert out','<. field return'],
+   r:['En statement: << = ReturnStmt','Entre expr: << = shift left']},
+  {s:'>',n:'ENTRER',t:B,g:'io',cpu:'CALL/PUSH',d:'Entrer, appeler, pousser',
+   c:['>> continue','>< break','>| pipe-in','>~ broadcast-in'],
+   r:['En statement: >> = ContinueStmt','Entre expr: >> = shift right']},
+  {s:'.',n:'ACCÉDER',t:B,g:'access',cpu:'LEA/MOV',d:'Accéder à un champ, naviguer',
+   c:['.. parent','..f parent field','.? optional measure','.! assert access'],
+   r:['. seul = DotAccess','.. = ParentAccess (prefix)','a..b = Range (infix)']},
+  {s:'?',n:'MESURER',t:B,g:'control',cpu:'CMP/TEST',d:'Mesurer, tester (if/match)',
+   c:['? if','?? while','?! assert','?# error check','?_ void check'],
+   r:['? postfixe = SingleMeasure','?? = ContinuousMeasure','?{} = MeasureBlock']},
+  {s:'!',n:'INVERSER',t:B,g:'control',cpu:'NOT/NEG',d:'Nier, inverser, compléter',
+   c:['!! double neg = identité','!? defer','!~ inv broadcast','!< inv return'],
+   r:['!expr = UnaryOp','!? = DeferStmt (2 chars)']},
+  {s:'|',n:'CONNECTER',t:B,g:'trio',cpu:'SPSC/PIPE',d:'CPU · Pipe async, canal SPSC',
+   c:['|| OR logique','|> pipe-forward','|! pipe-error','|~ CPU→GPU bridge'],
+   r:['| entre expr = pipe async','|| = LogicalOr','|> = sugar pipe']},
+  {s:'~',n:'DIFFUSER',t:B,g:'trio',cpu:'GPU/SIMD',d:'GPU · Broadcast 1→N, SIMD parallèle',
+   c:['~~ double broadcast','~| GPU→CPU bridge','~^ GPU→QPU bridge'],
+   r:['~ entre expr = BroadcastExpr','~ en statement = MutDecl (mut)']},
+  {s:'^',n:'SUPERPOSER',t:B,g:'trio',cpu:'QPU/QUBIT',d:'QPU · Superposition quantique',
+   c:['^! X gate (NOT)','^~ H gate (Hadamard)','^? measure (collapse)','^| CNOT','^^=measure²'],
+   r:['^{} = QuantumBlock','^^expr = QuantumMeasure','XOR → bits::xor()']},
+  {s:'%',n:'PROPORTIONNER',t:B,g:'math',cpu:'DIV(rem)',d:'Modulo, proportion, format',
+   c:['%% normaliser','%? probabilité','%"fmt" printf émergent','%! complément 1-p'],
+   r:['% infix = modulo (MulOp)','%"" = FormatExpr','%% = NormalizeExpr']},
+  {s:'/',n:'DIVISER',t:B,g:'math',cpu:'DIV(quot)',d:'Division, séparation → commentaires émergent',
+   c:['// commentaire (DIVISER²)','/* */ bloc commentaire (/+gluon)','/>= div-assign'],
+   r:['/ infix = division (MulOp)','// dans Spacing = commentaire','/* */ dans Spacing = bloc']},
+  {s:':',n:'DÉFINIR',t:B,g:'bind',cpu:'MOV/STORE',d:'Définir un type, annoter',
+   c:[':> cast',':: module path',':= define+assign'],
+   r:[': après param = type annotation',':: début = ModuleDecl',':: entre id = ModulePath']},
+  {s:'=',n:'LIER',t:B,g:'bind',cpu:'MOV/STORE',d:'Assigner, lier une valeur',
+   c:['== égalité','!= inégalité','<= >='],
+   r:['= en statement = Assignment','== = EqOp']},
+  {s:';',n:'TERMINER',t:B,g:'flow',cpu:'NOP/FENCE',d:'Terminer une instruction, gaz noble',
+   c:[';x = tuer x (noble gas, décay)'],
+   r:['; = Semicolon (fin de statement)','Combiné avec _ = mort totale']},
+  {s:'+',n:'ACCUMULER',t:B,g:'math',cpu:'ADD/INC',d:'Additionner, concaténer',
+   c:['++ concaténer','+=','+ spin (positif/true)'],
+   r:['+ préfixe = UnaryOp/SpinLiteral','+ infix = AddOp','++ = concat']},
+  {s:'-',n:'RÉDUIRE',t:B,g:'math',cpu:'SUB/DEC',d:'Soustraire, réduire, négatif',
+   c:['-- décrémenter','-= ','-  spin (négatif/false)'],
+   r:['- préfixe = UnaryOp/SpinLiteral','- infix = AddOp']},
+  {s:'*',n:'TRANSFORMER',t:B,g:'math',cpu:'MUL/IMUL',d:'Multiplier, wildcard, transformer',
+   c:['** deep copy','*= ','* spin (any/wildcard)'],
+   r:['** = CopyExpr','* infix = MulOp','* pattern = any spin']},
+  {s:'#',n:'MARQUER',t:B,g:'meta',cpu:'FLAG/TAG',d:'Marquer, tagger erreur',
+   c:['#Error("msg") spin erreur','## double mark'],
+   r:['# = spin erreur (10)','# préfixe = SpinExpr variant']},
+  {s:'_',n:'IGNORER',t:B,g:'meta',cpu:'NOP/DROP',d:'Ignorer, void, wildcard en pattern',
+   c:['_ spin void','__ noble gas','_x = ignorer x'],
+   r:['_ = WildcardBranch dans ?{}','_ seul = SpinLiteral void (11)']},
+  {s:'@',n:'RÉFÉRENCER',t:B,g:'memory',cpu:'LEA/ADDR',d:'Référencer, emprunter, annoter',
+   c:['@ borrow','@@ exclusive borrow','@extend','@comptime'],
+   r:['@ postfixe = BorrowSuffix','@name = Annotation']},
+  // 5 gluons
+  {s:'{ }',n:'BLOC',t:G,g:'container',cpu:'SCOPE/ARENA',d:'Conteneur universel. Chaque {} = arène mémoire. Free en 1 op.',
+   c:['{stmt; expr}','type{}','impl{}','^{} quantum','?{} measure block'],
+   r:['Crée scope + arène','Retourne dernière expression','Combinable avec tout : << {} | {} ** {}']},
+  {s:'( )',n:'GROUPE',t:G,g:'container',cpu:'STACK FRAME',d:'Grouper, appeler, tuple. Paramètres de fonction.',
+   c:['f(args)','(expr)','(a,b) tuple','(T) generic'],
+   r:['FunctionCall postfixe','GroupExpr primaire','FunctionLiteral : (params) : Type {}']},
+  {s:'[ ]',n:'COLLECTION',t:G,g:'container',cpu:'INDEX/OFFSET',d:'Liste, accès indexé, slice. Conteneur ordonné.',
+   c:['[a,b,c] list','x[i] index','x[a..b] slice','[k:v] map'],
+   r:['ListLiteral primaire','IndexAccess postfixe','SliceAccess postfixe']},
+  {s:'" "',n:'TEXTE',t:G,g:'container',cpu:'PTR+LEN',d:'String interpolée. $ pour expansion, \\ pour escape.',
+   c:['"hello $name"','"${expr}"','"literal \\$"'],
+   r:['StringChar : $id, ${expr}, \\esc, texte','$ = interpolation, PAS boson']},
+  {s:"' '",n:'BRUT',t:G,g:'container',cpu:'PTR+LEN',d:'Texte brut. Pas d\'interpolation, pas d\'escape.',
+   c:["'raw\\n'","'regex.*'","'C:\\path'"],
+   r:['RawStringChar : tout sauf quote','Comme single-quote bash']},
+  // 4 spins
+  {s:'+',n:'POSITIF',t:S,g:'state',cpu:'bits 00',d:'Succès, true. 2 bits hardware : 00.',
+   c:['true (sugar)','<< + expr (return success)'],r:['SpinPattern dans ? {}','SpinLiteral en expression']},
+  {s:'-',n:'NÉGATIF',t:S,g:'state',cpu:'bits 01',d:'Échec, false. 2 bits hardware : 01.',
+   c:['false (sugar)','<< - expr (return failure)'],r:['SpinPattern dans ? {}','SpinLiteral en expression']},
+  {s:'#',n:'ERREUR',t:S,g:'state',cpu:'bits 10',d:'Erreur, corruption. 2 bits hardware : 10.',
+   c:['#Error("msg")','<< # expr (return error)'],r:['SpinPattern dans ? {}','SpinExpr constructeur variant']},
+  {s:'_',n:'VOID',t:S,g:'state',cpu:'bits 11',d:'Void, rien, ignorer. 2 bits hardware : 11.',
+   c:['void (sugar)','_ (wildcard pattern)'],r:['WildcardBranch dans ? {}','SpinLiteral en expression']},
+];
+
+// Composition pairs for connections
+const CONNECTIONS = [
+  ['|','~','CPU↔GPU bridge'],['~','^','GPU↔QPU bridge'],['|','^','CPU↔QPU bridge'],
+  ['<','>','I/O symétrie'],['<','<','<< return (amplification)'],
+  ['>','>','>> continue (amplification)'],['!','?','!? defer (composition)'],
+  ['>','<','>< break (composition)'],['%','?','%? probabilité'],
+  ['%','%','%% normaliser'],['*','*','** deep copy'],
+  ['^','!','^! X gate'],['^','~','^~ H gate'],
+  ['^','?','^? measure'],['^','|','^| CNOT'],
+  ['/','/',  '// commentaire (émergent)'],
+  [';','_','noble gas (mort)'],['!','!','!! identité (noble gas)'],
+];
+
+// === THREE.JS ===
+const W = window.innerWidth, H = window.innerHeight;
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(55, W/H, 0.1, 500);
+const ren = new THREE.WebGLRenderer({antialias:true});
+ren.setSize(W,H);ren.setPixelRatio(Math.min(window.devicePixelRatio,2));
+document.body.appendChild(ren.domElement);
+
+// Lights
+scene.add(new THREE.AmbientLight(0x404060,0.5));
+const dl=new THREE.DirectionalLight(0xffffff,0.7);dl.position.set(5,8,6);scene.add(dl);
+scene.add(new THREE.PointLight(0xff6b35,0.3,30));
+
+// Reference sphere
+const sGeo=new THREE.SphereGeometry(5,48,32);
+const sMat=new THREE.MeshBasicMaterial({color:0x151525,wireframe:true,transparent:true,opacity:0.06});
+scene.add(new THREE.Mesh(sGeo,sMat));
+
+// Axes (trio)
+[[1,0,0,0xab47bc,'|CPU'],[0,1,0,0x4fc3f7,'~GPU'],[0,0,1,0xff6b35,'^QPU']].forEach(([x,y,z,c])=>{
+  const m=new THREE.LineBasicMaterial({color:c,transparent:true,opacity:0.2});
+  const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x*-7,y*-7,z*-7),new THREE.Vector3(x*7,y*7,z*7)]);
+  scene.add(new THREE.Line(g,m));
+});
+
+// Colors
+const COL={boson:0xff6b35,gluon:0x4fc3f7,spin:0x66bb6a,trio:0xab47bc,io:0xff8a65,math:0xffd54f,control:0xef5350,bind:0x7e57c2,flow:0x78909c,meta:0x90a4ae,memory:0x26c6da,container:0x4fc3f7,state:0x66bb6a,access:0xffab40};
+function gc(p){return p.g==='trio'?COL.trio:COL[p.t]||COL[p.g]||0xffffff}
+
+// Position calculators
+function fibSphere(i,tot,r){
+  const phi=Math.acos(1-2*(i+0.5)/tot);
+  const th=Math.PI*(1+Math.sqrt(5))*(i+0.5);
+  return new THREE.Vector3(r*Math.sin(phi)*Math.cos(th),r*Math.sin(phi)*Math.sin(th),r*Math.cos(phi));
+}
+function helix(i,tot,r){
+  const a=(i/tot)*Math.PI*5;
+  return new THREE.Vector3(r*Math.cos(a),(i/tot)*12-6,r*Math.sin(a));
+}
+function orbital(p,i){
+  // Bosons on outer shell, gluons as rings in middle, spins at core
+  const layer={boson:5,gluon:3,spin:1.5};
+  const r=layer[p.t]||4;
+  const same=P.filter(x=>x.t===p.t);
+  const li=same.indexOf(p);
+  const a=(li/same.length)*Math.PI*2;
+  const y=p.t==='boson'?(p.g==='trio'?2:p.g==='math'?0.5:p.g==='control'?-0.5:p.g==='io'?1.5:p.g==='bind'?-1:p.g==='meta'?-1.5:-2):0;
+  return new THREE.Vector3(r*Math.cos(a),y,r*Math.sin(a));
+}
+
+let curView='sphere';
+function getPos(p,i){
+  if(curView==='helix')return helix(i,P.length,4);
+  if(curView==='orbital')return orbital(p,i);
+  return fibSphere(i,P.length,5);
+}
+
+// Build meshes
+const meshes=[], lbls=[], gluonRings=[];
+let showConn=false,showLbl=true,autoRot=true,showGluon=true;
+
+function mkLabel(txt,col){
+  const cv=document.createElement('canvas');
+  const cx=cv.getContext('2d');
+  cv.width=256;cv.height=80;
+  cx.clearRect(0,0,256,80);
+  cx.fillStyle='#'+col.toString(16).padStart(6,'0');
+  cx.font='bold 36px Courier New';
+  cx.textAlign='center';
+  cx.fillText(txt,128,35);
+  const tx=new THREE.CanvasTexture(cv);
+  tx.needsUpdate=true;
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthTest:false}));
+  sp.scale.set(1.2,0.45,1);
+  return sp;
+}
+
+P.forEach((p,i)=>{
+  const sz=p.t===G?0.32:p.t===S?0.18:0.25;
+  let geo;
+  if(p.t===G) geo=new THREE.TorusGeometry(sz,sz*0.35,12,24);
+  else if(p.t===S) geo=new THREE.OctahedronGeometry(sz);
+  else geo=new THREE.SphereGeometry(sz,16,12);
+  const col=gc(p);
+  const mat=new THREE.MeshPhongMaterial({color:col,emissive:col,emissiveIntensity:0.25,transparent:true,opacity:0.9});
+  const m=new THREE.Mesh(geo,mat);
+  const pos=getPos(p,i);
+  m.position.copy(pos);
+  m.userData={p,i,col};
+  scene.add(m);meshes.push(m);
+  const l=mkLabel(p.s,col);
+  l.position.copy(pos).add(new THREE.Vector3(0,0.45,0));
+  scene.add(l);lbls.push(l);
+});
+
+// Gluon container rings (visible when toggled)
+function buildGluonRings(){
+  gluonRings.forEach(r=>scene.remove(r));
+  gluonRings.length=0;
+  if(!showGluon)return;
+  const gluonMeshes=meshes.filter(m=>m.userData.p.t===G);
+  gluonMeshes.forEach(gm=>{
+    const ringGeo=new THREE.RingGeometry(0.6,0.75,32);
+    const ringMat=new THREE.MeshBasicMaterial({color:0x4fc3f7,transparent:true,opacity:0.15,side:THREE.DoubleSide});
+    const ring=new THREE.Mesh(ringGeo,ringMat);
+    ring.position.copy(gm.position);
+    ring.lookAt(cam.position);
+    scene.add(ring);
+    gluonRings.push(ring);
+  });
+}
+
+// Connections
+const connLines=[];
+function buildConns(){
+  connLines.forEach(l=>scene.remove(l));
+  connLines.length=0;
+  if(!showConn)return;
+  CONNECTIONS.forEach(([a,b,label])=>{
+    const ma=meshes.find(m=>m.userData.p.s===a&&m.userData.p.t===B);
+    const mb=meshes.find(m=>m.userData.p.s===b&&m.userData.p.t===B);
+    if(!ma||!mb)return;
+    const col=a===b?0xffd54f:0x444466;
+    const op=a===b?0.4:0.15;
+    const mat=new THREE.LineBasicMaterial({color:col,transparent:true,opacity:op});
+    // Curved line via quadratic bezier
+    const mid=new THREE.Vector3().addVectors(ma.position,mb.position).multiplyScalar(0.5);
+    mid.multiplyScalar(1.15); // push outward for curve
+    const curve=new THREE.QuadraticBezierCurve3(ma.position,mid,mb.position);
+    const pts=curve.getPoints(20);
+    const geo=new THREE.BufferGeometry().setFromPoints(pts);
+    const line=new THREE.Line(geo,mat);
+    line.userData={label};
+    scene.add(line);
+    connLines.push(line);
+  });
+}
+
+// === INTERACTION ===
+const ray=new THREE.Raycaster();
+const mouse=new THREE.Vector2();
+let sel=null;
+
+ren.domElement.addEventListener('click',e=>{
+  mouse.x=(e.clientX/W)*2-1;
+  mouse.y=-(e.clientY/H)*2+1;
+  ray.setFromCamera(mouse,cam);
+  const hits=ray.intersectObjects(meshes);
+  if(hits.length){
+    const m=hits[0].object,p=m.userData.p;
+    if(sel){sel.material.emissiveIntensity=0.25;sel.scale.set(1,1,1)}
+    sel=m;m.material.emissiveIntensity=0.7;
+    const det=document.getElementById('detail');det.style.display='block';
+    document.getElementById('d-name').textContent=p.s+'  '+p.n;
+    document.getElementById('d-type').innerHTML=`<span style="color:${p.t===B?'#ff6b35':p.t===G?'#4fc3f7':'#66bb6a'}">${p.t.toUpperCase()}</span> · ${p.g} · CPU: <code style="color:#ffd54f">${p.cpu}</code>`;
+    document.getElementById('d-desc').textContent=p.d;
+    document.getElementById('d-comp').innerHTML='Compositions: '+p.c.map(c=>`<code>${c}</code>`).join(' · ');
+    document.getElementById('d-rules').innerHTML='Règles PEG: '+p.r.map(r=>`<br>→ ${r}`).join('');
+  } else {
+    if(sel){sel.material.emissiveIntensity=0.25;sel.scale.set(1,1,1);sel=null}
+    document.getElementById('detail').style.display='none';
+  }
+});
+
+// Orbit
+let drag=false,pm={x:0,y:0};
+let sph={th:0,ph:Math.PI/3,r:14};
+
+ren.domElement.addEventListener('mousedown',e=>{drag=true;pm={x:e.clientX,y:e.clientY}});
+ren.domElement.addEventListener('mousemove',e=>{
+  if(!drag)return;
+  sph.th-=(e.clientX-pm.x)*0.005;
+  sph.ph=Math.max(0.1,Math.min(Math.PI-0.1,sph.ph+(e.clientY-pm.y)*0.005));
+  pm={x:e.clientX,y:e.clientY};updCam();
+});
+ren.domElement.addEventListener('mouseup',()=>drag=false);
+ren.domElement.addEventListener('mouseleave',()=>drag=false);
+ren.domElement.addEventListener('wheel',e=>{sph.r=Math.max(6,Math.min(30,sph.r+e.deltaY*0.01));updCam()});
+
+function updCam(){
+  cam.position.set(sph.r*Math.sin(sph.ph)*Math.cos(sph.th),sph.r*Math.cos(sph.ph),sph.r*Math.sin(sph.ph)*Math.sin(sph.th));
+  cam.lookAt(0,0,0);
+}
+updCam();
+
+// Controls
+document.querySelectorAll('#ctrl button[data-v]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#ctrl button[data-v]').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    curView=b.dataset.v;
+    meshes.forEach((m,i)=>{m.userData.target=getPos(m.userData.p,i)});
+  });
+});
+document.getElementById('btn-conn').addEventListener('click',function(){showConn=!showConn;this.classList.toggle('on');buildConns()});
+document.getElementById('btn-lbl').addEventListener('click',function(){showLbl=!showLbl;this.classList.toggle('on');lbls.forEach(l=>l.visible=showLbl)});
+document.getElementById('btn-rot').addEventListener('click',function(){autoRot=!autoRot;this.classList.toggle('on')});
+document.getElementById('btn-gluon').addEventListener('click',function(){showGluon=!showGluon;this.classList.toggle('on');buildGluonRings()});
+
+document.getElementById('srch').addEventListener('input',e=>{
+  const q=e.target.value.toLowerCase();
+  meshes.forEach((m,i)=>{
+    const p=m.userData.p;
+    const ok=!q||p.s.toLowerCase().includes(q)||p.n.toLowerCase().includes(q)||p.d.toLowerCase().includes(q)||p.g.includes(q);
+    m.material.opacity=ok?0.9:0.08;
+    m.material.emissiveIntensity=ok?0.25:0.02;
+    lbls[i].material.opacity=ok?1:0.05;
+  });
+});
+
+// === ANIMATE ===
+let frame=0;
+function animate(){
+  requestAnimationFrame(animate);
+  frame++;
+  if(autoRot&&!drag){sph.th+=0.0015;updCam()}
+  meshes.forEach((m,i)=>{
+    if(m.userData.target){
+      m.position.lerp(m.userData.target,0.06);
+      lbls[i].position.copy(m.position).add(new THREE.Vector3(0,0.45,0));
+      if(m.position.distanceTo(m.userData.target)<0.01){m.position.copy(m.userData.target);delete m.userData.target}
+    }
+  });
+  if(sel){const s=1.2+Math.sin(frame*0.06)*0.08;sel.scale.set(s,s,s)}
+  gluonRings.forEach(r=>r.lookAt(cam.position));
+  ren.render(scene,cam);
+}
+buildGluonRings();
+animate();
+
+window.addEventListener('resize',()=>{
+  cam.aspect=window.innerWidth/window.innerHeight;
+  cam.updateProjectionMatrix();
+  ren.setSize(window.innerWidth,window.innerHeight);
+});
+</script>
+</body>
+</html>

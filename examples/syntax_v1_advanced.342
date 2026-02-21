@@ -1,0 +1,323 @@
+// ============================================================
+//  3.42 — Exemples avancés v1
+//  Tests de lisibilité sur du code réaliste
+// ============================================================
+
+
+// === A. SYSTÈME D'AUTHENTIFICATION ===
+
+type User {
+    id: int;
+    name: string;
+    email: string;
+    role: Role;
+    status: trit;     // + = actif, ~ = banni, _ = en attente, # = supprimé
+}
+
+type Role = + admin | + moderator | + user | _ guest;
+
+type Session {
+    token: string;
+    user: User;
+    expires: timestamp;
+}
+
+// Login complet
+login = (email: string, password: string) : Session {
+
+    db.find_user(email) {
+
+        + user : {
+            verify_password(user, password) {
+
+                + : user.status ? {
+                    +  : create_session(user);
+                    ~  : { + error: "Compte banni"; };
+                    _  : { + error: "Compte en attente de validation"; };
+                    #  : { + error: "Compte supprimé"; };
+                };
+
+                ~ : { + error: "Mot de passe incorrect"; };
+            };
+        }
+
+        ~ : { + error: "Utilisateur introuvable"; };
+        # : { + error: "Erreur base de données"; };
+    };
+};
+
+// Utilisation
+login("alexis@42.fr", "password123") {
+    + session : {
+        set_cookie(session.token);
+        redirect("/dashboard");
+    }
+    ~ err : show_error(err);
+    # : show_error("Erreur système, réessayez plus tard");
+};
+
+
+// === B. API REST COMPLÈTE ===
+
+module api {
+
+    // Middleware — vérifie l'auth avant chaque requête
+    auth_middleware = (handler) {
+        (request) {
+            extract_token(request.headers) {
+                + token : {
+                    validate_token(token) {
+                        + session : handler(request, session);
+                        ~         : send_error(401, "Token expiré");
+                        #         : send_error(401, "Token invalide");
+                    };
+                }
+                _ : send_error(401, "Token manquant");
+            };
+        };
+    };
+
+    // Route GET /users
+    get_users = auth_middleware((req, session) {
+        session.user.role ? {
+            + admin : {
+                db.query("SELECT * FROM users")
+                    .map(row: User.from(row))
+                    .collect() {
+                        + users : send_json(users);
+                        ~ err   : send_error(500, err);
+                    };
+            }
+            + moderator : {
+                db.query("SELECT * FROM users WHERE active = true")
+                    .map(row: User.from(row))
+                    .collect() {
+                        + users : send_json(users);
+                        ~ err   : send_error(500, err);
+                    };
+            }
+            _ : send_error(403, "Accès refusé");
+        };
+    });
+
+    // Route POST /users
+    create_user = auth_middleware((req, session) {
+        session.user.role ? {
+            + admin : {
+                req.body.parse_json()
+                    .validate(User.schema)
+                    .save_to_db() {
+                        + user : send_json(user, 201);
+                        ~ err  : send_error(422, err);
+                        #      : send_error(500, "Erreur interne");
+                    };
+            }
+            _ : send_error(403, "Seul un admin peut créer");
+        };
+    });
+}
+
+
+// === C. TRAITEMENT DE DONNÉES PARALLÈLE ===
+
+// Pipeline ETL (Extract, Transform, Load)
+etl_pipeline = (source: string, dest: string) {
+
+    // Extract — lire les données
+    read_csv(source) {
+
+        + raw_data : {
+            // Transform — nettoyer et transformer en parallèle
+            @parallel
+            cleaned = raw_data
+                .filter(row: row.is_valid())
+                .map(row: normalize(row))
+                .map(row: enrich(row));
+
+            // Load — écrire le résultat
+            write_to_db(dest, cleaned) {
+                + count : print("Chargé " + count + " lignes");
+                ~ err   : print("Échec écriture: " + err);
+            };
+        }
+
+        ~ err : print("Fichier illisible: " + err);
+        #     : print("Fichier corrompu");
+    };
+};
+
+
+// === D. GAME LOOP — boucle de jeu ===
+
+module game {
+
+    type Entity {
+        pos: vec2;
+        vel: vec2;
+        sprite: Texture;
+        health: int;
+        state: trit;    // + = vivant, ~ = mort, _ = invincible, # = buggé
+    }
+
+    update = (entities: list(Entity), dt: float) : list(Entity) {
+        @parallel
+        entities ? {
+            + entity : {
+                // Physique
+                entity.pos = entity.pos + entity.vel * dt;
+
+                // Collisions
+                check_collision(entity, entities) {
+                    + hit : {
+                        entity.health = entity.health - hit.damage;
+                        (entity.health <= 0) ? {
+                            + : { entity.state = ~; }   // mort
+                        };
+                    }
+                    _ : entity;     // pas de collision
+                };
+            }
+            ~ entity : entity;     // mort — ne pas mettre à jour
+            _ entity : entity;     // invincible — garder tel quel
+            # entity : despawn(entity);  // buggé — supprimer
+        };
+    };
+
+    render = (entities: list(Entity)) {
+        @gpu
+        entities ? {
+            + entity : draw(entity.sprite, entity.pos);
+            ~ entity : draw(death_anim, entity.pos);
+            _ entity : draw_transparent(entity.sprite, entity.pos);
+        };
+    };
+
+    // Main loop
+    run = () {
+        mut world = init_world();
+        mut last_time = now();
+
+        (true) ?? {
+            + : {
+                dt = now() - last_time;
+                last_time = now();
+
+                world.entities = update(world.entities, dt);
+                render(world.entities);
+
+                process_input() {
+                    + quit : break;
+                    + input : apply_input(world, input);
+                    _ : {};    // pas d'input
+                };
+            }
+        };
+    };
+}
+
+
+// === E. ALGORITHME — Tri fusion (merge sort) ===
+
+merge_sort = (list: list(int)) : list(int) {
+    (list.length <= 1) ? {
+        + : list;
+        ~ : {
+            mid = list.length / 2;
+            left = merge_sort(list.slice(0, mid));
+            right = merge_sort(list.slice(mid));
+            merge(left, right);
+        }
+    };
+};
+
+merge = (a: list(int), b: list(int)) : list(int) {
+    mut result = [];
+    mut i = 0;
+    mut j = 0;
+
+    (i < a.length && j < b.length) ?? {
+        + : {
+            (a[i] <= b[j]) ? {
+                + : { result.push(a[i]); i = i + 1; }
+                ~ : { result.push(b[j]); j = j + 1; }
+            };
+        }
+    };
+
+    result + a.slice(i) + b.slice(j);
+};
+
+
+// === F. ARBRES — structure récursive / fractale ===
+
+type Tree {
+    value: any;
+    children: list(Tree);
+    state: trit;
+}
+
+// Parcours en profondeur (DFS)
+dfs = (tree: Tree, action) {
+    tree ? {
+        + node : {
+            action(node.value);
+            node.children ? {
+                + child : dfs(child, action);
+            };
+        }
+        ~ : {};     // noeud supprimé — ignorer
+        _ : {};     // noeud vide — ignorer
+        # : log("Noeud corrompu détecté");
+    };
+};
+
+// Recherche
+find = (tree: Tree, predicate) : Tree {
+    tree ? {
+        + node (predicate(node.value)) : node;
+        + node : {
+            node.children
+                .map(child: find(child, predicate))
+                .filter(result: result.?) {
+                    + found : found.first();
+                    _ : { _ : "non trouvé"; };
+                };
+        }
+    };
+};
+
+
+// === G. STREAM PROCESSING — données temps réel ===
+
+@async
+process_stream = (source: Stream) {
+
+    source ?? {
+        + event : {
+            // Classifier l'événement par pattern matching
+            event.type ? {
+                + "click"    : track_click(event);
+                + "purchase" : {
+                    validate_purchase(event.data) {
+                        + order : {
+                            @parallel
+                            [
+                                charge_payment(order),
+                                send_confirmation(order),
+                                update_inventory(order)
+                            ] ? {
+                                + results : commit(results);
+                                ~ err     : rollback(order, err);
+                            };
+                        }
+                        ~ err : log_invalid(err);
+                    };
+                }
+                + "signup"   : create_account(event.data);
+                _            : log("Événement inconnu: " + event.type);
+            };
+        }
+        ~ err : reconnect(source);
+        #     : { log_critical("Stream corrompu"); break; };
+    };
+};

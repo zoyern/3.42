@@ -1,0 +1,417 @@
+// ============================================================
+//  3.42 — Exemples de syntaxe v2
+//  Paradigme : Tout est Sphère, ? est Mesure, Spin = État
+//  Spins : + (positif) - (négatif) * (neutre) # (erreur)
+//  _ = wildcard, @ = emprunt lecture, @@ = emprunt écriture
+// ============================================================
+
+
+// === 1. HELLO WORLD ===
+
+main = () {
+    print("Hello, 3.42!");
+};
+
+
+// === 2. VARIABLES — nommer des sphères ===
+
+name = "Alexis";           // sphère immutable, spin = +
+age = 23;                  // sphère immutable, spin = +
+mut count = 0;             // sphère mutable (modifiable)
+pi_approx = 3.14159;       // sphère immutable
+
+
+// === 3. FONCTIONS — sphères qui transforment ===
+
+greet = (name: string) : string {
+    "Hello " + name;
+};
+
+add = (a: int, b: int) : int {
+    a + b;
+};
+
+// Appel
+message = greet("Alexis");
+result = add(2, 3);
+
+
+// === 4. CONDITIONNEL — mesure unique ===
+
+// Simple (= if)
+(age > 18) ? {
+    + : welcome();
+};
+
+// Avec négatif (= if/else)
+(age > 18) ? {
+    + : welcome();
+    - : refuse();
+};
+
+// Inline après expression (? implicite)
+check_permission(user) {
+    + : grant_access();
+    - : deny_access();
+    # : log_critical();
+};
+
+// Match sur spin
+score ? {
+    + : "gagné";
+    - : "perdu";
+    _ : "match nul";
+};
+
+
+// === 5. ITÉRATION — mesure sur collection ===
+
+// Foreach simple (= for item in list)
+users ? {
+    item? : greet(item);       // + implicite quand binding présent
+};
+
+// Avec filtre
+users ? {
+    user? (user.age > 18) : welcome(user);
+};
+
+// Scan — chaque élément trié par spin
+results ? {
+    + item? : process(item);
+    - item? : recover(item);
+    * item? : skip;
+    # item? : quarantine(item);
+};
+
+// Avec index (le compilateur fournit l'index si demandé)
+students ? {
+    student?, i : print(i + ": " + student.name);
+};
+
+
+// === 6. BOUCLE — mesure continue ===
+
+// While (= tant que count > 0)
+mut count = 10;
+(count > 0) ?? {
+    + : {
+        process(count);
+        count = count - 1;
+    }
+};
+
+// Boucle infinie (= loop)
+(true) ?? {
+    + : {
+        sensor.read() {
+            data? : process(data);
+            - err? : alert(err);
+            # : break;
+        };
+    }
+};
+
+// Range (= for i in 0..100) — range est une fonction stdlib
+range(0, 100) ? {
+    i? : compute(i);
+};
+
+
+// === 7. CHAÎNAGE UFCS + BLOC DE MESURE ===
+
+// Chaîner puis mesurer le résultat final
+data.filter(x: x > 0)
+    .map(x: x * 2)
+    .collect() {
+        result? : save(result);
+        - : use_default_data();
+    };
+
+// Propagation auto + mesure à la fin
+user.profile.avatar.url {
+    url? : display_image(url);
+    - : display_placeholder();
+    # : log("avatar corrompu");
+};
+
+// Chaînage dans une itération
+files ? {
+    file? : file.read()
+                .parse()
+                .validate() {
+                    doc? : index(doc);
+                    - err? : log(err);
+                    # : skip;
+                };
+};
+
+
+// === 8. PARALLÉLISME — annotation ===
+
+// Auto-parallélisé (immutable = safe)
+@parallel
+big_data ? {
+    chunk? : heavy_compute(chunk);
+};
+
+// GPU
+@gpu
+pixels ? {
+    px? : shade(px);
+};
+
+// Async (réseau, IO)
+@async
+requests ? {
+    req? : handle(req) {
+        response? : send(response);
+        - timeout? : retry(req);
+        # : close_connection();
+    };
+};
+
+
+// === 9. MODULES ===
+
+module math {
+    pi_val = 3.14159;
+
+    sin = (x: float) : float {
+        // implémentation
+    };
+
+    cos = (x: float) : float {
+        // implémentation
+    };
+
+    circle_area = (r: float) : float {
+        pi_val * r * r;
+    };
+}
+
+// Utilisation
+area = math::circle_area(5.0);
+angle = math::sin(math::pi_val / 4.0);
+
+
+// === 10. TYPES — graduel ===
+
+// Sans type (inféré)
+x = 42;
+name = "Alice";
+
+// Avec type explicite
+x: int = 42;
+name: string = "Alice";
+
+// Type personnalisé — struct
+type Point {
+    x: float;
+    y: float;
+}
+
+// Type personnalisé — enum (variantes avec spin)
+type Color = + red | + green | + blue | * none;
+
+// Utilisation
+p = Point { x: 1.0, y: 2.0 };
+c: Color = + red;
+
+c ? {
+    + red   : draw_red();
+    + green : draw_green();
+    + blue  : draw_blue();
+    _       : draw_default();
+};
+
+
+// === 11. GESTION D'ERREURS — native via spin ===
+
+// Lire un fichier — le spin encode succès/échec
+read_file = (path: string) : string {
+    // retourne spin + avec contenu, ou - avec erreur, ou # si corrompu
+};
+
+read_file("data.txt") {
+    content? : {
+        parse_json(content) {
+            data? : process(data);
+            - err? : print("JSON invalide: " + err);
+        };
+    }
+    - err? : print("Fichier introuvable: " + err);
+    # : print("Erreur système critique");
+};
+
+// Version chaînée (propagation auto via .)
+read_file("data.txt")
+    .parse_json()
+    .validate()
+    .transform() {
+        result? : save(result);
+        - err? : print("Erreur: " + err);
+        # : panic("Corruption détectée");
+    };
+
+
+// === 12. MÉMOIRE — emprunt avec @ et @@ ===
+
+// Move par défaut
+send(data);                 // data déplacée, n'existe plus ici
+
+// Emprunt lecture : @
+print(data@);               // data empruntée, reste accessible après
+
+// Emprunt écriture : @@
+modify(data@@);             // accès exclusif temporaire
+
+// Copie explicite
+backup = copy(data);        // duplication volontaire
+
+// Paramètres de fonction
+display = (item: Point@) : string {    // reçoit un emprunt lecture
+    "(" + item.x + ", " + item.y + ")";
+};
+
+transform = (item: Point@@) {          // reçoit un emprunt écriture
+    item.x = item.x * 2;
+    item.y = item.y * 2;
+};
+
+
+// === 13. MAPS ET LISTES ===
+
+// Liste
+numbers = [1, 2, 3, 4, 5];
+empty = [];
+
+// Map (clé : valeur dans [])
+config = ["host" : "localhost", "port" : 8080, "debug" : true];
+
+// Accès
+host = config["host"];
+
+// Slice
+first_three = numbers[0..3];
+from_second = numbers[1..];
+until_last = numbers[..4];
+
+
+// === 14. STREAMS INFINIS ===
+
+// pi comme flux de décimales
+pi ?? {
+    digit? : {
+        print(digit);                   // 3, 1, 4, 1, 5, 9...
+        (digit_index > 50) ? {
+            + : break;
+        };
+    }
+};
+
+// Collecter les N premières décimales
+first_100 = pi.take(100).collect();
+
+// pi dans un calcul — précision automatique
+area = pi * r * r;
+
+
+// === 15. DESTRUCTURING ===
+
+// Tuple
+(x, y) = get_position();
+
+// Liste avec rest
+[first, second, ...rest] = get_items();
+
+// Dans une itération
+pairs ? {
+    (key?, value?) : print(key + " = " + value);
+};
+
+
+// === 16. GENERICS ===
+
+type Box(T) {
+    value: T;
+}
+
+// Fonction générique
+identity = (x: T) : T {
+    x;
+};
+
+// Avec contrainte de trait
+sort = (list: list(T : Comparable)) : list(T) {
+    // tri générique — T doit implémenter Comparable
+};
+
+
+// === 17. TRAITS ===
+
+trait Comparable(T) {
+    cmp = (other: T@) : int;
+}
+
+// Implémentation
+Point : Comparable(Point) {
+    cmp = (other: Point@) : int {
+        distance_from_origin(self) - distance_from_origin(other);
+    };
+}
+
+
+// === 18. FIZZBUZZ ===
+
+range(1, 101) ? {
+    n? : {
+        (n % 15 == 0) ? { + : print("FizzBuzz"); }
+        (n % 3 == 0)  ? { + : print("Fizz"); }
+        (n % 5 == 0)  ? { + : print("Buzz"); }
+        _             : print(n);
+    }
+};
+
+
+// === 19. SERVEUR HTTP ===
+
+@async
+server = listen(8080);
+
+server ?? {
+    request? : {
+        route(request.path) {
+            + "/home" : send_html(home_page());
+            + "/api"  : request.body
+                            .parse_json()
+                            .validate()
+                            .process() {
+                                data? : send_json(data);
+                                - err? : send_error(400, err);
+                            };
+            _ : send_error(404, "Not found");
+        };
+    }
+    - err? : log("Connexion échouée: " + err);
+};
+
+
+// === 20. PROBABILITÉ ===
+
+use math::probability { prob, uniform, normal };
+
+coin = prob(0.5);
+coin ? {
+    + : print("pile");
+    - : print("face");
+};
+
+dice = uniform(1, 6);
+dice ? {
+    result? : print("Lancé: " + result);
+};
+
+// Combinaison
+both = p1 && p2;       // intersection
+either = p1 || p2;     // union
