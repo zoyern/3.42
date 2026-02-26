@@ -64,6 +64,7 @@ static void	test_arena(void)
 	s3_arena_init(&a, 256);
 	ok = 1;
 	i = 0;
+ 
 	while (i < 100)
 	{
 		if (!s3_arena_alloc(&a, 64))
