@@ -1,0 +1,681 @@
+/* ============================================================================ */
+/* Q20 — EXEMPLES CONCRETS : DIFFABLE EN ACTION                              */
+/* Pseudocode 3.42 exécutable                                                 */
+/* ============================================================================ */
+
+/* ----------- PRÉAMBULE : IMPORTS ET CONFIGURATION ----------- */
+
+usage arene, types, diffable, history
+use fmt : println, format
+use crypto : hash256, sign, verify_signature
+use time : clock, ms_since_epoch
+
+/* Notation:
+   type = déclaration de type
+   trait = déclaration de trait
+   : = DÉFINIR (méthode)
+   = = LIER (nommer une valeur)
+   . = ACCÉDER
+   < = STOCKER
+   > = CHARGER / retourner
+*/
+
+/* ============================================================================ */
+/*                         EXEMPLE 1 : HISTORIQUE D'UN ENTIER                */
+/* ============================================================================ */
+
+example_1_integer_history {
+  println("\n=== EXEMPLE 1: Historique d'un Entier ===")
+
+  /* Créer un historique pour un entier */
+  hist = History::new(0, RetentionPolicy::FOREVER)
+
+  /* Enregistrer des modifications */
+  println("État initial: {}" <- hist:current())
+
+  hist:record(42)
+  println("Après record(42): {}" <- hist:current())
+
+  hist:record(100)
+  println("Après record(100): {}" <- hist:current())
+
+  hist:record(-5)
+  println("Après record(-5): {}" <- hist:current())
+
+  /* Consulter l'historique à des indices */
+  println("\nConsultation temps passé:")
+  println("  À l'index 0: {}" <- hist:at(0))
+  println("  À l'index 1: {}" <- hist:at(1))
+  println("  À l'index 2: {}" <- hist:at(2))
+  println("  À l'index 3: {}" <- hist:at(3))
+
+  /* Time travel : undo/redo */
+  println("\nTime travel:")
+  hist:undo()
+  println("  Après undo: {}" <- hist:current())
+
+  hist:undo()
+  println("  Après undo: {}" <- hist:current())
+
+  hist:redo()
+  println("  Après redo: {}" <- hist:current())
+
+  hist:redo()
+  println("  Après redo: {}" <- hist:current())
+
+  /* Vérifier les diffs */
+  println("\nDiffs enregistrés: {}" <- hist.diffs.len())
+  pour i en [0..hist.diffs.len()) {
+    d = hist.diffs[i]
+    println("  Diff {}: {}" <- i, d)
+  }
+}
+
+/* ============================================================================ */
+/*                      EXEMPLE 2 : HISTORIQUE DE TEXTE                      */
+/* ============================================================================ */
+
+example_2_string_history {
+  println("\n=== EXEMPLE 2: Historique d'un Texte ===")
+
+  hist_text = History::new("hello", RetentionPolicy::LAST_N {count : 100})
+
+  println("V0: '{}'" <- hist_text:current())
+
+  hist_text:record("hello world")
+  println("V1: '{}'" <- hist_text:current())
+
+  hist_text:record("hello world!")
+  println("V2: '{}'" <- hist_text:current())
+
+  hist_text:record("goodbye world!")
+  println("V3: '{}'" <- hist_text:current())
+
+  hist_text:record("goodbye world! See you later.")
+  println("V4: '{}'" <- hist_text:current())
+
+  /* Montrer les diffs compactes */
+  println("\nDiffs enregistrées:")
+  pour i en [0..hist_text.diffs.len()) {
+    delta = hist_text.diffs[i]
+    taille_snapshot = hist_text.snapshots[i+1]:size_estimate()
+    taille_diff = delta:size_estimate()
+
+    compression = (taille_snapshot - taille_diff) * 100 / taille_snapshot
+    println(
+      "  Delta {}: {} bytes (snapshot {} bytes, compression {}%)"
+      <- i, taille_diff, taille_snapshot, compression
+    )
+  }
+
+  /* Édition collaborative simulée */
+  println("\nSimulation édition collaborative:")
+
+  /* Branche alternative : correction orthographe */
+  alt = hist_text:branch("fix_typo")
+  alt:record("goodbye world!! See you later.")  /* !! au lieu de ! */
+
+  println("Branche main: '{}'" <- hist_text:current())
+  println("Branche alt: '{}'" <- alt:current())
+
+  /* Diff entre les deux branches */
+  main_snap = hist_text:snapshots[hist_text.current_idx]
+  alt_snap = alt:snapshots[alt.current_idx]
+  diff_branches = String::diff(main_snap, alt_snap)
+
+  println("Différence entre branches: {} changements" <- diff_branches.len())
+}
+
+/* ============================================================================ */
+/*                     EXEMPLE 3 : HISTORIQUE DE STRUCTURE                   */
+/* ============================================================================ */
+
+type Player {
+  name String
+  level i32
+  exp i32
+  health i32
+  inventory Vec { String }
+}
+
+example_3_struct_history {
+  println("\n=== EXEMPLE 3: Historique d'une Structure ===")
+
+  initial_player = Player {
+    name : "Alice"
+    level : 1
+    exp : 0
+    health : 100
+    inventory : {}
+  }
+
+  hist = History::new(initial_player, RetentionPolicy::LAST_N { count : 10000 })
+
+  println("Joueur créé: {} (level {})" <- hist:current().name, hist:current().level)
+
+  /* Simulation progression joueur */
+  hist:record(Player {
+    name : "Alice"
+    level : 1
+    exp : 100
+    health : 100
+    inventory : { "sword" }
+  })
+
+  println("Après première quête: level {}, exp {}, inventory {}"
+    <- hist:current().level, hist:current().exp, hist:current().inventory.len())
+
+  hist:record(Player {
+    name : "Alice"
+    level : 2
+    exp : 50
+    health : 75
+    inventory : { "sword", "shield" }
+  })
+
+  println("Après deuxième combat: level {}, health {}"
+    <- hist:current().level, hist:current().health)
+
+  /* Savepoint */
+  savepoint = hist:current()
+
+  hist:record(Player {
+    name : "Alice"
+    level : 2
+    exp : 100
+    health : 0
+    inventory : {}
+  })
+
+  println("GAME OVER: health {}" <- hist:current().health)
+
+  /* Recharger depuis savepoint */
+  println("\nChargement depuis savepoint...")
+  hist:undo()
+  hist:undo()
+
+  loaded = hist:current()
+  println("Restauré: level {}, health {}, exp {}"
+    <- loaded.level, loaded.health, loaded.exp)
+
+  assert(loaded == savepoint)
+}
+
+/* ============================================================================ */
+/*                    EXEMPLE 4 : BRANCHING (GIT-LIKE)                       */
+/* ============================================================================ */
+
+type GameState {
+  dialogue String
+  player_choice ? { String }
+  world_state String
+}
+
+example_4_branching {
+  println("\n=== EXEMPLE 4: Branching et Mergé ===")
+
+  initial_state = GameState {
+    dialogue : "You enter the tavern. \"Choose your fate.\""
+    player_choice : null
+    world_state : "tavern"
+  }
+
+  main_timeline = History::new(initial_state, RetentionPolicy::FOREVER)
+
+  /* Storyline principale : choisir A */
+  main_timeline:record(GameState {
+    dialogue : "You choose the SWORD path."
+    player_choice : "sword"
+    world_state : "quest_combat"
+  })
+
+  println("Timeline principale: {}" <- main_timeline:current().player_choice)
+
+  /* Savepoint avant choix crucial */
+  checkpoint = main_timeline:current()
+
+  /* Créer branche alternative : choisir B */
+  alt_timeline = main_timeline:branch("choice_magic")
+
+  alt_timeline:record(GameState {
+    dialogue : "You choose the MAGIC path."
+    player_choice : "magic"
+    world_state : "quest_spell"
+  })
+
+  println("Timeline alternative: {}" <- alt_timeline:current().player_choice)
+
+  /* Continuer la timeline principale */
+  main_timeline:record(GameState {
+    dialogue : "Sword mastery achieved!"
+    player_choice : "sword"
+    world_state : "quest_combat_complete"
+  })
+
+  /* Continuer la timeline alternative */
+  alt_timeline:record(GameState {
+    dialogue : "Magic mastery achieved!"
+    player_choice : "magic"
+    world_state : "quest_spell_complete"
+  })
+
+  println("\nFinal main timeline: {}" <- main_timeline:current().dialogue)
+  println("Final alt timeline: {}" <- alt_timeline:current().dialogue)
+
+  /* Historiques complètes */
+  println("\nMain timeline length: {} snapshots" <- main_timeline.snapshots.len())
+  println("Alt timeline length: {} snapshots" <- alt_timeline.snapshots.len())
+}
+
+/* ============================================================================ */
+/*                     EXEMPLE 5 : COMPRESSION ET RETENTION                  */
+/* ============================================================================ */
+
+example_5_retention {
+  println("\n=== EXEMPLE 5: Politiques de Rétention ===")
+
+  /* Scénario : système de log avec rétention limitée */
+
+  hist_short = History::new(
+    "log_entry_0"
+    RetentionPolicy::LAST_N { count : 5 }  /* Garder 5 dernier */
+  )
+
+  println("Insertion 10 entrées avec rétention LAST_N(5):")
+  pour i en [1..10) {
+    hist_short:record("log_entry_{}" <- i)
+  }
+
+  println("Snapshots après rétention: {}" <- hist_short.snapshots.len())
+  println("(Devrait être ~5 + overhead)")
+
+  /* TTL (Time To Live) */
+  hist_ttl = History::new(
+    "session_start"
+    RetentionPolicy::TTL { max_age_ns : 5_000_000_000 }  /* 5 secondes */
+  )
+
+  println("\nAvec TTL, snapshots expirant après 5 secondes:")
+  pour i en [0..3) {
+    hist_ttl:record("session_activity_{}" <- i)
+    sleep(1000)  /* 1 seconde */
+  }
+
+  println("Snapshots non expirés: {}" <- hist_ttl.snapshots.len())
+
+  /* Compression */
+  hist_compress = History::new(
+    "v0"
+    RetentionPolicy::COMPRESSED { every_n_snapshots : 10 }
+  )
+
+  println("\nInsertion 100 snapshots avec compression tous les 10:")
+  pour i en [1..100) {
+    hist_compress:record("v_{}" <- i)
+  }
+
+  println("Snapshots stockés: {}" <- hist_compress.snapshots.len())
+  println("(Compression ratio: {}x)"
+    <- 100 / hist_compress.snapshots.len()
+  )
+}
+
+/* ============================================================================ */
+/*                 EXEMPLE 6 : LAZY EVALUATION (OPTIMISATION)                */
+/* ============================================================================ */
+
+example_6_lazy_evaluation {
+  println("\n=== EXEMPLE 6: Lazy Evaluation ===")
+
+  hist = History::new(
+    [1, 2, 3, 4, 5]
+    RetentionPolicy::FOREVER
+  )
+
+  /* Enable lazy: ne calculer les diffs que si demandées */
+  hist.lazy_evaluation : true
+
+  println("Insertion 1000 vecteurs avec lazy evaluation:")
+  start_time = clock()
+
+  pour i en [0..1000) {
+    nouveau_vecteur = (i .. i+5):map(x => x * 2):collect()
+    hist:record(nouveau_vecteur)
+  }
+
+  end_time = clock()
+  duration_ms = (end_time - start_time) / 1_000_000
+
+  println("Temps: {} ms" <- duration_ms)
+  println("Snapshots: {}" <- hist.snapshots.len())
+  println("Diffs (non calculés): {}" <- hist.diffs.len())
+
+  /* Accéder à un diff déclenche le calcul */
+  println("\nAccès au diff à l'index 500...")
+  diff_500 = hist.diffs[500]:get()
+  println("Diff calculé, size: {} bytes" <- diff_500:size_estimate())
+
+  /* Compacter : supprimer les diffs peu accédés */
+  hist:compact(access_threshold: 1)
+  println("Après compact: {} diffs supprimés"
+    <- (hist.diffs.len() - hist.diffs:filter(d => d.computed).len())
+  )
+}
+
+/* ============================================================================ */
+/*                    EXEMPLE 7 : BLOCKCHAIN ET CERTIFICATION                */
+/* ============================================================================ */
+
+type Document {
+  title String
+  content String
+  author String
+}
+
+example_7_blockchain_certified {
+  println("\n=== EXEMPLE 7: Diff-Chain Signée (Blockchain) ===")
+
+  doc_v1 = Document {
+    title : "My Paper"
+    content : "Introduction..."
+    author : "Alice"
+  }
+
+  hist_doc = History::new(doc_v1, RetentionPolicy::FOREVER)
+
+  println("Document V1 créé par Alice")
+
+  hist_doc:record(Document {
+    title : "My Paper"
+    content : "Introduction...\nBody: First chapter"
+    author : "Alice"
+  })
+
+  println("Document V2 édité par Alice")
+
+  hist_doc:record(Document {
+    title : "My Paper (Revised)"
+    content : "Introduction (improved)...\nBody: First chapter (expanded)"
+    author : "Bob"
+  })
+
+  println("Document V3 révisé par Bob")
+
+  /* Exporter comme chaîne certifiée */
+  certified = hist_doc:to_certified_chain()
+
+  println("\nCertified diff-chain:")
+  pour i en [0..certified.len()) {
+    cd = certified[i]
+    println("  [{}] Auteur: {}, Timestamp: {}, Hash: {}"
+      <- i
+      <- cd.author
+      <- cd.timestamp
+      <- cd.previous_hash
+    )
+  }
+
+  /* Vérifier l'intégrité */
+  println("\nVérification d'intégrité:")
+  integrity_ok = true
+  pour i en [1..certified.len()) {
+    prev_hash = hash256(certified[i-1])
+    expected_hash = certified[i].previous_hash
+
+    si prev_hash != expected_hash {
+      integrity_ok : false
+      println("  ERREUR à l'index {}: chaîne cassée!" <- i)
+    }
+  }
+
+  si integrity_ok {
+    println("  ✓ Chaîne intègre et vérifiée")
+  }
+
+  /* Simulation blockchain : enregistrement immuable */
+  println("\nEnregistrement sur blockchain:")
+  pour cd dans certified {
+    /* blockchain:commit(cd) */
+    hash_block = hash256(cd)
+    println("  Enregistré: {}" <- hash_block)
+  }
+}
+
+/* ============================================================================ */
+/*                EXEMPLE 8 : HISTORIQUE FRACTAL (HISTORY<HISTORY>)          */
+/* ============================================================================ */
+
+type CodeFile {
+  name String
+  content String
+}
+
+example_8_fractal_history {
+  println("\n=== EXEMPLE 8: Historique Fractal ===")
+
+  /* Historique du contenu d'un fichier */
+  file = CodeFile {
+    name : "main.342"
+    content : "fn main() { }"
+  }
+
+  file_history = History::new(file, RetentionPolicy::FOREVER)
+
+  println("Version 0: {}" <- file_history:current().content)
+
+  file_history:record(CodeFile {
+    name : "main.342"
+    content : "fn main() { println(\"hello\") }"
+  })
+
+  println("Version 1: {}" <- file_history:current().content)
+
+  /* Historique du repository (historique d'historiques) */
+  repo = Repository {
+    files : { "main.342" : file_history }
+    timestamp : clock()
+    commit_msg : "Initial commit"
+  }
+
+  repo_history = History::new(repo, RetentionPolicy::FOREVER)
+
+  println("Repo commit 0 : {}" <- repo_history:current().commit_msg)
+
+  /* Évolution du fichier */
+  file_history:record(CodeFile {
+    name : "main.342"
+    content : "fn main() { println(\"goodbye\") }"
+  })
+
+  /* Nouveau commit du repository */
+  repo_history:record(Repository {
+    files : { "main.342" : file_history }
+    timestamp : clock()
+    commit_msg : "Update greeting"
+  })
+
+  println("Repo commit 1 : {}" <- repo_history:current().commit_msg)
+
+  /* Meta-analyse : quand le fichier a changé */
+  println("\nChangements détectés:")
+
+  pour i en [1..repo_history.snapshots.len()) {
+    curr_repo = repo_history:at(i)
+    prev_repo = repo_history:at(i-1)
+
+    si curr_repo.files["main.342"] != prev_repo.files["main.342"] {
+      println("  Fichier modifié au commit {}" <- i)
+    }
+  }
+}
+
+/* ============================================================================ */
+/*                        EXEMPLE 9 : PERFORMANCE METRICS                    */
+/* ============================================================================ */
+
+example_9_performance {
+  println("\n=== EXEMPLE 9: Mesures de Performance ===")
+
+  /* Benchmark : String diff vs full copy */
+  test_string = "The quick brown fox jumps over the lazy dog"
+
+  hist = History::new(test_string, RetentionPolicy::FOREVER)
+
+  start = clock()
+
+  pour i en [0..100) {
+    modified = test_string + " " + "modification_{}".format(i)
+    hist:record(modified)
+  }
+
+  end = clock()
+  duration_ms = (end - start) / 1_000_000
+
+  println("Temps insertion 100 strings: {} ms" <- duration_ms)
+
+  total_snapshot_size = 0
+  total_diff_size = 0
+
+  pour snap dans hist.snapshots {
+    total_snapshot_size : total_snapshot_size + snap:size_estimate()
+  }
+
+  pour diff dans hist.diffs {
+    total_diff_size : total_diff_size + diff:size_estimate()
+  }
+
+  compression_factor = total_snapshot_size / total_diff_size
+
+  println("Taille totale snapshots: {} bytes" <- total_snapshot_size)
+  println("Taille totale diffs: {} bytes" <- total_diff_size)
+  println("Compression: {}x" <- compression_factor)
+
+  /* Memory usage estimation */
+  estimated_memory_mb = total_snapshot_size / (1024 * 1024)
+  println("Mémoire estimée: {} MB" <- estimated_memory_mb)
+
+  /* Undo performance */
+  start = clock()
+
+  pour i en [0..100) {
+    hist:undo()
+  }
+
+  end = clock()
+  undo_duration = (end - start) / 1_000_000
+
+  println("Temps 100 undo: {} ms" <- undo_duration)
+}
+
+/* ============================================================================ */
+/*                      EXEMPLE 10 : SCENARIO REALISTE                       */
+/* ============================================================================ */
+
+type TextEditor {
+  buffer String
+  selection (u64, u64)  /* Start, end */
+  saved_version u64
+}
+
+example_10_text_editor {
+  println("\n=== EXEMPLE 10: Simulateur d'Éditeur de Texte ===")
+
+  editor = TextEditor {
+    buffer : "int x = 42;\nint y = 100;\n"
+    selection : (0, 10)
+    saved_version : 0
+  }
+
+  history = History::new(editor, RetentionPolicy::LAST_N { count : 1000 })
+
+  println("Nouveau document ouvert")
+
+  /* Simulation typing */
+  history:record(TextEditor {
+    buffer : "int x = 42;\nint y = 100;\nint z = x + y;\n"
+    selection : (43, 43)
+    saved_version : 0
+  })
+
+  println("Typing: int z = x + y;")
+
+  history:record(TextEditor {
+    buffer : "int x = 42;\nint y = 100;\nint z = x + y;\nprintf(\"%d\", z);\n"
+    selection : (67, 67)
+    saved_version : 0
+  })
+
+  println("Typing: printf(\"%d\", z);")
+
+  /* Édition : sélectionner et remplacer */
+  history:record(TextEditor {
+    buffer : "int x = 42;\nint y = 100;\nint z = x + y;\nprintf(\"%d\\n\", z);\n"
+    selection : (68, 68)
+    saved_version : 0
+  })
+
+  println("Modification: printf(\"%d\\n\", z);")
+
+  /* Save */
+  current = history:current()
+  current.saved_version : history.snapshots.len() - 1
+  history:record(current)
+
+  println("Fichier sauvegardé à version {}" <- current.saved_version)
+
+  /* Continue editing */
+  history:record(TextEditor {
+    buffer : "int x = 42;\nint y = 100;\nint z = x + y;\nprintf(\"%d\\n\", z);\n// Comment added\n"
+    selection : (84, 84)
+    saved_version : 4
+  })
+
+  println("Ajout commentaire (unsaved)")
+
+  /* Montrer l'état non sauvegardé */
+  current = history:current()
+  si current.saved_version < history.snapshots.len() - 1 {
+    println("Document modifié, non sauvegardé (3 changements)")
+  }
+
+  /* Undo jusqu'au dernier save */
+  println("\nAnnulation pour revenir à la sauvegarde...")
+
+  tant que history.current_idx > current.saved_version {
+    history:undo()
+  }
+
+  println("Revenu à la dernière sauvegarde")
+  println("Buffer: '{}'" <- history:current().buffer)
+}
+
+/* ============================================================================ */
+/*                            MAIN ORCHESTRATOR                               */
+/* ============================================================================ */
+
+fn main() {
+  println("╔════════════════════════════════════════════════════════════╗")
+  println("║          Q20 — DIFFABLE TRAIT SYSTEM — EXEMPLES           ║")
+  println("║             3.42 Language Reference Implementation         ║")
+  println("╚════════════════════════════════════════════════════════════╝")
+
+  example_1_integer_history()
+  example_2_string_history()
+  example_3_struct_history()
+  example_4_branching()
+  example_5_retention()
+  example_6_lazy_evaluation()
+  example_7_blockchain_certified()
+  example_8_fractal_history()
+  example_9_performance()
+  example_10_text_editor()
+
+  println("\n╔════════════════════════════════════════════════════════════╗")
+  println("║                  TOUS LES EXEMPLES EXÉCUTÉS               ║")
+  println("║              Diffable = Git intégré au langage            ║")
+  println("╚════════════════════════════════════════════════════════════╝")
+}
+
+/* ============================================================================ */
+/* FIN EXEMPLES Q20-DIFFABLE                                                   */
+/* ============================================================================ */

@@ -30,80 +30,79 @@
 
 ---
 
-## QUESTIONS RESTANTES (nouvelles issues des blueprints)
+## QUESTIONS RÉSOLUES CP-2 (HAUTE PRIORITÉ)
 
-### PRIORITÉ HAUTE
+#### Q19 : 342-IR — prototype concret ✅ RÉSOLU
+**Réponse** : ParticleIR spécifié et prototypé avec 5 exemples complets.
+- Format SSA : `BOSON(operands) -> result : type @arena #spin`
+- 6 types de gluons IR : body, function, branch, quantum, select
+- 19 bosons mappés → ParticleIR → MachineIR → LLVM IR
+- 5 exemples : Hello World, Fibonacci, Pipe chain, Quantum circuit, Arènes imbriquées
+**Fichier** : `designs/Q19-PARTICLEIR-SPEC.md`
 
-#### Q19 : 342-IR — prototype concret
-**Contexte** : Q13 résolu (SSA 2 niveaux). Reste à prototyper.
-**Format proposé** :
-```
-ParticleIR = List<Node>
-Node = Boson { verb: Symbol, operands: [Node], spin: Spin, energy: u32 }
-     | Fermion { value: Value, type: Type, lifetime: Arena }
-     | Gluon { kind: GluonKind, contents: [Node] }
-```
-**Action** : Écrire 5 exemples (hello world, fibonacci, pipe, quantum, measure) en ParticleIR
+#### Q20 : Diff-chain — trait Diffable ✅ RÉSOLU
+**Réponse** : Système complet conçu avec 7 livrables.
+- Trait Diffable avec types associés (Diff, Snap)
+- History<T: Diffable> avec undo/redo/branching/merge
+- 5 stratégies de rétention (KeepAll, KeepLast(n), TimeBased, SizeBased, Adaptive)
+- Lazy evaluation : CoW O(1) pour snapshots
+- Granularité configurable (per-expression, per-statement, per-commit)
+- Intégration arènes : diffs dans arena dédiée
+- Fractal : History<History<T>> fonctionne (méta-versioning)
+**Fichiers** : `designs/Q20-*.md` (7 fichiers, ~5000 lignes)
 
-#### Q20 : Diff-chain (des blueprints, oublié)
-**Contexte** : Les blueprints originaux spécifient History<T: Diffable> pour TOUT (kernel, compilateur, filesystem, réseau, rendu).
-**Questions** :
-- Snapshots + diffs = quelle granularité ? (par statement ? par commit ?)
-- Rétention policies ? (garder combien d'historique ?)
-- Lazy evaluation pour ne pas stocker ce qui n'est pas demandé ?
-**Action** : Concevoir le trait Diffable et ses implémentations minimales
-
-#### Q21 : Sécurité mémoire — failles connues arènes
-**Contexte** : Recherche révèle 3 vulnérabilités des arena allocators :
-1. **Cross-arena references** : arène A → objet dans arène B, B droppée → UAF
-2. **Dangling pointers post-dealloc** : arène libérée mais pointer gardé
-3. **Aliasing violations** : overlapping arenas
-**Mitigations** :
-- **Interdiction cross-arena refs** : le borrow checker 342 INTERDIT les refs cross-arène
-- **Index-based access** : utiliser indices (pas pointeurs) + bounds check
-- **Guard pages** en debug mode (SIGSEGV sur UAF)
-- **Types linéaires** : MOVE par défaut = pas de double-free, pas de dangling
-**Statut** : Les types linéaires (D5) + arènes (D4) + borrow checker suffisent SI cross-arena refs sont interdites.
-**Action** : Formaliser la règle "pas de ref cross-arène" dans la spec
+#### Q21 : Sécurité mémoire — formalisée ✅ RÉSOLU
+**Réponse** : Spécification formelle complète avec preuves.
+- **RULE 6-CA1** (règle centrale) : `∀ ref @A → obj @B : lifetime(A) ≤ lifetime(B)`
+- 9 invariants formels (INV-A1 à INV-A4, INV-M1 à INV-M7)
+- 7 bugs prouvés impossibles : UAF, double-free, dangling, overflow, leak, data race, stack overflow
+- 60+ exemples annotés (patterns sûrs + interdits)
+- Comparaison Rust vs 3.42 (arènes = O(1) free vs heap fragmenté)
+- Règles de jugement de type : T-MOVE, T-COPY, T-BORROW-READ, T-BORROW-WRITE
+- Edge cases formalisés : closures, async, récursion TCO
+**Fichiers** : `MEMORY_SAFETY_FORMAL_Q21.md`, `MEMORY_SAFETY_EXAMPLES_Q21.md`, `Q21_SUMMARY.md`
 
 ### PRIORITÉ MOYENNE
 
-#### Q22 : Blockchain en toile (des blueprints, CRITIQUE mais long terme)
-**Contexte** : Les blueprints décrivent une blockchain vectorielle (pas linéaire) avec cercles de confidentialité.
-- Architecture en toile = plus résiliente que linéaire
-- PI automatique via hash de code
-- Identité décentralisée (3 niveaux de clés)
-**Statut** : Fondamental pour l'écosystème mais pas bloquant pour le langage.
-**Action** : Créer un document CP-3-ECOSYSTEM séparé
+#### Q22 : Blockchain en toile ✅ RÉSOLU (CP-3)
+**Réponse** : Fondamental pour l'écosystème, pas bloquant pour le langage.
+- **W3C DID 1.0** standard existe (approuvé 2022, v2.0 en cours)
+- **Move** (Aptos/Sui) prouve qu'un langage peut être natif blockchain
+- **Architecture** : intégrer via Diffable (Q20) + hash de code = PI automatique
+- **Identité** : 3 niveaux de clés alignés avec W3C DID
+- **Timeline** : après le compilateur prototype. CP-4-ECOSYSTEM dédié
 
-#### Q23 : Sphère de Bloch comme conteneur universel (des blueprints)
-**Contexte** : Les blueprints SZN spécifient que TOUS les types (int, float, string) sont encodés sur la sphère (θ, φ, depth, spin).
-**Idée** : Chaque valeur = point sur une sphère de Bloch généralisée. Le type = la "couche orbitale". La valeur = la position angulaire.
-**Recherche** : Bloch généralisé à N dimensions = SU(N), théorique mais PROUVÉ pour qubits et qutrits.
-**Questions** :
-- Est-ce que ça apporte un avantage computationnel réel ou c'est juste une métaphore ?
-- Comment encoder un int32 sur une sphère de manière efficace ?
-**Action** : Évaluer si c'est un modèle de données ou juste une visualisation
+#### Q23 : Sphère de Bloch ✅ RÉSOLU (CP-3)
+**Réponse** : La sphère = ORGANISATION et VISUALISATION, PAS adressage mémoire.
+- **Recherche CGA** : Algèbre géométrique conforme prouvée pour transformations (Clifford 1.5.1, Klein, ganja.js)
+- **Avantage computationnel** : NON pour les données générales (coût trigo, perte cache)
+- **Avantage organisationnel** : OUI pour les particules du langage (bosons, fermions, gluons, gravitons)
+- **La sphère scindée** : utile pour séparer les contextes graviton (|{} = hémisphère CPU, ~{} = GPU, ^{} = QPU)
+- **Décision D44** : Sphère = métaphore et visu, pas structure de données runtime
 
-#### Q24 : Harmoniques sphériques et compression (des blueprints v4.1)
-**Contexte** : Les blueprints mentionnent harmoniques sphériques pour compression de données et rendu SDF.
-**Recherche** : Les harmoniques sphériques sont PROUVÉES pour compression (utilisées en graphics, audio).
-**Questions** :
-- Applicable au code ? (signaux = oui, AST = spéculatif)
-- Utile pour le rendu SDF mentionné dans les blueprints ?
-**Action** : Basse priorité, revenir quand le runtime graphique existe
+#### Q24 : Harmoniques sphériques ✅ RÉSOLU (CP-3)
+**Réponse** : Utile pour la compression de données continues (rendu SDF, audio), PAS pour le diff/code.
+- **SH compression** : 10-200× prouvé pour données sphériques continues
+- **Diff de code** : INCOMPATIBLE (données discrètes, pas continues). On garde delta encoding + LZ4/zstd
+- **Rendu SDF** : OUI, quand le runtime graphique existera
+- **Timeline** : basse priorité, après compilateur
 
-#### Q9 : Trit coprocesseur (mis à jour)
-- Brevet Huawei 2025 : ternaire viable, -40% transistors
-- Timeline : 3-5 ans
-- Mapping spins → trits défini (D28)
-- **Nouveau** : ISA agnostique possible (recherche Trillium confirme)
-- FPGA prototype = première étape concrète
+#### Q9 : Trit coprocesseur (mis à jour CP-3)
+- Brevet Huawei CN119652311A confirmé (mars 2025) : premier chip ternaire mondial
+- CNT-SGT : portes ternaires fonctionnelles, SRAM ternaire, 45% moins d'espace, 30% moins d'énergie
+- Réseau neurones ternaire : 100% précision classification images
+- Défi : bruit plus problématique avec 3 états
+- D28 (agnosticisme) = **CONFIRMÉ VISIONNAIRE** par la recherche 2025-2026
+- Timeline : 2-3 ans pour prototypes, 5+ ans pour production
 
-#### Q10 : QPU backend réel
-- IBM Qiskit / Google Cirq comme cibles
-- ^{} → QASM circuit
-- Set universel vérifié : {^!, ^~, ^|, ^(θ)} = complet
+#### Q10 : QPU backend réel (mis à jour CP-3)
+- IBM Nighthawk 120 qubits (nov. 2025), Google Willow 105 qubits (oct. 2025)
+- **Avantage quantique vérifié visé fin 2026** (IBM et Google convergent)
+- Google AlphaQubit : 13000× accélération correction d'erreur
+- Théorème de seuil démontré (holy grail physique quantique)
+- Qiskit = dominant (37+ frameworks), Cirq = second
+- ^{} → QASM circuit. Set universel vérifié : {^!, ^~, ^|, ^(θ)} = complet
+- **342 arrive AU BON MOMENT** pour le quantique
 
 #### Q11 : Blockchain pour code (fusionné avec Q22)
 
@@ -142,12 +141,12 @@ Node = Boson { verb: Symbol, operands: [Node], spin: Spin, energy: u32 }
 
 ---
 
-## PROCHAINES ÉTAPES CONCRÈTES
+## PROCHAINES ÉTAPES CONCRÈTES (CP-3)
 
-1. **Parser Pest** : Implémenter 342.peg en .pest, 50+ tests (Q15)
-2. **ParticleIR** : Prototyper format SSA avec 5 exemples (Q19)
-3. **Sécurité mémoire** : Formaliser interdiction cross-arena refs (Q21)
-4. **Exemples** : 10 programmes complets en 342 natif
-5. **Sugar C** : Sugar C minimal (if/while/return → ?/??/<<)
-6. **Diff-chain** : Designer trait Diffable (Q20)
-7. **Visualisation** : 342-sphere.html v2 (amélioré, 3 vues, conteneurs, liaisons)
+1. **Parser Pest** : grammar/342.peg → .pest + 50 tests
+2. **AST → ParticleIR** : Lowering en Rust (~500 lignes)
+3. **QBE backend** : ParticleIR → QBE IL → binaire (hello world)
+4. **Gravitons PEG** : Ajouter |{} ~{} ^{} dans la grammaire
+5. **10 exemples** : Programmes complets en 342 natif
+6. **Sugar C** : if/while/return → ?/??/<< (premier sugar)
+7. **LLVM backend** : Quand QBE fonctionne, brancher LLVM pour prod
