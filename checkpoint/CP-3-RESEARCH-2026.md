@@ -21,8 +21,9 @@
 - **Stable 1.93.1** (fév. 2026)
 - Async closures (`async || {}`), AsyncFn traits stabilisés
 - **async-std discontinué** (mars 2025) → Tokio = standard de facto
-- Cranelift backend = production-ready pour dev local (20% plus rapide codegen)
-- **Pertinence 342** : L'écosystème Rust mûrit. Cranelift prouve qu'un backend alternatif à LLVM est viable → valide D43 (QBE pour prototype)
+- Cranelift backend = production-ready pour dev local (**40% plus rapide** que LLVM codegen, 86% perf runtime)
+- Rustc backend Cranelift disponible en stable
+- **Pertinence 342** : L'écosystème Rust mûrit. Cranelift prouve qu'un backend alternatif à LLVM est viable → D43 mis à jour : **Cranelift recommandé** pour prototype (meilleur que QBE en 2026)
 
 ### Carbon (Google)
 - **Toujours expérimental**. MVP 0.1 fin 2026 au plus tôt. 1.0 après 2028
@@ -77,13 +78,15 @@
 
 ### Cranelift (Rust backend)
 - Production-ready pour `cargo test`/`cargo run` (2025H2)
-- 20% plus rapide que LLVM pour codegen
-- **Pertinence 342** : Alternative à QBE pour le prototype ? Cranelift est plus mature que QBE mais plus complexe. QBE = plus simple pour démarrer
+- **40% plus rapide que LLVM** pour codegen, ~86% perf runtime
+- Rustc backend disponible en stable (édition 2024)
+- Natif Rust, 4 cibles ISA (x86-64, aarch64, rv64, s390x)
+- **Pertinence 342** : **RECOMMANDÉ** pour le prototype (D43 mis à jour). Plus mature que QBE, meilleur rapport effort/résultat. QBE reste fallback ultra-léger
 
 ### QBE
 - Pas de mise à jour majeure 2025-2026
 - Toujours 3 cibles : amd64, arm64, riscv64
-- **Pertinence 342** : Stable et suffisant pour le prototype. D43 reste valide
+- **Pertinence 342** : Reste option fallback ultra-léger (~5K LOC). Cranelift préféré pour le prototype (D43 mis à jour)
 
 ---
 
@@ -218,9 +221,9 @@
 | D28 (agnosticisme) | ✅ Huawei ternaire confirmé, CNT-SGT fonctionne |
 | D35 (0 keywords) | ✅ Aucun concurrent ne le fait → différentiateur |
 | D37 (@@) | ✅ Vale 2-10% overhead validé, Lobster 95% compile-time |
-| D40 (gravitons) | ✅ Concurrence structurée adoptée massivement |
+| D46 (gravitons) | ✅ Concurrence structurée adoptée massivement (D40 obsolète → D46) |
 | D42 (pas borrow) | ✅ OpenSSF "safety is a continuum", pas besoin de 100% Rust |
-| D43 (QBE→LLVM) | ✅ Cranelift prouve que les backends alternatifs marchent |
+| D43 (Cranelift→LLVM) | ✅ Cranelift production-ready (40% < LLVM compile, 86% runtime) |
 
 ### Décisions UNIQUES (aucun concurrent)
 

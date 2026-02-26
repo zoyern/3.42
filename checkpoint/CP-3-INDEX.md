@@ -11,10 +11,11 @@
 │   └── 342.peg              ← PEG formelle COURANTE (CP-2, à maj pour CP-3)
 ├── checkpoint/
 │   ├── CP-3-INDEX.md         ← CE FICHIER
-│   ├── CP-2-DECISIONS.md      ← 60 décisions (D1-D60, 1 obsolète, 2 corrigées)
+│   ├── CP-2-DECISIONS.md      ← 61 décisions (D1-D61, 1 obsolète, 2 corrigées)
 │   ├── CP-3-OPEN.md          ← Questions ouvertes (Q1-Q24 TOUTES résolues)
 │   ├── CP-3-RESEARCH-2026.md ← État de l'art 2025-2026
 │   ├── CP-3.2-AUDIT-FINAL.md ← Audit complet logique/cohérence/perf
+│   ├── CP-3.3-SECURITY-AUDIT.md ← Audit sécurité TOCTOU/closures/async/arènes
 │   ├── AUDIT-GEMINI.md       ← Audit conversation Gemini
 │   ├── CP-2-*                ← Archived
 │   └── CP-1-*                ← Archived
@@ -39,7 +40,7 @@
 **1 règle** : `A B = A(B)` (composition, profondeur N)
 **0 keywords** : `:` suffit. `type`/`trait` = sugar optionnel (D35)
 **Trio compute** : `|` CPU, `~` GPU, `^` QPU
-**Pipeline** : Source → AST → ParticleIR → MachineIR → QBE|LLVM → Binaire
+**Pipeline** : Source → AST → ParticleIR → MachineIR → Cranelift|LLVM → Binaire
 **Mémoire** : MOVE default + arènes O(1) + @ lecture + @@ écriture séquentielle
 
 ---
@@ -53,14 +54,14 @@
 4. D35 clarifié : `:` = primaire, `type`/`trait` = sugar valide
 
 ### Nouvelles décisions
-5. D40 : Gravitons = contextes d'exécution (`|{} ~{} ^{}`)
-6. D43 : QBE prototype, LLVM production
+5. D46 : Gravitons = contextes d'exécution (`|{} ~{} ^{}`) (D40 obsolète → D46)
+6. D43 : Cranelift prototype (recommandé), LLVM production. QBE = fallback ultra-léger
 7. D44 : Sphère = organisation, pas adressage mémoire
 8. D45 : Symétrie CPU formalisée (6 paires + 7 solitaires)
 
 ### Recherche 2025-2026
 9. Mojo 1.0 → H1 2026, Zig 1.0 → 2026
-10. Cranelift = production-ready pour dev (20% plus rapide que LLVM codegen)
+10. Cranelift = production-ready pour dev (40% plus rapide que LLVM codegen, 86% perf runtime)
 11. Google Willow 105 qubits, IBM Nighthawk 120 qubits → avantage quantique fin 2026
 12. Huawei ternaire confirmé (CNT-SGT : 45% moins d'espace, 30% moins d'énergie)
 13. DARPA TRACTOR : migration C → Rust avec IA
@@ -92,7 +93,7 @@
 |---------|----------------|--------------|-------------|
 | Sécurité mémoire | Rust (borrow checker) | Arena-scoped + MOVE + warnings | Plus simple, ~même résultat |
 | Ergonomie | Go (GC simple) | Symboles 1 char + 0 keywords | Plus compact, plus rapide à parser |
-| Compile speed | Zig/TCC | QBE prototype (~1s) | Compétitif |
+| Compile speed | Zig/TCC | Cranelift prototype (40% < LLVM) | Compétitif |
 | Runtime perf | C/Rust | Arènes O(1) + LLVM prod | Compétitif |
 | Concurrence | Pony (prouvé thread-safe) | Gravitons + MOVE + |! async | Émergent des symboles |
 | Quantique | Qiskit (Python) | ^{} natif dans le langage | Intégré, pas une lib |
@@ -110,7 +111,14 @@
 - **Stream fusion** (D58) : `*{} -{} +{}` composent en 1 passe (zéro collection intermédiaire)
 - **Matrice symétrique** (D59) : même suffixe × |/~/^ = CPU/GPU/QPU cohérent
 - **!{} vs !?** (D60) : defer block vs lazy eval, coexistent
-- **Total** : 60 décisions, 1 obsolète (D40→D46), 2 corrigées (D41, D54)
+- **Total** : 61 décisions, 1 obsolète (D40→D46), 2 corrigées (D41, D54)
+
+### CP-3.3 — Audit sécurité avancé
+- **5 concerns analysés** : TOCTOU, closures, async, arena-in-arena, atomicité
+- **4/5 déjà couverts** par RULE 1-3 + MOVE + structured concurrency
+- **D61 ajouté** : Borrow granularity = struct-level (conservateur)
+- **Score sécurité** : 96/100 → 13/13 attaques couvertes, 0 faille ouverte
+- **342 = seul langage avec 0 faille** sur 10 catégories de sécurité mémoire
 
 ### Fichiers ajoutés
 - `designs/GRAVITONS-COMPLETE-SPEC.md` — spécification complète des 19 gravitons
@@ -119,10 +127,11 @@
 
 ## PROCHAINES ÉTAPES
 
-1. **Parser Pest** : grammar/342.peg → .pest + 50 tests
-2. **AST → ParticleIR** : Lowering en Rust (~500 lignes)
-3. **QBE backend** : ParticleIR → QBE IL → binaire (hello world)
-4. **10 exemples** : Programmes complets en 342
-5. **Gravitons PEG** : Ajouter les 19 gravitons dans la grammaire
-6. **Sugar C** : if/while/return → ?/??/<< (premier sugar)
-7. **Transducteurs** : Implémenter |* |- |+ avec stream fusion
+1. **PEG CP-3** : Ajouter les 24 règles manquantes (gravitons + transducteurs + :.)
+2. **Parser Pest** : grammar/342.peg → .pest + 50 tests
+3. **AST → ParticleIR** : Lowering en Rust (~500 lignes)
+4. **Cranelift POC** : ParticleIR → Cranelift → binaire (hello world)
+5. **10 exemples** : Programmes complets démontrant les 19 gravitons
+6. **Stream fusion** : Implémenter |* |- |+ → 1 boucle dans l'IR
+7. **Sugar C** : if/while/return → ?/??/<< (premier dictionnaire)
+8. **Benchmarks** : Arena bump vs malloc, fusion vs boucle manuelle

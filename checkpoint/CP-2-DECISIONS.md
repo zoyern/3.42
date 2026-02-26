@@ -92,6 +92,7 @@
 | D58 | Stream fusion via gravitons transducteurs | *{} -{} +{} composent sans collections intermédiaires = 1 seule boucle. Inspiré Clojure transducers, Haskell stream fusion. Killer feature. | ✓ SOLIDE |
 | D59 | Trio compute × suffixes = matrice symétrique | Même suffixe (!*+-?~\|) sur \|/~/^ donne CPU séquentiel / GPU parallèle / QPU quantique. \|* = map CPU, ~* = parallel map GPU, ^* = rotation QPU. FRACTAL. | ✓ SOLIDE |
 | D60 | !{} defer vs !? lazy = coexistence | !{} = INVERSER+CORPS = defer block (exécuter à sortie scope). !? = INVERSER+MESURER = lazy eval (évaluer plus tard). Sémantiques différentes, pas de conflit. | ✓ SOLIDE |
+| D61 | Borrow granularity = struct-level | Un @@ sur un champ verrouille le struct entier. Un @ sur un champ verrouille le struct en lecture entière. Conservateur comme Rust. Field-level = optimisation future (flag `#split`). | ✓ SOLIDE |
 
 ## DÉCISIONS REJETÉES
 

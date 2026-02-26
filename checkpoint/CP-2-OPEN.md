@@ -135,18 +135,21 @@
 | Bug | Sévérité | Statut |
 |-----|----------|--------|
 | PEG non testé avec parser réel | ⚠️ | Q15 résolu (Pest), reste à implémenter |
+| PEG manque 24 règles (gravitons, transducteurs, :.) | ⚠️ | Documenté dans CP-3.2-AUDIT §4 |
 | Cross-arena refs = UAF potentiel | ⚠️ | Q21 : mitigé par interdiction + types linéaires |
 | Portes Y/Z non dans PEG | ℹ️ | Q8 : émergent via ^+/^-, pas besoin de PEG |
 | Blueprints écosystème orphelins | ⚠️ | 8 idées majeures à intégrer (backlog) |
 
 ---
 
-## PROCHAINES ÉTAPES CONCRÈTES (CP-3)
+## PROCHAINES ÉTAPES CONCRÈTES (CP-3.3)
 
-1. **Parser Pest** : grammar/342.peg → .pest + 50 tests
-2. **AST → ParticleIR** : Lowering en Rust (~500 lignes)
-3. **QBE backend** : ParticleIR → QBE IL → binaire (hello world)
-4. **Gravitons PEG** : Ajouter |{} ~{} ^{} dans la grammaire
-5. **10 exemples** : Programmes complets en 342 natif
-6. **Sugar C** : if/while/return → ?/??/<< (premier sugar)
-7. **LLVM backend** : Quand QBE fonctionne, brancher LLVM pour prod
+1. **PEG CP-3** : Ajouter les 24 règles manquantes (19 gravitons + transducteurs + :.)
+2. **Parser Pest** : grammar/342.peg → .pest + 50 tests
+3. **AST → ParticleIR** : Lowering en Rust (~500 lignes)
+4. **Cranelift POC** : ParticleIR → Cranelift → binaire (hello world)
+5. **10 exemples** : Programmes complets démontrant les 19 gravitons
+6. **Stream fusion** : Implémenter |* |- |+ → 1 boucle fusionnée dans l'IR
+7. **Sugar C** : if/while/return → ?/??/<< (premier dictionnaire boson→keyword)
+8. **LLVM backend** : Quand Cranelift fonctionne, brancher LLVM pour prod
+9. **Benchmarks** : Arena bump vs malloc, fusion vs boucle manuelle
