@@ -87,6 +87,13 @@
 - **Rendu SDF** : OUI, quand le runtime graphique existera
 - **Timeline** : basse priorité, après compilateur
 
+#### Q25 : HKT émergents + sugar tenseur ❓ OUVERTE (CP-3.4)
+**Question** : Faut-il des Higher-Kinded Types (types qui prennent d'autres types en paramètres) émergents ? Et un sugar pour les opérations tensorielles (produit matriciel, contraction) ?
+- **HKT** : Haskell les a (type classes, foncteurs, monades). 342 pourrait les faire émerger via `:` et composition fractale. À explorer.
+- **Tenseurs** : `A @* B` = produit matriciel ? `A %* B` = contraction ? Ou via stream fusion sur grilles ?
+- **Champs scalaires** : simulation via `*{} -{} +{}` sur grilles 3D + GPU gravitons `~{}`. Cohérent avec le design.
+- **Priorité** : Moyenne — après compilateur prototype, quand on aura des benchmarks réels.
+
 #### Q9 : Trit coprocesseur (mis à jour CP-3)
 - Brevet Huawei CN119652311A confirmé (mars 2025) : premier chip ternaire mondial
 - CNT-SGT : portes ternaires fonctionnelles, SRAM ternaire, 45% moins d'espace, 30% moins d'énergie

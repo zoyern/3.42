@@ -11,11 +11,12 @@
 │   └── 342.peg              ← PEG formelle COURANTE (CP-2, à maj pour CP-3)
 ├── checkpoint/
 │   ├── CP-3-INDEX.md         ← CE FICHIER
-│   ├── CP-2-DECISIONS.md      ← 61 décisions (D1-D61, 1 obsolète, 2 corrigées)
-│   ├── CP-3-OPEN.md          ← Questions ouvertes (Q1-Q24 TOUTES résolues)
+│   ├── CP-2-DECISIONS.md      ← 62 décisions (D1-D62, 1 obsolète, 2 corrigées)
+│   ├── CP-3-OPEN.md          ← Questions ouvertes (Q1-Q24 résolues, Q25 ouverte)
 │   ├── CP-3-RESEARCH-2026.md ← État de l'art 2025-2026
 │   ├── CP-3.2-AUDIT-FINAL.md ← Audit complet logique/cohérence/perf
 │   ├── CP-3.3-SECURITY-AUDIT.md ← Audit sécurité TOCTOU/closures/async/arènes
+│   ├── CP-3.4-DEEP-ANALYSIS.md ← Émergence fractale, COBOL/Haskell, CPU mapping, tenseurs
 │   ├── AUDIT-GEMINI.md       ← Audit conversation Gemini
 │   ├── CP-2-*                ← Archived
 │   └── CP-1-*                ← Archived
@@ -111,7 +112,7 @@
 - **Stream fusion** (D58) : `*{} -{} +{}` composent en 1 passe (zéro collection intermédiaire)
 - **Matrice symétrique** (D59) : même suffixe × |/~/^ = CPU/GPU/QPU cohérent
 - **!{} vs !?** (D60) : defer block vs lazy eval, coexistent
-- **Total** : 61 décisions, 1 obsolète (D40→D46), 2 corrigées (D41, D54)
+- **Total** : 62 décisions, 1 obsolète (D40→D46), 2 corrigées (D41, D54)
 
 ### CP-3.3 — Audit sécurité avancé
 - **5 concerns analysés** : TOCTOU, closures, async, arena-in-arena, atomicité
@@ -120,8 +121,21 @@
 - **Score sécurité** : 96/100 → 13/13 attaques couvertes, 0 faille ouverte
 - **342 = seul langage avec 0 faille** sur 10 catégories de sécurité mémoire
 
+### CP-3.4 — Analyse approfondie
+- **COBOL + Haskell** comparés à 342 (tableau 11 axes)
+- **Table CPU/GPU/QPU** complète pour 19 bosons + 19 gravitons (vérification ancrage hardware)
+- **Émergence fractale N niveaux** : ✅ fonctionne via espace, tokens collés = hardcodés (acceptable)
+- **Boson + fermion = gluon ?** Non. Gluons = catégorie séparée, graviton = boson + gluon
+- **$ pas un boson** (marqueur syntaxique)
+- **Ternaire et spins** : `#` passe en out-of-band, `+ - _` mappent sur 1 trit
+- **D62** : Real-time debug = Diffable + Énergie + Sphère (combinaison unique)
+- **Q25 ouverte** : HKT émergents + sugar tenseur
+- **Champs scalaires / tenseurs** : stream fusion + GPU gravitons = idéal pour simulation
+- **Prononciation** : "trois quarante-deux"
+
 ### Fichiers ajoutés
 - `designs/GRAVITONS-COMPLETE-SPEC.md` — spécification complète des 19 gravitons
+- `checkpoint/CP-3.4-DEEP-ANALYSIS.md` — analyse approfondie émergence/comparaisons/tenseurs
 
 ---
 
