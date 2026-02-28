@@ -1,5 +1,6 @@
-# 19 GRAVITONS — Spécification Complète
+# 18 GRAVITONS — Spécification Complète
 ## Graviton = Boson + Gluon {} = Scope Typé Émergent
+### (Mis à jour CP-3.5 : `;{}` retiré → D63, `;` reclassé en ponctuation)
 
 ---
 
@@ -80,9 +81,9 @@ data |~ [sink1, sink2];          // fanout : envoyer à N destinations
 
 ---
 
-## LES 19 GRAVITONS
+## LES 18 GRAVITONS
 
-### Tier 1 — FONDAMENTAUX (déjà validés)
+### Tier 1 — FONDAMENTAUX (8, déjà validés)
 
 #### 1. `:{} ` — DÉFINIR+CORPS = Définition de type/trait
 ```
@@ -169,7 +170,7 @@ fib : (n : i64) : i64 = { ... };
 
 ---
 
-### Tier 2 — PUISSANTS (nouvelles découvertes)
+### Tier 2 — PUISSANTS (6, nouvelles découvertes)
 
 #### 9. `<{}` — SORTIR+CORPS = Bloc de sortie (générateur/writer)
 ```
@@ -245,7 +246,7 @@ result = data *{ double } -{ positive } +{ sum };
 
 ---
 
-### Tier 3 — SPÉCIALISÉS (utiles dans des contextes précis)
+### Tier 3 — SPÉCIALISÉS (4, utiles dans des contextes précis)
 
 #### 15. `%{}` — PROPORTIONNER+CORPS = Probabiliste/Pondéré
 ```
@@ -260,21 +261,11 @@ action = %{
 - Utilisation : IA/ML (sampling), jeux (loot tables), tests (fuzzing)
 - Le compilateur vérifie que les poids somment à 1.0 (ou normalise)
 
-#### 16. `;{}` — TERMINER+CORPS = Séquence stricte (barrière)
-```
-;{
-    init_hardware();
-    configure_registers();
-    start_device();
-};
-// Aucun reordering possible à l'intérieur
-```
-- Garantie d'ordre : chaque `;` = sequence point dur
-- Le compilateur NE PEUT PAS réordonner (contrairement à `{}` normal)
-- Usage : I/O hardware, registres mappés mémoire, init sequences
-- Équivalent d'une barrière mémoire scopée (`memory_fence`)
+#### ~~16. `;{}` — RETIRÉ (D63)~~
+> `;` reclassé en ponctuation (comme `,` et espace). Pas d'opcode CPU propre.
+> `;{}` créait confusion avec les séquences normales. La barrière mémoire = `!{ fence(); }` ou annotation `#{ strict_order: + }`.
 
-#### 17. `@{}` — RÉFÉRENCER+CORPS = Scope partagé immutable
+#### 16. `@{}` — RÉFÉRENCER+CORPS = Scope partagé immutable
 ```
 @{
     // Tout est @ (lecture seule) à l'intérieur
@@ -288,7 +279,7 @@ action = %{
 - Utile pour les sections critiques en lecture
 - Ou : transaction scope (tout est atomique)
 
-#### 18. `/{}` — DIVISER+CORPS = Commentaire bloc (déjà émergé)
+#### 17. `/{}` — DIVISER+CORPS = Commentaire bloc (déjà émergé)
 ```
 /* Ceci est déjà un graviton /{}
    DIVISER + gluon = séparer du code */
@@ -298,7 +289,7 @@ action = %{
 - `data /{ predicate }` = `(matching, non_matching)`
 - Mais usage principal = commentaire bloc
 
-#### 19. `_{}` — IGNORER+CORPS = Sandbox/Discard
+#### 18. `_{}` — IGNORER+CORPS = Sandbox/Discard
 ```
 _{
     expensive_computation();
@@ -313,18 +304,18 @@ _{
 
 ---
 
-## CLASSIFICATION : ; ET ,
+## CLASSIFICATION : ; ET , (MIS À JOUR D63)
 
-### `;` = BOSON ✓ (TERMINER)
-- **CPU** : NOP / sequence point / memory barrier
-- **Dans la liste des 19** : oui, boson #13
-- **Graviton** : `;{}` = séquence stricte (barrière d'ordonnancement)
-- **Usage courant** : terminateur de statement (comme en C)
-- **Conclusion** : `;` EST un boson ET a un graviton utile
+### `;` = PONCTUATION ✗ (reclassé D63, anciennement boson)
+- **CPU** : PAS d'opcode propre. NOP/fence = instructions séparées, pas liées à `;`
+- **Problème** : `;{}` créait confusion avec les blocs normaux `{}`
+- **Rôle** : terminateur de statement (comme en C), séparateur structurel
+- **Analogue** : comme `,` et espace — ponctuation d'un langage parlé
+- **Conclusion** : `;` rejoint `,` et espace comme **séparateur syntaxique** (D63)
 
 ### `,` = SÉPARATEUR SYNTAXIQUE ✗ (pas un boson)
 - **CPU** : aucune instruction correspondante
-- **Pas dans les 19 bosons** : correct
+- **Pas dans les 18 bosons** : correct
 - **Pas de graviton** : `,{}` n'a pas de sens
 - **Rôle** : lie des fermions à l'intérieur d'un gluon
 - **Analogue** : comme l'espace (sépare les mots, pas une force)
@@ -363,10 +354,10 @@ Les deux coexistent. `!?` = lazy single expression. `!{}` = defer block.
 | 13 | `-{}` | RÉDUIRE+CORPS | Filter/Diff | 2 | Clojure filter |
 | 14 | `*{}` | TRANSFORMER+CORPS | Map | 2 | Haskell map, .map() |
 | 15 | `%{}` | PROPORTIONNER+CORPS | Probabiliste | 3 | Monte Carlo, fuzzing |
-| 16 | `;{}` | TERMINER+CORPS | Séquence stricte | 3 | Memory barrier |
-| 17 | `@{}` | RÉFÉRENCER+CORPS | Immutable scope | 3 | Rust & lifetime |
-| 18 | `/{}` | DIVISER+CORPS | Comment/Partition | 3 | /* */ déjà émergé |
-| 19 | `_{}` | IGNORER+CORPS | Sandbox/Discard | 3 | /dev/null, dry-run |
+| ~~16~~ | ~~`;{}`~~ | ~~TERMINER+CORPS~~ | ~~Séquence stricte~~ | ~~3~~ | ~~RETIRÉ D63~~ |
+| 16 | `@{}` | RÉFÉRENCER+CORPS | Immutable scope | 3 | Rust & lifetime |
+| 17 | `/{}` | DIVISER+CORPS | Comment/Partition | 3 | /* */ déjà émergé |
+| 18 | `_{}` | IGNORER+CORPS | Sandbox/Discard | 3 | /dev/null, dry-run |
 
 ---
 
@@ -409,11 +400,11 @@ Même syntaxe, 3 niveaux de parallélisme. Le compilateur choisit le backend.
 `|*` = map, `|-` = filter, `|+` = fold, `|!` = async, `|?` = conditional pipe, `|~` = fanout.
 Portes logiques classiques → `:.bits` module (D48 inchangé).
 
-### D57 (NOUVEAU) : 19 gravitons complets
-Chaque boson + {} = graviton avec sémantique émergente.
+### D57 (MIS À JOUR D63) : 18 gravitons complets
+Chaque boson + {} = graviton avec sémantique émergente. `;{}` retiré (D63).
 - Tier 1 (8) : fondamentaux, utilisés partout
 - Tier 2 (6) : puissants, map/filter/fold + I/O + destructure
-- Tier 3 (5) : spécialisés, contextes précis
+- Tier 3 (4) : spécialisés, contextes précis (`;{}` retiré)
 
 ### D58 (NOUVEAU) : Stream fusion via transducteurs graviton
 `*{} -{} +{}` composent sans collections intermédiaires.

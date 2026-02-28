@@ -87,12 +87,27 @@
 - **Rendu SDF** : OUI, quand le runtime graphique existera
 - **Timeline** : basse priorité, après compilateur
 
-#### Q25 : HKT émergents + sugar tenseur ❓ OUVERTE (CP-3.4)
-**Question** : Faut-il des Higher-Kinded Types (types qui prennent d'autres types en paramètres) émergents ? Et un sugar pour les opérations tensorielles (produit matriciel, contraction) ?
+#### Q25 : HKT émergents + sugar tenseur + autograd ❓ OUVERTE (CP-3.4/3.5)
+**Question** : Faut-il des Higher-Kinded Types (types qui prennent d'autres types en paramètres) émergents ? Et un sugar pour les opérations tensorielles (produit matriciel, contraction) ? Autograd via Diffable ?
 - **HKT** : Haskell les a (type classes, foncteurs, monades). 342 pourrait les faire émerger via `:` et composition fractale. À explorer.
 - **Tenseurs** : `A @* B` = produit matriciel ? `A %* B` = contraction ? Ou via stream fusion sur grilles ?
 - **Champs scalaires** : simulation via `*{} -{} +{}` sur grilles 3D + GPU gravitons `~{}`. Cohérent avec le design.
+- **Autograd** : Diffable (D20) = fonctionnellement équivalent à la différentiation automatique. Si chaque op math implémente Diffable, les gradients viennent gratuitement. 342 serait le premier langage avec autograd natif.
 - **Priorité** : Moyenne — après compilateur prototype, quand on aura des benchmarks réels.
+
+#### Q26 : COBOL decimal arithmetic native ❓ OUVERTE (CP-3.5)
+**Question** : Faut-il un type `decimal` natif pour la finance (COBOL PICTURE, fixed-point) ?
+- **Problème** : COBOL domine la banque (95% des transactions ATM) grâce à `PICTURE 9(5)V99` = décimal exact sans erreurs flottantes.
+- **Solution possible** : type `:decimal` natif ou sugar `%` pour fixed-point. `0.1 + 0.2 = 0.3` garanti.
+- **Concurrents** : C# `decimal`, Java `BigDecimal`, Python `Decimal`. Aucun n'est natif au langage.
+- **Priorité** : Moyenne — critique si 342 vise le domaine bancaire.
+
+#### Q27 : WASM backend priorité ❓ OUVERTE (CP-3.5)
+**Question** : Faut-il un backend WASM (WebAssembly) en plus de Cranelift/LLVM ?
+- **Avantage** : déploiement web instantané, sandboxing natif, portabilité universelle.
+- **Cranelift supporte déjà WASM** comme target. Potentiellement quasi-gratuit.
+- **Concurrents** : Rust (wasm-pack), Go (tinygo), Zig (natif). Tous supportent WASM.
+- **Priorité** : Haute — si 342 veut être universel, le web est incontournable.
 
 #### Q9 : Trit coprocesseur (mis à jour CP-3)
 - Brevet Huawei CN119652311A confirmé (mars 2025) : premier chip ternaire mondial
@@ -151,12 +166,14 @@
 
 ## PROCHAINES ÉTAPES CONCRÈTES (CP-3.3)
 
-1. **PEG CP-3** : Ajouter les 24 règles manquantes (19 gravitons + transducteurs + :.)
+1. **PEG CP-3.5** : Ajouter les 23 règles manquantes (18 gravitons + transducteurs + :.) — `;{}` retiré
 2. **Parser Pest** : grammar/342.peg → .pest + 50 tests
 3. **AST → ParticleIR** : Lowering en Rust (~500 lignes)
 4. **Cranelift POC** : ParticleIR → Cranelift → binaire (hello world)
-5. **10 exemples** : Programmes complets démontrant les 19 gravitons
+5. **10 exemples** : Programmes complets démontrant les 18 gravitons
 6. **Stream fusion** : Implémenter |* |- |+ → 1 boucle fusionnée dans l'IR
-7. **Sugar C** : if/while/return → ?/??/<< (premier dictionnaire boson→keyword)
+7. **Sugar universel** : if/while/return → ?/??/<< + COBOL/Haskell/C → 342 dictionnaire
 8. **LLVM backend** : Quand Cranelift fonctionne, brancher LLVM pour prod
 9. **Benchmarks** : Arena bump vs malloc, fusion vs boucle manuelle
+10. **Autograd POC** : Diffable + math ops → gradients automatiques (Q25)
+11. **WASM backend** : Cranelift → WASM pour web deployment (Q27)

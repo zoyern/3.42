@@ -11,8 +11,8 @@
 │   └── 342.peg              ← PEG formelle COURANTE (CP-2, à maj pour CP-3)
 ├── checkpoint/
 │   ├── CP-3-INDEX.md         ← CE FICHIER
-│   ├── CP-2-DECISIONS.md      ← 62 décisions (D1-D62, 1 obsolète, 2 corrigées)
-│   ├── CP-3-OPEN.md          ← Questions ouvertes (Q1-Q24 résolues, Q25 ouverte)
+│   ├── CP-2-DECISIONS.md      ← 63 décisions (D1-D63, 1 obsolète, 2 corrigées)
+│   ├── CP-3-OPEN.md          ← Questions ouvertes (Q1-Q24 résolues, Q25-Q27 ouvertes)
 │   ├── CP-3-RESEARCH-2026.md ← État de l'art 2025-2026
 │   ├── CP-3.2-AUDIT-FINAL.md ← Audit complet logique/cohérence/perf
 │   ├── CP-3.3-SECURITY-AUDIT.md ← Audit sécurité TOCTOU/closures/async/arènes
@@ -23,7 +23,7 @@
 ├── designs/
 │   ├── Q19-PARTICLEIR-SPEC.md     ← IR spécification + 5 exemples
 │   ├── Q20-*.md                   ← Système Diffable (7 fichiers)
-│   ├── GRAVITONS-COMPLETE-SPEC.md ← 19 gravitons (3 tiers) spécification
+│   ├── GRAVITONS-COMPLETE-SPEC.md ← 18 gravitons (3 tiers) spécification
 │   └── MEMORY_SAFETY_*.md         ← Sécurité mémoire formelle (Q21)
 ├── 342-sphere.html           ← Visualisation 3D interactive (Three.js)
 ├── archive/                  ← Tout le reste
@@ -34,10 +34,11 @@
 
 ## CLÉS DE LECTURE RAPIDE
 
-**19 bosons** : `< > . ? ! | ~ ^ % / : = ; + - * # _ @`
+**18 bosons** : `< > . ? ! | ~ ^ % / : = + - * # _ @` (`;` reclassé ponctuation D63)
 **5 gluons** : `{} () [] "" ''`
+**3 séparateurs** : `;` `,` ` ` (ponctuation structurelle)
 **4 spins** : `+ - # _` (2 bits), `*` = flag wildcard
-**19 gravitons** : 3 tiers (8 fondamentaux + 6 puissants + 5 spécialisés)
+**18 gravitons** : 3 tiers (8 fondamentaux + 6 puissants + 4 spécialisés)
 **1 règle** : `A B = A(B)` (composition, profondeur N)
 **0 keywords** : `:` suffit. `type`/`trait` = sugar optionnel (D35)
 **Trio compute** : `|` CPU, `~` GPU, `^` QPU
@@ -85,6 +86,9 @@
 | Q22 | ✅ CP-3 | Blockchain → W3C DID + Move langue |
 | Q23 | ✅ CP-3 | Sphère = organisation (CGA), pas mémoire |
 | Q24 | ✅ CP-3 | SH = compression continue, pas pour diff |
+| Q25 | ❓ CP-3.4 | HKT émergents + sugar tenseur |
+| Q26 | ❓ CP-3.5 | COBOL decimal arithmetic native |
+| Q27 | ❓ CP-3.5 | WASM backend priorité |
 
 ---
 
@@ -107,12 +111,12 @@
 ## NOUVEAUTÉS CP-3.1
 
 ### Gravitons complets (D57-D60)
-- **19 gravitons** définis en 3 tiers (8 fondamentaux + 6 puissants + 5 spécialisés)
+- **18 gravitons** définis en 3 tiers (8 fondamentaux + 6 puissants + 4 spécialisés) — `;{}` retiré D63
 - **D54 corrigé** : |! reste async, pas NOT gate. |* = map, |- = filter, |+ = fold (transducteurs)
 - **Stream fusion** (D58) : `*{} -{} +{}` composent en 1 passe (zéro collection intermédiaire)
 - **Matrice symétrique** (D59) : même suffixe × |/~/^ = CPU/GPU/QPU cohérent
 - **!{} vs !?** (D60) : defer block vs lazy eval, coexistent
-- **Total** : 62 décisions, 1 obsolète (D40→D46), 2 corrigées (D41, D54)
+- **Total** : 63 décisions, 1 obsolète (D40→D46), 2 corrigées (D41, D54), D63 = `;` ponctuation
 
 ### CP-3.3 — Audit sécurité avancé
 - **5 concerns analysés** : TOCTOU, closures, async, arena-in-arena, atomicité
@@ -123,7 +127,7 @@
 
 ### CP-3.4 — Analyse approfondie
 - **COBOL + Haskell** comparés à 342 (tableau 11 axes)
-- **Table CPU/GPU/QPU** complète pour 19 bosons + 19 gravitons (vérification ancrage hardware)
+- **Table CPU/GPU/QPU** complète pour 18 bosons + 18 gravitons (vérification ancrage hardware)
 - **Émergence fractale N niveaux** : ✅ fonctionne via espace, tokens collés = hardcodés (acceptable)
 - **Boson + fermion = gluon ?** Non. Gluons = catégorie séparée, graviton = boson + gluon
 - **$ pas un boson** (marqueur syntaxique)
@@ -134,18 +138,31 @@
 - **Prononciation** : "trois quarante-deux"
 
 ### Fichiers ajoutés
-- `designs/GRAVITONS-COMPLETE-SPEC.md` — spécification complète des 19 gravitons
+- `designs/GRAVITONS-COMPLETE-SPEC.md` — spécification complète des 18 gravitons (`;{}` retiré D63)
 - `checkpoint/CP-3.4-DEEP-ANALYSIS.md` — analyse approfondie émergence/comparaisons/tenseurs
+
+### CP-3.5 — Revue complète + Modèle particules + Domaines
+- **D63** : `;` reclassé en ponctuation (comme `,` et espace). **18 bosons**, **18 gravitons** (8+6+4)
+- **Modèle particules complet** : quarks=MOVE, leptons=COPY, neutrinos=annotations, photons=pipe, W/Z=cast, Higgs=types
+- **15 domaines × tous langages** : matrice compétitivité complète, gaps identifiés
+- **Anne L'Huillier HHG** : parallèle avec passes d'optimisation compilateur (harmoniques)
+- **Sphère Bloch arbre-dans-sphère** : aligné avec blueprint v5.0 §44
+- **Autograd émergent** : Diffable (D20) = différentiation automatique native
+- **Q26 ouverte** : COBOL decimal arithmetic native
+- **Q27 ouverte** : WASM backend priorité
+- **Fichier** : `checkpoint/CP-3.5-COMPLETE-REVIEW.md`
 
 ---
 
 ## PROCHAINES ÉTAPES
 
-1. **PEG CP-3** : Ajouter les 24 règles manquantes (gravitons + transducteurs + :.)
+1. **PEG CP-3.5** : Ajouter les 23 règles manquantes (18 gravitons + transducteurs + :.) — retirer `;{}`
 2. **Parser Pest** : grammar/342.peg → .pest + 50 tests
 3. **AST → ParticleIR** : Lowering en Rust (~500 lignes)
 4. **Cranelift POC** : ParticleIR → Cranelift → binaire (hello world)
-5. **10 exemples** : Programmes complets démontrant les 19 gravitons
+5. **10 exemples** : Programmes complets démontrant les 18 gravitons
 6. **Stream fusion** : Implémenter |* |- |+ → 1 boucle dans l'IR
-7. **Sugar C** : if/while/return → ?/??/<< (premier dictionnaire)
+7. **Sugar universel** : if/while/return → ?/??/<< + COBOL/Haskell/C → 342 dictionnaire
 8. **Benchmarks** : Arena bump vs malloc, fusion vs boucle manuelle
+9. **Autograd POC** : Diffable + math ops → gradients automatiques (Q25)
+10. **WASM backend** : Cranelift → WASM pour web deployment (Q27)
