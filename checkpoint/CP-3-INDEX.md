@@ -11,8 +11,8 @@
 │   └── 342.peg              ← PEG formelle COURANTE (CP-2, à maj pour CP-3)
 ├── checkpoint/
 │   ├── CP-3-INDEX.md         ← CE FICHIER
-│   ├── CP-2-DECISIONS.md      ← 63 décisions (D1-D63, 1 obsolète, 2 corrigées)
-│   ├── CP-3-OPEN.md          ← Questions ouvertes (Q1-Q24 résolues, Q25-Q27 ouvertes)
+│   ├── CP-2-DECISIONS.md      ← 67 décisions (D1-D67, 1 obsolète, 2 corrigées)
+│   ├── CP-3-OPEN.md          ← Questions ouvertes (Q1-Q24 résolues, Q25-Q28 ouvertes)
 │   ├── CP-3-RESEARCH-2026.md ← État de l'art 2025-2026
 │   ├── CP-3.2-AUDIT-FINAL.md ← Audit complet logique/cohérence/perf
 │   ├── CP-3.3-SECURITY-AUDIT.md ← Audit sécurité TOCTOU/closures/async/arènes
@@ -89,6 +89,7 @@
 | Q25 | ❓ CP-3.4 | HKT émergents + sugar tenseur |
 | Q26 | ❓ CP-3.5 | COBOL decimal arithmetic native |
 | Q27 | ❓ CP-3.5 | WASM backend priorité |
+| Q28 | ❓ CP-3.6 | Algèbre géométrique native (rotors, CGA) |
 
 ---
 
@@ -116,7 +117,7 @@
 - **Stream fusion** (D58) : `*{} -{} +{}` composent en 1 passe (zéro collection intermédiaire)
 - **Matrice symétrique** (D59) : même suffixe × |/~/^ = CPU/GPU/QPU cohérent
 - **!{} vs !?** (D60) : defer block vs lazy eval, coexistent
-- **Total** : 63 décisions, 1 obsolète (D40→D46), 2 corrigées (D41, D54), D63 = `;` ponctuation
+- **Total** : 67 décisions, 1 obsolète (D40→D46), 2 corrigées (D41, D54), D63-D67 = CP-3.5/3.6
 
 ### CP-3.3 — Audit sécurité avancé
 - **5 concerns analysés** : TOCTOU, closures, async, arena-in-arena, atomicité
@@ -151,6 +152,21 @@
 - **Q26 ouverte** : COBOL decimal arithmetic native
 - **Q27 ouverte** : WASM backend priorité
 - **Fichier** : `checkpoint/CP-3.5-COMPLETE-REVIEW.md`
+
+### CP-3.6 — Émergence fractale complète + Reclassification
+- **D64** : Autograd natif via Diffable = killer feature (premier langage avec autograd natif)
+- **D65** : `|` `~` `^` = modes de calcul (séquentiel/parallèle/superposé), PAS hardware spécifique
+- **D66** : MOVE = principe d'exclusion de Pauli (parallèle physique exact)
+- **D67** : 4 tiers de bosons (Compute/Structure/Flux/Méta) alignés sur 4 forces physique
+- **MFENCE émergent** : `@@ + #{ ordered } + {}` = barrière mémoire par composition (pas `;{}`)
+- **Modèle Standard complet** : quarks=types liés, leptons=valeurs libres, 3 générations=3 niveaux complexité
+- **Calculateurs futurs** : modes (pas hardware) → photonique/neuromorphique émergent automatiquement
+- **Graviton** : nom CONFIRMÉ (gravité = confinement = scope)
+- **Géométrie native** : rotors > quaternions, ternaire optimise rotations 120°
+- **Sugar + IA** : dictionnaires sugar générables par IA, pas dans le langage
+- **Q28 ouverte** : Algèbre géométrique native (rotors, multivecteurs, CGA)
+- **Fichier** : `checkpoint/CP-3.6-EMERGENCE-COMPLETE.md`
+- **Visualisation** : `342-octogones.html`
 
 ---
 

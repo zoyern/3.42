@@ -109,6 +109,14 @@
 - **Concurrents** : Rust (wasm-pack), Go (tinygo), Zig (natif). Tous supportent WASM.
 - **Priorité** : Haute — si 342 veut être universel, le web est incontournable.
 
+#### Q28 : Algèbre géométrique native ❓ OUVERTE (CP-3.6)
+**Question** : Faut-il des types géométriques natifs (rotors, multivecteurs, CGA) ?
+- **Aucun langage** n'a l'algèbre géométrique nativement en 2026 (que des bibliothèques Julia, Python, C++)
+- **Rotors** > quaternions pour les rotations 3D (plus intuitifs, généralisent en N dimensions)
+- **Ternaire** optimise les rotations par 120° (permutation circulaire de trits = gratuit)
+- **CGA** (Conformal Geometric Algebra) : rotations, translations, dilatations = MÊME opération
+- **Priorité** : Moyenne — après compilateur. Type `:Multivec` comme citoyen de première classe.
+
 #### Q9 : Trit coprocesseur (mis à jour CP-3)
 - Brevet Huawei CN119652311A confirmé (mars 2025) : premier chip ternaire mondial
 - CNT-SGT : portes ternaires fonctionnelles, SRAM ternaire, 45% moins d'espace, 30% moins d'énergie

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>3.42 — 18 Bosons : 2 Octogones + 2 Centres</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a1a; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
+h1 { font-size: 1.6em; margin-bottom: 5px; color: #fff; }
+h2 { font-size: 1em; color: #888; margin-bottom: 20px; font-weight: normal; }
+.container { position: relative; width: 700px; height: 700px; }
+svg { width: 100%; height: 100%; }
+
+/* Tooltip */
+.tooltip { position: absolute; background: rgba(20,20,40,0.95); border: 1px solid #555; border-radius: 8px; padding: 12px 16px; pointer-events: none; opacity: 0; transition: opacity 0.2s; max-width: 280px; z-index: 10; font-size: 0.85em; }
+.tooltip .sym { font-size: 1.8em; font-weight: bold; margin-bottom: 4px; }
+.tooltip .name { color: #aaa; font-size: 0.9em; }
+.tooltip .desc { margin-top: 6px; line-height: 1.4; }
+.tooltip .tier { margin-top: 4px; font-size: 0.8em; color: #666; }
+
+/* Legend */
+.legend { display: flex; gap: 24px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.85em; }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+/* Info panel */
+.info { max-width: 700px; margin-top: 30px; background: rgba(255,255,255,0.03); border: 1px solid #333; border-radius: 12px; padding: 20px; line-height: 1.6; font-size: 0.9em; }
+.info h3 { color: #64b5f6; margin-bottom: 8px; }
+.info p { margin-bottom: 8px; }
+.info code { background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; font-size: 0.95em; }
+
+/* Gluon ring */
+.gluon-label { font-size: 0.7em; fill: #666; }
+</style>
+</head>
+<body>
+<h1>3.42 — Structure des 18 Bosons</h1>
+<h2>2 Octogones + 2 Centres | Modele inspire de la physique des particules</h2>
+
+<div class="container" id="container">
+<svg viewBox="0 0 700 700" id="svg"></svg>
+<div class="tooltip" id="tooltip"></div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#ff6b6b"></div> Tier 1 — Fondamentaux (8)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ffd93d"></div> Tier 2 — Puissants (6+2)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#6bcb77"></div> Centre — Neutres (2)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#4d96ff; opacity:0.4"></div> Gluons (5)</div>
+</div>
+
+<div class="info">
+  <h3>Lecture du diagramme</h3>
+  <p><strong>Octogone externe (rouge)</strong> : 8 bosons fondamentaux. Chacun a un graviton Tier 1 (<code>boson + {}</code>). Ce sont les forces principales du langage.</p>
+  <p><strong>Octogone interne (jaune)</strong> : 6 bosons puissants (Tier 2) + 2 specialises (Tier 3). Stream fusion (<code>*{} -{} +{}</code>) et I/O (<code>&lt;{} &gt;{}</code>).</p>
+  <p><strong>Centres (vert)</strong> : <code>/</code> (DIVISER = commentaire) et <code>_</code> (IGNORER = void). Les plus passifs.</p>
+  <p><strong>Anneau bleu</strong> : 5 gluons (<code>{} () [] "" ''</code>) — les conteneurs qui entourent la matiere (fermions).</p>
+  <p><strong>Regle</strong> : <code>A B = A(B)</code>. Chaque boson compose avec chaque gluon. Le <code>{}</code> donne un graviton. L'emergence fractale continue a N niveaux.</p>
+</div>
+
+<script>
+const svg = document.getElementById('svg');
+const tooltip = document.getElementById('tooltip');
+const container = document.getElementById('container');
+const cx = 350, cy = 350;
+
+// Boson data
+const tier1 = [
+  { sym: ':', name: 'DEFINIR', desc: 'Type, trait, definition. CPU: MOV imm→reg. Le fondement du systeme de types.', color: '#ff6b6b', cpu: 'MOV' },
+  { sym: '?', name: 'MESURER', desc: 'If/match/pattern. CPU: CMP+JCC. Controle de flux par mesure.', color: '#ff6b6b', cpu: 'CMP' },
+  { sym: '|', name: 'CONNECTER', desc: 'Pipe, flux sequentiel. CPU: MOV reg→reg. Le mode SEQUENTIEL.', color: '#ff6b6b', cpu: 'MOV' },
+  { sym: '~', name: 'DIFFUSER', desc: 'Parallele, broadcast. GPU: dispatch. Le mode PARALLELE.', color: '#ff6b6b', cpu: 'SIMD' },
+  { sym: '^', name: 'SUPERPOSER', desc: 'Quantique, XOR, superposition. QPU: gate. Le mode SUPERPOSE.', color: '#ff6b6b', cpu: 'XOR' },
+  { sym: '!', name: 'INVERSER', desc: 'NOT, defer, negation. CPU: NOT/NEG. Inversion logique et temporelle.', color: '#ff6b6b', cpu: 'NOT' },
+  { sym: '=', name: 'LIER', desc: 'Assignation, binding, closure. CPU: MOV/LEA. Lie un nom a une valeur.', color: '#ff6b6b', cpu: 'LEA' },
+  { sym: '#', name: 'MARQUER', desc: 'Annotation, metadata. CPU: NOP/trap. Marqueur compile-time.', color: '#ff6b6b', cpu: 'NOP' },
+];
+
+const tier2 = [
+  { sym: '<', name: 'SORTIR', desc: 'Output, generateur, write. CPU: OUT/PUSH. Stream de sortie.', color: '#ffd93d', cpu: 'OUT' },
+  { sym: '>', name: 'ENTRER', desc: 'Input, alloc, read. CPU: IN/POP. Scope allocation.', color: '#ffd93d', cpu: 'IN' },
+  { sym: '.', name: 'ACCEDER', desc: 'Champ, destructure, with. CPU: LOAD offset. Acces membre.', color: '#ffd93d', cpu: 'LOAD' },
+  { sym: '+', name: 'ACCUMULER', desc: 'Add, fold, accumulate. CPU: ADD. Aussi spin positif.', color: '#ffd93d', cpu: 'ADD' },
+  { sym: '-', name: 'REDUIRE', desc: 'Sub, filter, diff. CPU: SUB. Aussi spin negatif.', color: '#ffd93d', cpu: 'SUB' },
+  { sym: '*', name: 'TRANSFORMER', desc: 'Mul, map, deref. CPU: MUL/IMUL. Transformation universelle.', color: '#ffd93d', cpu: 'MUL' },
+  { sym: '%', name: 'PROPORTIONNER', desc: 'Mod, probabiliste, ratio. CPU: DIV (remainder). Branches ponderees.', color: '#ffd93d', cpu: 'DIV' },
+  { sym: '@', name: 'REFERENCER', desc: 'Borrow read, reference. CPU: LEA. Scope immutable.', color: '#ffd93d', cpu: 'LEA' },
+];
+
+const centers = [
+  { sym: '/', name: 'DIVISER', desc: 'Commentaire bloc, partition. Le plus passif — separe sans agir.', color: '#6bcb77', cpu: 'DIV' },
+  { sym: '_', name: 'IGNORER', desc: 'Void, discard, sandbox. Le neutre absolu — NOP conceptuel.', color: '#6bcb77', cpu: 'NOP' },
+];
+
+const gluons = [
+  { sym: '{}', name: 'BLOC' },
+  { sym: '()', name: 'GROUPE' },
+  { sym: '[]', name: 'INDEX' },
+  { sym: '""', name: 'TEXTE' },
+  { sym: "''", name: 'CHAR' },
+];
+
+function createNS(tag) {
+  return document.createElementNS('http://www.w3.org/2000/svg', tag);
+}
+
+function polarToXY(cx, cy, r, angleDeg) {
+  const rad = (angleDeg - 90) * Math.PI / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+// Draw gluon ring
+function drawGluonRing() {
+  const r = 195;
+  const circle = createNS('circle');
+  circle.setAttribute('cx', cx);
+  circle.setAttribute('cy', cy);
+  circle.setAttribute('r', r);
+  circle.setAttribute('fill', 'none');
+  circle.setAttribute('stroke', 'rgba(77,150,255,0.15)');
+  circle.setAttribute('stroke-width', '30');
+  circle.setAttribute('stroke-dasharray', '35 40');
+  svg.appendChild(circle);
+
+  gluons.forEach((g, i) => {
+    const angle = (i * 72);
+    const pos = polarToXY(cx, cy, r, angle);
+    const text = createNS('text');
+    text.setAttribute('x', pos.x);
+    text.setAttribute('y', pos.y);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'central');
+    text.setAttribute('class', 'gluon-label');
+    text.textContent = g.sym;
+    svg.appendChild(text);
+  });
+}
+
+// Draw octogon
+function drawOctogon(items, radius, tierLabel) {
+  const n = items.length;
+  const points = [];
+
+  items.forEach((item, i) => {
+    const angle = (i * 360 / n);
+    const pos = polarToXY(cx, cy, radius, angle);
+    points.push(pos);
+  });
+
+  // Draw connecting lines
+  const polygon = createNS('polygon');
+  polygon.setAttribute('points', points.map(p => `${p.x},${p.y}`).join(' '));
+  polygon.setAttribute('fill', 'none');
+  polygon.setAttribute('stroke', items[0].color);
+  polygon.setAttribute('stroke-opacity', '0.3');
+  polygon.setAttribute('stroke-width', '1.5');
+  svg.appendChild(polygon);
+
+  // Draw nodes
+  items.forEach((item, i) => {
+    const pos = points[i];
+
+    // Glow
+    const glow = createNS('circle');
+    glow.setAttribute('cx', pos.x);
+    glow.setAttribute('cy', pos.y);
+    glow.setAttribute('r', '28');
+    glow.setAttribute('fill', item.color);
+    glow.setAttribute('opacity', '0.08');
+    svg.appendChild(glow);
+
+    // Node circle
+    const circle = createNS('circle');
+    circle.setAttribute('cx', pos.x);
+    circle.setAttribute('cy', pos.y);
+    circle.setAttribute('r', '22');
+    circle.setAttribute('fill', 'rgba(10,10,26,0.9)');
+    circle.setAttribute('stroke', item.color);
+    circle.setAttribute('stroke-width', '2');
+    circle.style.cursor = 'pointer';
+    circle.style.transition = 'all 0.2s';
+    svg.appendChild(circle);
+
+    // Symbol text
+    const text = createNS('text');
+    text.setAttribute('x', pos.x);
+    text.setAttribute('y', pos.y);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'central');
+    text.setAttribute('fill', item.color);
+    text.setAttribute('font-size', '18');
+    text.setAttribute('font-weight', 'bold');
+    text.setAttribute('font-family', 'monospace');
+    text.style.pointerEvents = 'none';
+    text.textContent = item.sym;
+    svg.appendChild(text);
+
+    // Name label (small, outside)
+    const labelR = radius + (radius > 200 ? 38 : -38);
+    const labelPos = polarToXY(cx, cy, labelR, (i * 360 / n));
+    const label = createNS('text');
+    label.setAttribute('x', labelPos.x);
+    label.setAttribute('y', labelPos.y);
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('dominant-baseline', 'central');
+    label.setAttribute('fill', '#666');
+    label.setAttribute('font-size', '9');
+    label.textContent = item.name;
+    svg.appendChild(label);
+
+    // Hover events
+    circle.addEventListener('mouseenter', (e) => {
+      circle.setAttribute('r', '26');
+      circle.setAttribute('stroke-width', '3');
+      glow.setAttribute('opacity', '0.2');
+      glow.setAttribute('r', '35');
+      showTooltip(item, tierLabel, e);
+    });
+    circle.addEventListener('mouseleave', () => {
+      circle.setAttribute('r', '22');
+      circle.setAttribute('stroke-width', '2');
+      glow.setAttribute('opacity', '0.08');
+      glow.setAttribute('r', '28');
+      hideTooltip();
+    });
+  });
+}
+
+// Draw centers
+function drawCenters() {
+  centers.forEach((item, i) => {
+    const x = cx + (i === 0 ? -30 : 30);
+    const y = cy;
+
+    // Glow
+    const glow = createNS('circle');
+    glow.setAttribute('cx', x);
+    glow.setAttribute('cy', y);
+    glow.setAttribute('r', '28');
+    glow.setAttribute('fill', item.color);
+    glow.setAttribute('opacity', '0.1');
+    svg.appendChild(glow);
+
+    const circle = createNS('circle');
+    circle.setAttribute('cx', x);
+    circle.setAttribute('cy', y);
+    circle.setAttribute('r', '22');
+    circle.setAttribute('fill', 'rgba(10,10,26,0.9)');
+    circle.setAttribute('stroke', item.color);
+    circle.setAttribute('stroke-width', '2');
+    circle.style.cursor = 'pointer';
+    svg.appendChild(circle);
+
+    const text = createNS('text');
+    text.setAttribute('x', x);
+    text.setAttribute('y', y);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'central');
+    text.setAttribute('fill', item.color);
+    text.setAttribute('font-size', '18');
+    text.setAttribute('font-weight', 'bold');
+    text.setAttribute('font-family', 'monospace');
+    text.style.pointerEvents = 'none';
+    text.textContent = item.sym;
+    svg.appendChild(text);
+
+    const label = createNS('text');
+    label.setAttribute('x', x);
+    label.setAttribute('y', y + 32);
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('fill', '#555');
+    label.setAttribute('font-size', '8');
+    label.textContent = item.name;
+    svg.appendChild(label);
+
+    circle.addEventListener('mouseenter', (e) => {
+      circle.setAttribute('r', '26');
+      glow.setAttribute('opacity', '0.25');
+      showTooltip(item, 'Centre', e);
+    });
+    circle.addEventListener('mouseleave', () => {
+      circle.setAttribute('r', '22');
+      glow.setAttribute('opacity', '0.1');
+      hideTooltip();
+    });
+  });
+}
+
+// Draw connections between trios
+function drawTrioConnections() {
+  // |, ~, ^ trio (compute)
+  const computeIndices = [2, 3, 4]; // in tier1
+  const computeColor = 'rgba(255,107,107,0.15)';
+  computeIndices.forEach((idx, i) => {
+    const next = computeIndices[(i + 1) % 3];
+    const p1 = polarToXY(cx, cy, 270, idx * 45);
+    const p2 = polarToXY(cx, cy, 270, next * 45);
+    const line = createNS('line');
+    line.setAttribute('x1', p1.x); line.setAttribute('y1', p1.y);
+    line.setAttribute('x2', p2.x); line.setAttribute('y2', p2.y);
+    line.setAttribute('stroke', computeColor);
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke-dasharray', '4 4');
+    svg.appendChild(line);
+  });
+
+  // +, -, * trio (stream fusion)
+  const streamIndices = [3, 4, 5]; // in tier2
+  const streamColor = 'rgba(255,217,61,0.15)';
+  streamIndices.forEach((idx, i) => {
+    const next = streamIndices[(i + 1) % 3];
+    const p1 = polarToXY(cx, cy, 140, idx * 45);
+    const p2 = polarToXY(cx, cy, 140, next * 45);
+    const line = createNS('line');
+    line.setAttribute('x1', p1.x); line.setAttribute('y1', p1.y);
+    line.setAttribute('x2', p2.x); line.setAttribute('y2', p2.y);
+    line.setAttribute('stroke', streamColor);
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke-dasharray', '4 4');
+    svg.appendChild(line);
+  });
+}
+
+function showTooltip(item, tier, e) {
+  const rect = container.getBoundingClientRect();
+  const x = e.clientX - rect.left + 15;
+  const y = e.clientY - rect.top - 10;
+  tooltip.innerHTML = `
+    <div class="sym" style="color:${item.color}">${item.sym}</div>
+    <div class="name">${item.name}</div>
+    <div class="desc">${item.desc}</div>
+    ${item.cpu ? `<div class="tier">CPU: ${item.cpu} | Graviton: ${item.sym}{}</div>` : ''}
+    <div class="tier">${tier}</div>
+  `;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top = y + 'px';
+  tooltip.style.opacity = '1';
+}
+
+function hideTooltip() {
+  tooltip.style.opacity = '0';
+}
+
+// Render
+drawGluonRing();
+drawTrioConnections();
+drawOctogon(tier1, 270, 'Tier 1 — Fondamental');
+drawOctogon(tier2, 140, 'Tier 2/3 — Puissant/Specialise');
+drawCenters();
+
+// Center label
+const centerLabel = createNS('text');
+centerLabel.setAttribute('x', cx);
+centerLabel.setAttribute('y', cy - 45);
+centerLabel.setAttribute('text-anchor', 'middle');
+centerLabel.setAttribute('fill', '#444');
+centerLabel.setAttribute('font-size', '10');
+centerLabel.textContent = 'NEUTRES';
+svg.appendChild(centerLabel);
+</script>
+</body>
+</html>

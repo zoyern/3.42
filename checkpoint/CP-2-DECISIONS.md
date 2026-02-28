@@ -95,6 +95,10 @@
 | D61 | Borrow granularity = struct-level | Un @@ sur un champ verrouille le struct entier. Un @ sur un champ verrouille le struct en lecture entière. Conservateur comme Rust. Field-level = optimisation future (flag `#split`). | ✓ SOLIDE |
 | D62 | Real-time debug = Diffable + Énergie + Sphère | Debugger 342 combine : Diffable (time-travel + branching), énergie (coût par opération visible), sphère 3D (variables = points, taille = mémoire, couleur = chaleur). Combinaison unique. | ✓ SOLIDE |
 | D63 | `;` reclassé en ponctuation | `;` n'a pas d'opcode CPU propre, `;{}` crée confusion. Rejoint `,` et espace comme syntaxe structurelle. **18 bosons** (pas 19), **18 gravitons** (8+6+4). | ✓ SOLIDE |
+| D64 | Autograd natif via Diffable | Chaque op math implémente Diffable → gradients automatiques (chain rule). 342 = premier langage avec autograd natif. JAX/Enzyme = bibliothèques, pas natifs. Killer feature IA/physique/finance. | ✓ CONFIRMÉ |
+| D65 | `|` `~` `^` = modes de calcul | Séquentiel/Parallèle/Superposé, PAS CPU/GPU/QPU. Le compilateur mappe vers hardware disponible (GPU, photonique, neuromorphique...). Extensible sans nouveau boson. | ✓ SOLIDE |
+| D66 | MOVE = Pauli | Principe d'exclusion de Pauli : un fermion (donnée) ne peut être qu'à un endroit. Les bosons (opérateurs) n'ont pas cette restriction. Le parallèle physique est exact. | ✓ PROFOND |
+| D67 | 4 tiers de bosons | Tier 0: Compute (| ~ ^), Tier 1: Structure (: = . ! #), Tier 2: Flux (? < > + - *), Tier 3: Méta (% @ / _). Aligné 4 forces physique. | 💡 PROPOSITION |
 
 ## DÉCISIONS REJETÉES
 
