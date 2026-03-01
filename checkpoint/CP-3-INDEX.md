@@ -11,8 +11,8 @@
 │   └── 342.peg              ← PEG formelle COURANTE (CP-2, à maj pour CP-3)
 ├── checkpoint/
 │   ├── CP-3-INDEX.md         ← CE FICHIER
-│   ├── CP-2-DECISIONS.md      ← 78 décisions (D1-D78, 1 obsolète, 3 corrigées)
-│   ├── CP-2-OPEN.md          ← Questions ouvertes (Q1-Q24 résolues, Q25-Q28 ouvertes)
+│   ├── CP-2-DECISIONS.md      ← 79 décisions (D1-D79, 1 obsolète, 3 corrigées)
+│   ├── CP-2-OPEN.md          ← Questions (Q1-Q28 TOUTES RÉSOLUES)
 │   ├── CP-3-RESEARCH-2026.md ← État de l'art 2025-2026
 │   ├── CP-3.2-AUDIT-FINAL.md ← Audit complet logique/cohérence/perf
 │   ├── CP-3.3-SECURITY-AUDIT.md ← Audit sécurité TOCTOU/closures/async/arènes
@@ -124,7 +124,7 @@
 - **Stream fusion** (D58) : `*{} -{} +{}` composent en 1 passe (zéro collection intermédiaire)
 - **Matrice symétrique** (D59) : même suffixe × |/~/^ = CPU/GPU/QPU cohérent
 - **!{} vs !?** (D60) : defer block vs lazy eval, coexistent
-- **Total** : 73 décisions (D1-D73), 1 obsolète (D40→D46), 3 corrigées (D41, D54, D65)
+- **Total** : 79 décisions (D1-D79), 1 obsolète (D40→D46), 3 corrigées (D41, D54, D65)
 
 ### CP-3.3 — Audit sécurité avancé
 - **5 concerns analysés** : TOCTOU, closures, async, arena-in-arena, atomicité
@@ -199,6 +199,10 @@
 - **D76** : Range types natifs — `age : 0..150` = type et borne fusionnés. Overflow vérifié statiquement.
 - **D77** : Algèbre géométrique émergente — `*^` wedge, `*.` dot, `.!` reverse. 360°/N adaptatif.
 - **D78** : Stack SDL3 3.4.2 + wgpu + Cranelift + LLVM. WebGPU via WASM quasi-gratuit.
+- **D79** : Accessibilité par construction — IDE + compilateur + sugar = sécurité haute + barrière basse.
+- **Multi-fichier/POO** : `|>` import, `:` héritage, `@` self, `.` méthodes. Zéro keyword OOP.
+- **Annotations `#{}`** : scopées (variable/bloc/fonction/fichier), registre de clés connues.
+- **Overflow** : pas de clamp implicite. `?` gère, `|> clamp()` explicite, `#{ overflow: saturate }` opt-in.
 - **Q25-Q28 TOUTES FERMÉES** — 28/28 questions résolues
 - **Fichier** : `checkpoint/CP-3.9-CONVERGENCE.md`
 

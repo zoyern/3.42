@@ -111,7 +111,22 @@ f : (x : number) : number = {
 // → MAIS si précision exacte requise → decimal128 ou rationnel
 ```
 
-### Ce que l'IDE montre (en pre-compile) :
+### Range analysis à 3 NIVEAUX (pas juste compile-time)
+
+**Niveau 1 — IDE realtime (LSP)** : pendant que tu tapes, l'IDE calcule et affiche les bornes en ghost text :
+```
+x : 0..100 = input();     // IDE: [u8, 1 byte]
+y = x * 3;                // IDE: [0..300, u16, 2 bytes]
+z = y - 50;               // IDE: [-50..250, i16, 2 bytes]
+overflow_risk = z * z;     // IDE: [2500..62500, u16, ⚠️ overflow si z > 255]
+```
+Le LSP (Language Server Protocol — serveur d'analyse intégré) recalcule en continu. Comme Rust Analyzer montre les types inférés, mais en plus puissant : **bornes + taille mémoire + bugs potentiels**.
+
+**Niveau 2 — Compile-time** : vérification formelle, choix optimal de représentation, erreur si overflow non géré.
+
+**Niveau 3 — Runtime (debug)** : le visualiseur montre les valeurs réelles superposées aux bornes théoriques.
+
+### Ce que l'IDE montre (en realtime) :
 
 ```
 f : (x : number) : number = {
@@ -164,9 +179,9 @@ result ? {
 
 Ada est le plus proche, mais 342 va plus loin : Ada demande des annotations explicites (`type F is delta 0.005 range -50.0..50.0`), 342 INFÈRE les bornes automatiquement et montre dans l'IDE.
 
-→ **D75 : Décimal exact par défaut. `0.1 + 0.2 = 0.3` garanti. Float = opt-in via `~f64` ou `#{ precision: fast }`. Range analysis native = bornes calculées à compile-time, affichées dans l'IDE. Overflow impossible si bornes connues.**
+→ **D75 : Décimal exact par défaut. `0.1 + 0.2 = 0.3` garanti. Float = opt-in via `~f64` ou `#{ precision: fast }`. Range analysis native = 3 niveaux (IDE realtime + compile-time + debug runtime). Overflow impossible si bornes connues.**
 
-→ **D76 : Range types natifs. `age : 0..150` = le type EST la borne. Le compilateur choisit la représentation minimale (u8, i16, etc.). Overflow vérifié statiquement.**
+→ **D76 : Range types natifs. `age : 0..150` = le type EST la borne. Le compilateur choisit la représentation minimale (u8, i16, etc.). Overflow vérifié statiquement. Pas de clamp implicite — le développeur gère explicitement les cas hors-borne.**
 
 ---
 
@@ -518,8 +533,88 @@ x = 0.1 + 0.2;     // = 0.3 garanti même en ~{}
 | D77 | Algèbre géométrique émergente | Rotors, multivecteurs, CGA = `*` `*^` `*.` `.!`. 360°/N adaptatif (D28). Aucun boson ajouté. Q28 fermée. | ✓ ÉMERGENT |
 | D78 | Stack : SDL3 + wgpu + Cranelift | SDL3 = fenêtrage/input. wgpu = GPU cross-platform + WebGPU. Cranelift = proto + WASM. LLVM = prod. | ✓ SOLIDE |
 
+| D79 | Accessibilité par construction | IDE (range realtime) + compilateur (refuse code dangereux) + sugar (mots familiers) = barrière d'entrée basse + sécurité haute. Un débutant produit du code aussi sûr qu'un expert. | ✓ SOLIDE |
+
+### §11 — MULTI-FICHIER / POO ÉMERGENTE
+
+Le système OOP (programmation orientée objet) émerge de `:` + `.` + `@` + `|>` :
+
+```
+// === types/animal.342 ===
+Animal : {
+    name : str; age : 0..50;
+    .new : (name: str, age: 0..50) : @ = { @ = { name, age } };
+    .speak : () : str;                   // méthode abstraite
+    .info : () : str = { << "$(@.name), $(@.age) ans" };
+};
+
+// === types/dog.342 ===
+|> types/animal;                         // |> = import (CONNECTER+DIRIGER)
+Dog : Animal {                           // héritage via :
+    breed : str;
+    .new : (name, age, breed) : @ = { @ = Animal.new(name, age) + { breed } };
+    .speak : () : str = { << "Woof!" };
+};
+
+// === main.342 ===
+|> types/dog;
+main : () = {
+    pets = [ Dog.new("Rex", 5, "Berger") ];
+    pets |* { pet |> pet.speak() |> print };   // polymorphisme
+};
+```
+
+Pas de `class`, `extends`, `implements` — tout émerge de `:` (héritage = typage), `.` (méthodes), `@` (self).
+
+### §12 — ANNOTATIONS `#{}` : COMMENT ÇA SAIT
+
+L'annotation `#{}` (boson CONFIGURER) est **scopée** — elle s'attache au contexte immédiat :
+
+```
+// Sur une variable → configure CETTE variable
+x : rational #{ precision: fast } = 0.1;
+
+// Sur un bloc → configure TOUT le bloc
+#{ precision: fast } { a = 0.1 + 0.2; b = sin(x); };
+
+// Sur une fonction → configure la fonction entière
+calc : (x: f64) : f64 #{ precision: exact } = { ... };
+
+// Sur un fichier (en haut) → configure tout le fichier
+#{ precision: fast, target: gpu }
+```
+
+Le compilateur a un **registre de clés connues** :
+- `precision` → types numériques (rational/float)
+- `overflow` → opérations arithmétiques (saturate/wrap/trap)
+- `target` → compilation (CPU/GPU/QPU)
+- `arena` → allocation mémoire
+- Clé inconnue → erreur compile
+
+### §13 — OVERFLOW : PAS DE CLAMP IMPLICITE
+
+```
+// Range overflow → le développeur CHOISIT :
+x : -1000..1000 = get_value();
+
+// Statique → erreur compile
+x = 1500;                          // ❌ COMPILE ERROR
+
+// Dynamique → ? (boson TESTER) gère
+x = external_input();              // type = i32 | #
+x ? { + : use; - : use; # : handle_overflow };
+
+// Clamp explicite si voulu
+x = external_input() |> clamp(-1000, 1000);
+
+// Saturation via annotation
+x : -1000..1000 #{ overflow: saturate } = calc();  // → clamp auto
+```
+
+Philosophie : **ne jamais perdre d'information silencieusement.**
+
 ### Compteurs
-- **78 décisions** (D1-D78)
+- **79 décisions** (D1-D79)
 - **18 bosons** | **5 gluons** | **3 séparateurs** | **18 gravitons**
 - **28 questions** (Q1-Q28 **TOUTES RÉSOLUES**)
 - **4 tiers SOLIDES** (s,p,d,f)

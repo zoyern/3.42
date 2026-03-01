@@ -551,14 +551,14 @@ Fichier : `342-octogones.html` (interactif, hoverable)
 | D64 | Autograd natif via Diffable | Chaque op math implémente Diffable → gradients automatiques. 342 = premier langage avec autograd natif. Killer feature pour IA/physique/finance. | ✓ CONFIRMÉ |
 | D65 | `\|` `~` `^` = modes de calcul | Séquentiel/Parallèle/Superposé, PAS CPU/GPU/QPU. Le compilateur mappe vers le hardware disponible. Extensible sans nouveau boson. | ✓ SOLIDE |
 | D66 | MOVE = Pauli | Principe d'exclusion : une donnée (fermion) ne peut être qu'à un endroit. Les opérateurs (bosons) peuvent être réutilisés partout. Parallèle exact avec la physique. | ✓ PROFOND |
-| D67 | 4 tiers de bosons | Tier 0: Compute (3), Tier 1: Structure (5), Tier 2: Flux (6), Tier 3: Méta (4). Aligné avec les 4 forces de la physique. | 💡 PROPOSITION |
-| Q28 | Algèbre géométrique native | Rotors, multivecteurs, CGA comme types de première classe. Ternaire optimise les rotations (120° = natif). | ❓ OUVERTE |
+| D67 | 4 tiers de bosons | Tier 0: Compute (3), Tier 1: Structure (5), Tier 2: Flux (6), Tier 3: Méta (4). Aligné avec les 4 forces de la physique. | ✓ SOLIDE |
+| Q28 | Algèbre géométrique native | ✅ RÉSOLU CP-3.9 (D77) : émergente des bosons existants (`*^` wedge, `*.` dot, `.!` reverse). | ✅ FERMÉE |
 
 ### Compteurs mis à jour
-- **73 décisions** (D1-D73, D65 corrigé, D40 obsolète)
+- **79 décisions** (D1-D79, D65 corrigé, D40 obsolète)
 - **18 bosons** (inchangé)
 - **5 gluons** (inchangé)
 - **3 séparateurs** : `;` `,` espace
 - **18 gravitons** (inchangé, nom CONFIRMÉ)
-- **4 tiers** (reclassifié : 3+5+6+4)
-- **28 questions** (Q1-Q24 résolues, Q25-Q28 ouvertes)
+- **4 tiers SOLIDES** (reclassifié : 3+5+6+4)
+- **28 questions** (Q1-Q28 **TOUTES RÉSOLUES**)

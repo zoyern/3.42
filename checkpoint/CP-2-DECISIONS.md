@@ -111,6 +111,7 @@
 | D76 | Range types natifs | `age : 0..150` = le type est la borne. Overflow vérifié statiquement. Représentation auto (u8, i16, etc.). Inspiré Ada delta types, étendu. | ✓ SOLIDE |
 | D77 | Algèbre géométrique émergente | Rotors, multivecteurs, CGA = compositions de bosons (`*`, `*^`, `*.`, `.!`). 360°/N adaptatif (D28). Aucun boson ajouté. | ✓ ÉMERGENT |
 | D78 | Stack : SDL3 + wgpu + Cranelift | SDL3 3.4.2 = fenêtrage/input/audio. wgpu = GPU cross-platform + WebGPU. Cranelift = proto + WASM. LLVM = prod future. | ✓ SOLIDE |
+| D79 | Accessibilité par construction | IDE (range realtime) + compilateur (refuse code dangereux) + sugar (mots familiers) = sécurité haute + barrière d'entrée basse. Débutant = aussi sûr qu'expert. | ✓ SOLIDE |
 
 ## DÉCISIONS REJETÉES
 
