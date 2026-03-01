@@ -11,7 +11,7 @@
 │   └── 342.peg              ← PEG formelle COURANTE (CP-2, à maj pour CP-3)
 ├── checkpoint/
 │   ├── CP-3-INDEX.md         ← CE FICHIER
-│   ├── CP-2-DECISIONS.md      ← 73 décisions (D1-D73, 1 obsolète, 3 corrigées)
+│   ├── CP-2-DECISIONS.md      ← 78 décisions (D1-D78, 1 obsolète, 3 corrigées)
 │   ├── CP-2-OPEN.md          ← Questions ouvertes (Q1-Q24 résolues, Q25-Q28 ouvertes)
 │   ├── CP-3-RESEARCH-2026.md ← État de l'art 2025-2026
 │   ├── CP-3.2-AUDIT-FINAL.md ← Audit complet logique/cohérence/perf
@@ -21,6 +21,7 @@
 │   ├── CP-3.6-EMERGENCE-COMPLETE.md ← Émergence fractale + Reclassification physique
 │   ├── CP-3.7-PHYSIQUE-PROFONDE.md ← Spin, ternaire, orbitales, émergence linguistique
 │   ├── CP-3.8-FONDEMENTS-REVISES.md ← Autograd symbolique, meta-spins, | threads
+│   ├── CP-3.9-CONVERGENCE.md   ← Types auto, décimaux, géométrie, stack SDL3+wgpu
 │   ├── AUDIT-GEMINI.md       ← Audit conversation Gemini
 │   ├── CP-2-*                ← Archived
 │   └── CP-1-*                ← Archived
@@ -92,10 +93,10 @@
 | Q22 | ✅ CP-3 | Blockchain → W3C DID + Move langue |
 | Q23 | ✅ CP-3 | Sphère = organisation (CGA), pas mémoire |
 | Q24 | ✅ CP-3 | SH = compression continue, pas pour diff |
-| Q25 | ❓ CP-3.4 | HKT émergents + sugar tenseur |
-| Q26 | ❓ CP-3.5 | COBOL decimal arithmetic native |
-| Q27 | ❓ CP-3.5 | WASM backend priorité |
-| Q28 | ❓ CP-3.6 | Algèbre géométrique native (rotors, CGA) |
+| Q25 | ✅ CP-3.9 | HKT émergent + autograd D70 + tenseurs stream fusion |
+| Q26 | ✅ CP-3.9 | Décimal exact défaut (D75) + range types (D76) |
+| Q27 | ✅ CP-3.9 | WASM via Cranelift + SDL3 + wgpu (D78) |
+| Q28 | ✅ CP-3.9 | Algèbre géométrique émergente (D77) |
 
 ---
 
@@ -190,6 +191,16 @@
 - **D73** : `|` = connexion universelle — Threads = `|{} | |{}`. GPU = `~{}` dans pipe. QPU = `^{}` dans pipe. ZÉRO keyword.
 - **Sphère de Bloch** : pas qu'une métaphore — modèle computationnel réel quand hardware le permet
 - **Fichier** : `checkpoint/CP-3.8-FONDEMENTS-REVISES.md`
+
+### CP-3.9 — Convergence : types, décimaux, géométrie, stack
+- **D67/D69** : Tiers = orbitales → **✓ SOLIDE** (structure apprentissage + visualisation)
+- **D74** : Typage numérique auto-optimisé — compilateur choisit i8/i64/bigint automatiquement
+- **D75** : Décimal exact par défaut — `0.1+0.2=0.3` garanti. Float = opt-in. Range analysis dans IDE.
+- **D76** : Range types natifs — `age : 0..150` = type et borne fusionnés. Overflow vérifié statiquement.
+- **D77** : Algèbre géométrique émergente — `*^` wedge, `*.` dot, `.!` reverse. 360°/N adaptatif.
+- **D78** : Stack SDL3 3.4.2 + wgpu + Cranelift + LLVM. WebGPU via WASM quasi-gratuit.
+- **Q25-Q28 TOUTES FERMÉES** — 28/28 questions résolues
+- **Fichier** : `checkpoint/CP-3.9-CONVERGENCE.md`
 
 ---
 

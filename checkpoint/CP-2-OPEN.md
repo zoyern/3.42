@@ -87,35 +87,30 @@
 - **Rendu SDF** : OUI, quand le runtime graphique existera
 - **Timeline** : basse priorité, après compilateur
 
-#### Q25 : HKT émergents + sugar tenseur + autograd ❓ OUVERTE (CP-3.4/3.5)
-**Question** : Faut-il des Higher-Kinded Types (types qui prennent d'autres types en paramètres) émergents ? Et un sugar pour les opérations tensorielles (produit matriciel, contraction) ? Autograd via Diffable ?
-- **HKT** : Haskell les a (type classes, foncteurs, monades). 342 pourrait les faire émerger via `:` et composition fractale. À explorer.
-- **Tenseurs** : `A @* B` = produit matriciel ? `A %* B` = contraction ? Ou via stream fusion sur grilles ?
-- **Champs scalaires** : simulation via `*{} -{} +{}` sur grilles 3D + GPU gravitons `~{}`. Cohérent avec le design.
-- **Autograd** : Diffable (D20) = fonctionnellement équivalent à la différentiation automatique. Si chaque op math implémente Diffable, les gradients viennent gratuitement. 342 serait le premier langage avec autograd natif.
-- **Priorité** : Moyenne — après compilateur prototype, quand on aura des benchmarks réels.
+#### Q25 : HKT émergents + sugar tenseur + autograd ✅ RÉSOLU (CP-3.9)
+**Réponse** : HKT émergent via `:` + composition fractale. Tenseurs via stream fusion `*{} +{}`. Autograd = D70 (`.~` `.!` `.=`).
+- **HKT** : `Functor : { .map : (F(A), (A):B) : F(B) }` émerge de `:` naturellement
+- **Tenseurs** : `*{ +{} }` = contraction (map de folds). Stream fusion sur grilles 3D + `~{}` GPU.
+- **Autograd** : D70 = purement symbolique. 342 = premier langage avec autograd natif.
 
-#### Q26 : COBOL decimal arithmetic native ❓ OUVERTE (CP-3.5)
-**Question** : Faut-il un type `decimal` natif pour la finance (COBOL PICTURE, fixed-point) ?
-- **Problème** : COBOL domine la banque (95% des transactions ATM) grâce à `PICTURE 9(5)V99` = décimal exact sans erreurs flottantes.
-- **Solution possible** : type `:decimal` natif ou sugar `%` pour fixed-point. `0.1 + 0.2 = 0.3` garanti.
-- **Concurrents** : C# `decimal`, Java `BigDecimal`, Python `Decimal`. Aucun n'est natif au langage.
-- **Priorité** : Moyenne — critique si 342 vise le domaine bancaire.
+#### Q26 : COBOL decimal arithmetic native ✅ RÉSOLU (CP-3.9)
+**Réponse** : D75 — décimal EXACT par défaut (arithmétique rationnelle). Float = opt-in.
+- `0.1 + 0.2 = 0.3` garanti nativement. Pas une bibliothèque.
+- D76 — range types : `age : 0..150` = type et borne fusionnés. Compilateur choisit u8.
+- Range analysis dans IDE : bornes calculées à pre-compile time, overflow détecté statiquement.
+- D74 — typage numérique auto-optimisé : `byte/int/long` = même concept, compilateur choisit.
 
-#### Q27 : WASM backend priorité ❓ OUVERTE (CP-3.5)
-**Question** : Faut-il un backend WASM (WebAssembly) en plus de Cranelift/LLVM ?
-- **Avantage** : déploiement web instantané, sandboxing natif, portabilité universelle.
-- **Cranelift supporte déjà WASM** comme target. Potentiellement quasi-gratuit.
-- **Concurrents** : Rust (wasm-pack), Go (tinygo), Zig (natif). Tous supportent WASM.
-- **Priorité** : Haute — si 342 veut être universel, le web est incontournable.
+#### Q27 : WASM backend priorité ✅ RÉSOLU (CP-3.9)
+**Réponse** : D78 — WASM quasi-gratuit via Cranelift (qui supporte déjà WASM nativement).
+- Desktop/embarqué = priorité (kernel). Web = futur via WASM + WebGPU.
+- Stack : SDL3 3.4.2 (fenêtrage) + wgpu (GPU cross-platform + WebGPU) + Cranelift.
+- Le code 342 ne change PAS entre desktop et web (grâce aux modes `~ ^`).
 
-#### Q28 : Algèbre géométrique native ❓ OUVERTE (CP-3.6)
-**Question** : Faut-il des types géométriques natifs (rotors, multivecteurs, CGA) ?
-- **Aucun langage** n'a l'algèbre géométrique nativement en 2026 (que des bibliothèques Julia, Python, C++)
-- **Rotors** > quaternions pour les rotations 3D (plus intuitifs, généralisent en N dimensions)
-- **Ternaire** optimise les rotations par 120° (permutation circulaire de trits = gratuit)
-- **CGA** (Conformal Geometric Algebra) : rotations, translations, dilatations = MÊME opération
-- **Priorité** : Moyenne — après compilateur. Type `:Multivec` comme citoyen de première classe.
+#### Q28 : Algèbre géométrique native ✅ RÉSOLU (CP-3.9)
+**Réponse** : D77 — émergente des bosons existants. Aucun nouveau symbole.
+- `*^` = produit extérieur (wedge), `*.` = produit intérieur (dot), `.!` = reverse
+- 360°/N adaptatif grâce à l'agnosticisme D28 (120° en ternaire, 180° en binaire)
+- CliffordNet 2026 confirme : les réseaux de neurones utilisent déjà les multivecteurs (arxiv:2601.06793)
 
 #### Q9 : Trit coprocesseur (mis à jour CP-3)
 - Brevet Huawei CN119652311A confirmé (mars 2025) : premier chip ternaire mondial

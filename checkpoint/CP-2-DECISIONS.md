@@ -98,14 +98,19 @@
 | D64 | Autograd natif via Diffable | Chaque op math implémente Diffable → gradients automatiques (chain rule). 342 = premier langage avec autograd natif. JAX/Enzyme = bibliothèques, pas natifs. Killer feature IA/physique/finance. | ✓ CONFIRMÉ |
 | D65 | ~~`|` `~` `^` = modes de calcul~~ | ~~Ancien : 3 modes équivalents~~ → REMPLACÉ par D65 CORRIGÉ ci-dessous | ⚠️ CORRIGÉ |
 | D66 | MOVE = Pauli | Principe d'exclusion de Pauli : un fermion (donnée) ne peut être qu'à un endroit. Les bosons (opérateurs) n'ont pas cette restriction. Le parallèle physique est exact. | ✓ PROFOND |
-| D67 | 4 tiers = orbitales atomiques | Tier 0/s: Compute (~ ^), Tier 1/p: Structure (: = . ! #), Tier 2/d: Flux (? < > + - *), Tier 3/f: Méta (% @ / _). Aligné orbitales s,p,d,f. | 💡 PROPOSITION |
+| D67 | 4 tiers = orbitales atomiques | Tier 0/s: Compute (~ ^), Tier 1/p: Structure (: = . ! #), Tier 2/d: Flux (? < > + - *), Tier 3/f: Méta (% @ / _). Aligné orbitales s,p,d,f. | ✓ SOLIDE |
 | D68 | Classification par spin physique | Séparateurs=spin 0, Fermions=spin ½ (Pauli/MOVE), Bosons=spin 1, Gravitons=spin 2. Mapping exact Modèle Standard. | ✓ PROFOND |
-| D69 | Tiers = remplissage orbital | s(2)→compute, p(5)→structure, d(6)→flux, f(4)→méta. Progression énergétique = progression de complexité. | 💡 PROPOSITION |
+| D69 | Tiers = remplissage orbital | s(2)→compute, p(5)→structure, d(6)→flux, f(4)→méta. Progression énergétique = progression de complexité. | ✓ SOLIDE |
 | D65 | CORRIGÉ: séquentiel = défaut | Séquentiel = PAS de symbole (défaut). `~` brise la séquentialité (parallèle). `^` brise le déterminisme (superposé). `\|` = pipe/connexion, PAS un mode de calcul. | ✓ CORRIGÉ |
 | D70 | Autograd purement symbolique | `.~` = dérivée, `.!` = snapshot, `.=` = apply. Structural typing : pas besoin de nommer le trait. ZÉRO mot nécessaire. | ✓ ÉLÉGANT |
 | D71 | Spin = profondeur de composition | Spin 2 = graviton, spin 3 = graviton+matière, spin N = N niveaux. Modules = molécules (compositions), pas atomes (bosons). | ✓ COHÉRENT |
 | D72 | Meta-spins agnostiques | `#` `*` s'adaptent à la base. Base N : N premières valeurs (+ - _ # *) remplissent la base, le reste = méta hors-bande. Rôle constant. | ✓ ÉLÉGANT |
 | D73 | `\|` = connexion universelle | Threads = `\|{} \| \|{}`. GPU = `~{}` dans pipe. QPU = `^{}` dans pipe. `#{}` pour device. ZÉRO keyword. | ✓ SOLIDE |
+| D74 | Typage numérique auto-optimisé | `byte/int/long` = même concept. Le compilateur choisit la représentation minimale (i8→bigint). Le type = la contrainte, pas la représentation. | ✓ ÉLÉGANT |
+| D75 | Décimal exact par défaut | `0.1 + 0.2 = 0.3` garanti (rational). Float = opt-in via `~f64` ou `#{ precision: fast }`. Range analysis native dans IDE + compile-time. | ✓ SOLIDE |
+| D76 | Range types natifs | `age : 0..150` = le type est la borne. Overflow vérifié statiquement. Représentation auto (u8, i16, etc.). Inspiré Ada delta types, étendu. | ✓ SOLIDE |
+| D77 | Algèbre géométrique émergente | Rotors, multivecteurs, CGA = compositions de bosons (`*`, `*^`, `*.`, `.!`). 360°/N adaptatif (D28). Aucun boson ajouté. | ✓ ÉMERGENT |
+| D78 | Stack : SDL3 + wgpu + Cranelift | SDL3 3.4.2 = fenêtrage/input/audio. wgpu = GPU cross-platform + WebGPU. Cranelift = proto + WASM. LLVM = prod future. | ✓ SOLIDE |
 
 ## DÉCISIONS REJETÉES
 
