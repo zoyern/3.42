@@ -98,7 +98,10 @@
 | D64 | Autograd natif via Diffable | Chaque op math implémente Diffable → gradients automatiques (chain rule). 342 = premier langage avec autograd natif. JAX/Enzyme = bibliothèques, pas natifs. Killer feature IA/physique/finance. | ✓ CONFIRMÉ |
 | D65 | `|` `~` `^` = modes de calcul | Séquentiel/Parallèle/Superposé, PAS CPU/GPU/QPU. Le compilateur mappe vers hardware disponible (GPU, photonique, neuromorphique...). Extensible sans nouveau boson. | ✓ SOLIDE |
 | D66 | MOVE = Pauli | Principe d'exclusion de Pauli : un fermion (donnée) ne peut être qu'à un endroit. Les bosons (opérateurs) n'ont pas cette restriction. Le parallèle physique est exact. | ✓ PROFOND |
-| D67 | 4 tiers de bosons | Tier 0: Compute (| ~ ^), Tier 1: Structure (: = . ! #), Tier 2: Flux (? < > + - *), Tier 3: Méta (% @ / _). Aligné 4 forces physique. | 💡 PROPOSITION |
+| D67 | 4 tiers = orbitales atomiques | Tier 0/s: Compute (~ ^), Tier 1/p: Structure (: = . ! #), Tier 2/d: Flux (? < > + - *), Tier 3/f: Méta (% @ / _). Aligné orbitales s,p,d,f. | 💡 PROPOSITION |
+| D68 | Classification par spin physique | Séparateurs=spin 0, Fermions=spin ½ (Pauli/MOVE), Bosons=spin 1, Gravitons=spin 2. Mapping exact Modèle Standard. | ✓ PROFOND |
+| D69 | Tiers = remplissage orbital | s(2)→compute, p(5)→structure, d(6)→flux, f(4)→méta. Progression énergétique = progression de complexité. | 💡 PROPOSITION |
+| D65 | CORRIGÉ: séquentiel = défaut | Séquentiel = PAS de symbole (défaut). `~` brise la séquentialité (parallèle). `^` brise le déterminisme (superposé). `\|` = pipe/connexion, PAS un mode de calcul. | ✓ CORRIGÉ |
 
 ## DÉCISIONS REJETÉES
 

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>3.42 — Modèle de Particules Interactif</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0d1117; color: #c9d1d9; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; overflow-x: hidden; }
+
+/* Header */
+.header { text-align: center; padding: 24px 16px 16px; border-bottom: 1px solid #21262d; }
+.header h1 { font-size: 1.5em; color: #fff; }
+.header p { color: #8b949e; font-size: 0.85em; margin-top: 4px; }
+
+/* Navigation breadcrumb */
+.breadcrumb { display: flex; gap: 8px; align-items: center; padding: 12px 24px; background: #161b22; border-bottom: 1px solid #21262d; font-size: 0.8em; flex-wrap: wrap; }
+.breadcrumb span { color: #8b949e; cursor: pointer; padding: 2px 8px; border-radius: 4px; }
+.breadcrumb span:hover { background: #21262d; color: #58a6ff; }
+.breadcrumb span.active { color: #58a6ff; font-weight: bold; background: rgba(56,139,253,0.1); }
+.breadcrumb .sep { color: #484f58; cursor: default; }
+.breadcrumb .sep:hover { background: none; }
+
+/* Main layout */
+.main { display: flex; height: calc(100vh - 110px); }
+
+/* Left: particle grid */
+.particles-panel { flex: 1; overflow-y: auto; padding: 20px; }
+
+/* Right: detail panel */
+.detail-panel { width: 380px; background: #161b22; border-left: 1px solid #21262d; overflow-y: auto; padding: 20px; }
+.detail-panel h2 { font-size: 1.1em; color: #fff; margin-bottom: 12px; }
+.detail-panel .sym-big { font-size: 3em; font-family: monospace; font-weight: bold; margin-bottom: 8px; }
+.detail-panel .meta { color: #8b949e; font-size: 0.8em; margin-bottom: 16px; }
+.detail-panel .desc { line-height: 1.6; margin-bottom: 16px; font-size: 0.9em; }
+.detail-panel .code-example { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 0.8em; line-height: 1.5; margin-bottom: 12px; overflow-x: auto; white-space: pre; }
+.detail-panel .code-label { font-size: 0.75em; color: #8b949e; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.detail-panel .tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.7em; margin: 2px; }
+
+/* Level sections */
+.level-section { margin-bottom: 24px; }
+.level-title { font-size: 0.85em; color: #8b949e; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.level-title .line { flex: 1; height: 1px; background: #21262d; }
+
+/* Particle grid */
+.particle-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Particle node */
+.particle { width: 72px; height: 72px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; border: 2px solid transparent; position: relative; }
+.particle:hover { transform: scale(1.08); border-color: currentColor; }
+.particle.selected { border-color: currentColor; box-shadow: 0 0 12px currentColor; }
+.particle .sym { font-family: monospace; font-size: 1.5em; font-weight: bold; }
+.particle .name { font-size: 0.55em; color: #8b949e; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+.particle .badge { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; font-size: 0.5em; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+/* Colors by type */
+.particle.boson-compute { background: rgba(136,46,224,0.15); color: #a371f7; }
+.particle.boson-structure { background: rgba(56,139,253,0.12); color: #58a6ff; }
+.particle.boson-flux { background: rgba(255,107,107,0.12); color: #ff7b72; }
+.particle.boson-meta { background: rgba(255,217,61,0.12); color: #e3b341; }
+.particle.gluon { background: rgba(63,185,80,0.12); color: #3fb950; }
+.particle.separator { background: rgba(139,148,158,0.1); color: #8b949e; }
+.particle.graviton { background: rgba(210,153,34,0.12); color: #d29922; border-style: dashed; }
+.particle.fermion { background: rgba(219,171,255,0.1); color: #d2a8ff; border-radius: 50%; }
+.particle.transducer { background: rgba(56,139,253,0.08); color: #79c0ff; font-size: 0.9em; }
+
+/* Connections */
+.connections { margin: 16px 0; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid #21262d; }
+.connections h3 { font-size: 0.8em; color: #8b949e; margin-bottom: 8px; }
+.conn-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.8em; cursor: pointer; }
+.conn-item:hover { color: #58a6ff; }
+.conn-item .arrow { color: #484f58; }
+
+/* Rule display */
+.rule-box { background: rgba(136,46,224,0.1); border: 1px solid rgba(136,46,224,0.3); border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 20px; }
+.rule-box .rule { font-family: monospace; font-size: 1.3em; color: #a371f7; }
+.rule-box .explain { font-size: 0.8em; color: #8b949e; margin-top: 6px; }
+
+/* Spin indicator */
+.spin-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 8px; font-size: 0.7em; }
+
+/* Legend */
+.legend { display: flex; flex-wrap: wrap; gap: 12px; padding: 12px 24px; background: #161b22; border-top: 1px solid #21262d; font-size: 0.75em; }
+.legend-item { display: flex; align-items: center; gap: 4px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+@media (max-width: 900px) {
+  .main { flex-direction: column; height: auto; }
+  .detail-panel { width: 100%; border-left: none; border-top: 1px solid #21262d; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>3.42 — Modele de Particules</h1>
+  <p>Cliquez sur une particule pour voir ses details, connexions et exemples de code</p>
+</div>
+
+<div class="breadcrumb" id="breadcrumb">
+  <span class="active" onclick="showLevel(0)">Niveau 0 : Particules</span>
+  <span class="sep">/</span>
+  <span onclick="showLevel(1)">Niveau 1 : Gravitons</span>
+  <span class="sep">/</span>
+  <span onclick="showLevel(2)">Niveau 2 : Transducteurs</span>
+</div>
+
+<div class="main">
+  <div class="particles-panel" id="particlesPanel"></div>
+  <div class="detail-panel" id="detailPanel">
+    <div class="rule-box">
+      <div class="rule">A B = A(B)</div>
+      <div class="explain">Regle unique : tout emerge de la composition fractale</div>
+    </div>
+    <h2>Selectionnez une particule</h2>
+    <p class="desc">Cliquez sur n'importe quelle particule a gauche pour voir :
+ses proprietes physiques, ses connexions avec les autres particules,
+des exemples de code equivalent en C, Python, Haskell, etc.</p>
+    <div class="connections">
+      <h3>Structure du langage</h3>
+      <div class="conn-item"><span style="color:#a371f7">■</span> 2 Bosons compute (orbitale s) — ~ ^</div>
+      <div class="conn-item"><span style="color:#58a6ff">■</span> 5 Bosons structure (orbitale p) — : = . ! #</div>
+      <div class="conn-item"><span style="color:#ff7b72">■</span> 6 Bosons flux (orbitale d) — ? < > + - *</div>
+      <div class="conn-item"><span style="color:#e3b341">■</span> 4 Bosons meta (orbitale f) — % @ / _</div>
+      <div class="conn-item"><span style="color:#3fb950">■</span> 5 Gluons (conteneurs) — {} () [] "" ''</div>
+      <div class="conn-item"><span style="color:#8b949e">■</span> 3 Separateurs (ponctuation) — ; , espace</div>
+    </div>
+    <div class="connections">
+      <h3>Physique → 342</h3>
+      <div class="conn-item">Spin 0 → Separateurs (scalaires)</div>
+      <div class="conn-item">Spin ½ → Fermions/Donnees (Pauli = MOVE)</div>
+      <div class="conn-item">Spin 1 → Bosons/Operateurs (forces)</div>
+      <div class="conn-item">Spin 2 → Gravitons (confinement = scope)</div>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#a371f7"></div> Compute (s)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div> Structure (p)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ff7b72"></div> Flux (d)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e3b341"></div> Meta (f)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div> Gluons</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8b949e"></div> Separateurs</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d29922;border:1px dashed #d29922"></div> Gravitons</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff;border-radius:50%"></div> Fermions</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════
+
+const bosons = [
+  // Tier 0 — Compute (orbital s)
+  { sym: '~', name: 'DIFFUSER', tier: 'compute', spin: 1, cpu: 'SIMD broadcast',
+    desc: 'Force PARALLELE. Brise la sequentialite. Le code dans ~{} sexecute en parallele (GPU, photonique, multi-thread).',
+    graviton: '~{} = scope parallele (GPU compute)',
+    code342: '~{\n  data ~* (x) { x * 2 };  // parallel map\n  result ~+ (a,b) { a+b }; // reduce\n};',
+    codeC: '// CUDA equivalent\n__global__ void kernel(int* d) {\n  int i = threadIdx.x;\n  d[i] = d[i] * 2;\n}',
+    codePy: '# NumPy equivalent\nimport numpy as np\nresult = np.sum(data * 2)',
+  },
+  { sym: '^', name: 'SUPERPOSER', tier: 'compute', spin: 1, cpu: 'XOR / quantum gate',
+    desc: 'Force SUPERPOSEE. Brise le determinisme. Le code dans ^{} peut etre quantique (QPU) ou simule.',
+    graviton: '^{} = scope quantique (circuit QPU)',
+    code342: '^{\n  q = ^~(0.5, 0.5); // Hadamard\n  r = ^|(q, anc);    // CNOT\n  result = ^^r;       // Mesure\n};',
+    codeC: '// Qiskit equivalent\nqc = QuantumCircuit(2)\nqc.h(0)\nqc.cx(0, 1)\nqc.measure_all()',
+    codePy: '# Cirq equivalent\nimport cirq\nq = cirq.LineQubit(0)\ncircuit = cirq.Circuit(cirq.H(q))',
+  },
+  // Tier 1 — Structure (orbital p)
+  { sym: ':', name: 'DEFINIR', tier: 'structure', spin: 1, cpu: 'MOV imm→reg',
+    desc: 'Definit les types et traits. Le Higgs de 342 : donne la "masse" (type) aux donnees.',
+    graviton: ':{} = definition de type ou trait',
+    code342: 'Point : {\n  x : f64;\n  y : f64;\n};',
+    codeC: 'typedef struct {\n  double x;\n  double y;\n} Point;',
+    codePy: 'class Point:\n  x: float\n  y: float',
+    codeHaskell: 'data Point = Point\n  { x :: Double\n  , y :: Double }',
+  },
+  { sym: '=', name: 'LIER', tier: 'structure', spin: 1, cpu: 'MOV / LEA',
+    desc: 'Lie un nom a une valeur. Avec {} = closure (capture lenvironnement).',
+    graviton: '={} = closure (liaison de scope)',
+    code342: 'counter = ={\n  n = 0;\n  () { n += 1; << n };\n};',
+    codeC: '// C: pas de closures natives\nint n = 0;\nint counter() { return ++n; }',
+    codePy: 'def make_counter():\n  n = [0]\n  def inc(): n[0]+=1; return n[0]\n  return inc',
+    codeHaskell: 'counter = do\n  ref <- newIORef 0\n  return $ modifyIORef ref (+1)',
+  },
+  { sym: '.', name: 'ACCEDER', tier: 'structure', spin: 1, cpu: 'LOAD offset',
+    desc: 'Acces a un champ. Avec {} = destructuration (ouvre les champs dans le scope).',
+    graviton: '.{} = destructuration / with-block',
+    code342: 'point .{\n  dist = (x*x + y*y) ^ 0.5;\n};',
+    codeC: '// C: pas de with-block\ndouble dist = sqrt(\n  p.x*p.x + p.y*p.y);',
+    codePy: '# Python: no with-block for attrs\ndist = math.sqrt(p.x**2 + p.y**2)',
+    codeHaskell: '-- Haskell: record wildcards\nlet Point{..} = p\n    dist = sqrt(x*x+y*y)',
+  },
+  { sym: '!', name: 'INVERSER', tier: 'structure', spin: 1, cpu: 'NOT / NEG',
+    desc: 'Negation, inversion. Avec {} = defer (execute a la sortie du scope, LIFO).',
+    graviton: '!{} = defer block',
+    code342: 'f = open("data.txt");\n!{ close(f) };\n// ... utiliser f ...\n// close(f) auto a la sortie',
+    codeC: '// C: pas de defer natif\nFILE* f = fopen("data.txt","r");\n// ... utiliser f ...\nfclose(f); // facile a oublier !',
+    codePy: '# Python: with statement\nwith open("data.txt") as f:\n  # ... utiliser f ...',
+    codeHaskell: '-- Haskell: bracket\nbracket (openFile "data.txt")\n  hClose\n  (\\h -> ...)',
+  },
+  { sym: '#', name: 'MARQUER', tier: 'structure', spin: 1, cpu: 'NOP / trap',
+    desc: 'Annotations compile-time. En trit = out-of-band (erreur/trap, comme NaN). Avec {} = metadata block.',
+    graviton: '#{} = annotations / metadata',
+    code342: '#{ pure: +; version: 1 }\nfib : (n:i64) : i64 = {\n  n ? { 0:0; 1:1; _:fib(n-1)+fib(n-2) }\n};',
+    codeC: '// C: pas dannotations\n/* @pure @version(1) */\nint fib(int n) { ... }',
+    codePy: '# Python: decorators\n@pure\ndef fib(n: int) -> int: ...',
+    codeHaskell: '-- Haskell: pragmas\n{-# INLINE fib #-}\nfib :: Int -> Int',
+  },
+  // Tier 2 — Flux (orbital d)
+  { sym: '?', name: 'MESURER', tier: 'flux', spin: 1, cpu: 'CMP + JCC',
+    desc: 'If/match/pattern matching. Le Z boson de 342 : mesure sans changer (courant neutre).',
+    graviton: '?{} = pattern matching (switch/match)',
+    code342: 'value ? {\n  + : handle_ok;\n  - : handle_fail;\n  # : handle_error;\n  _ : default;\n};',
+    codeC: 'switch(value) {\n  case OK: handle_ok(); break;\n  case FAIL: handle_fail(); break;\n  default: break;\n}',
+    codePy: 'match value:\n  case OK: handle_ok()\n  case FAIL: handle_fail()\n  case _: pass',
+    codeHaskell: 'case value of\n  Ok x  -> handleOk x\n  Err e -> handleErr e\n  _     -> pure ()',
+  },
+  { sym: '<', name: 'SORTIR', tier: 'flux', spin: 1, cpu: 'OUT / PUSH / STORE',
+    desc: 'Output, generateur, write. << = return. Avec {} = bloc de sortie (stream writer).',
+    graviton: '<{} = generateur / writer block',
+    code342: 'html = <{\n  "<html>";\n  "<body>";\n  content;\n  "</body>";\n};',
+    codeC: 'printf("<html>");\nprintf("<body>");\nprintf("%s", content);\nprintf("</body>");',
+    codePy: 'def gen_html():\n  yield "<html>"\n  yield "<body>"\n  yield content\n  yield "</body>"',
+  },
+  { sym: '>', name: 'ENTRER', tier: 'flux', spin: 1, cpu: 'IN / POP / LOAD',
+    desc: 'Input, allocation, read. Avec {} = scope dallocation (arene locale).',
+    graviton: '>{} = alloc scope / input block',
+    code342: '>{\n  buf = > 4096;   // alloc 4Ko\n  process(@buf);\n};\n// libere en O(1)',
+    codeC: 'void* buf = alloca(4096);\nprocess(buf);\n// auto-free quand la stack unwind',
+    codePy: '# Python: pas de controle memoire\nbuf = bytearray(4096)\nprocess(buf)',
+  },
+  { sym: '+', name: 'ACCUMULER', tier: 'flux', spin: 1, cpu: 'ADD',
+    desc: 'Addition, fold, accumulation. Aussi spin positif (+). Avec {} = fold/reduce avec init.',
+    graviton: '+{} = fold / accumulate',
+    code342: 'total = items +{\n  init: 0;\n  (acc, x) { acc + x.price };\n};',
+    codeC: 'int total = 0;\nfor(int i=0; i<n; i++)\n  total += items[i].price;',
+    codePy: 'total = sum(x.price for x in items)',
+    codeHaskell: 'total = foldl (\\acc x -> acc + price x)\n  0 items',
+  },
+  { sym: '-', name: 'REDUIRE', tier: 'flux', spin: 1, cpu: 'SUB',
+    desc: 'Soustraction, filter, diff. Aussi spin negatif (-). Avec {} = filter block.',
+    graviton: '-{} = filter / diff block',
+    code342: 'adults = people\n  -{ (p) { p.age >= 18 } };',
+    codeC: '// C: boucle manuelle\nfor(int i=0; i<n; i++)\n  if(people[i].age >= 18)\n    add(adults, people[i]);',
+    codePy: 'adults = [p for p in people\n  if p.age >= 18]',
+    codeHaskell: 'adults = filter\n  (\\p -> age p >= 18) people',
+  },
+  { sym: '*', name: 'TRANSFORMER', tier: 'flux', spin: 1, cpu: 'MUL / IMUL',
+    desc: 'Multiplication, map, deref. Aussi flag wildcard (*). Avec {} = map/transform.',
+    graviton: '*{} = map / transform',
+    code342: 'doubled = items\n  *{ (x) { x * 2 } };',
+    codeC: 'for(int i=0; i<n; i++)\n  result[i] = items[i] * 2;',
+    codePy: 'doubled = [x*2 for x in items]\n# ou: list(map(lambda x: x*2, items))',
+    codeHaskell: 'doubled = map (*2) items',
+  },
+  // Tier 3 — Meta (orbital f)
+  { sym: '%', name: 'PROPORTIONNER', tier: 'meta', spin: 1, cpu: 'DIV (remainder)',
+    desc: 'Modulo, probabiliste, ratio. Avec {} = branches ponderees par probabilite.',
+    graviton: '%{} = probabilistic block',
+    code342: 'action = %{\n  0.7 : common;\n  0.2 : rare;\n  0.1 : ultra_rare;\n};',
+    codeC: '// C: manual probability\nfloat r = rand()/(float)RAND_MAX;\nif(r<0.7) common();\nelse if(r<0.9) rare();\nelse ultra_rare();',
+    codePy: 'import random\naction = random.choices(\n  [common,rare,ultra],\n  weights=[0.7,0.2,0.1])[0]',
+  },
+  { sym: '@', name: 'REFERENCER', tier: 'meta', spin: 1, cpu: 'LEA',
+    desc: 'Borrow read (@ = lecture). @@ = ecriture sequentielle. Avec {} = scope immutable.',
+    graviton: '@{} = immutable scope (read-only)',
+    code342: '@{\n  // tout est @ (lecture seule)\n  shared_view(data);\n  // @@ interdit ici\n};',
+    codeC: '// C: const qualifier\nconst int* p = &data;\n// *p = 42; // ERREUR',
+    codePy: '# Python: pas dimmutabilite native\n# Convention: UPPER_CASE = const',
+    codeHaskell: '-- Haskell: tout est immutable\n-- par defaut !',
+  },
+  { sym: '/', name: 'DIVISER', tier: 'meta', spin: 1, cpu: 'DIV',
+    desc: 'Division, commentaire bloc. Le plus passif — separe sans agir. /* */ est deja un graviton emerge.',
+    graviton: '/{} = commentaire bloc / partition',
+    code342: '/* commentaire = graviton /{}\n   emerge naturellement */\ndata /{ predicate };\n// = (match, non_match)',
+    codeC: '/* C: commentaires identiques */\n// partition: pas natif',
+    codePy: '# Python: pas de partition native\nmatch = [x for x in d if p(x)]\nnon = [x for x in d if not p(x)]',
+  },
+  { sym: '_', name: 'IGNORER', tier: 'meta', spin: 1, cpu: 'NOP',
+    desc: 'Void, discard, wildcard. Le neutre absolu. Avec {} = sandbox/dry-run.',
+    graviton: '_{} = sandbox / discard block',
+    code342: '_{\n  expensive_op();\n  // resultat ignore\n  // side-effects supprimes\n};',
+    codeC: '// C: cast to void\n(void)expensive_op();',
+    codePy: '# Python: underscore convention\n_ = expensive_op()',
+    codeHaskell: '-- Haskell: void\nvoid $ expensive_op',
+  },
+];
+
+const gluons = [
+  { sym: '{}', name: 'BLOC', desc: 'Conteneur principal. Cree une arene memoire. Free en O(1) a la sortie.', equiv: '{ } en C/Java/Rust' },
+  { sym: '()', name: 'GROUPE', desc: 'Groupement dexpressions. Parametres de fonction. Priorite.', equiv: '( ) partout' },
+  { sym: '[]', name: 'INDEX', desc: 'Acces par index. Tableaux. Collections ordonnees.', equiv: '[ ] en C/Python/JS' },
+  { sym: '""', name: 'TEXTE', desc: 'Chaines de caracteres. Interpolation avec $.', equiv: '" " partout' },
+  { sym: "''", name: 'CHAR', desc: 'Caractere unique ou symbol.', equiv: "' ' en C/Rust" },
+];
+
+const separators = [
+  { sym: ';', name: 'TERMINER', desc: 'Fin de statement. Comme le point en francais. Spin 0 (scalaire, pas de force).', equiv: '; en C/Java/Rust' },
+  { sym: ',', name: 'SEPARER', desc: 'Separe les elements dans un gluon. Comme la virgule en francais.', equiv: ', partout' },
+  { sym: '⎵', name: 'ESPACE', desc: 'Discriminant entre bosons et fermions. A B = A(B). Le silence entre les notes.', equiv: 'espace partout' },
+];
+
+const fermions = [
+  { sym: 'i32', name: 'Quark up', desc: 'Entier 32 bits. Generation 1 (stable). Spin ½ : obeit a Pauli/MOVE.', gen: 1 },
+  { sym: 'f64', name: 'Quark down', desc: 'Flottant 64 bits. Generation 1 (stable). Nombres reels.', gen: 1 },
+  { sym: 'bool', name: 'Electron', desc: 'Booleen. Lepton generation 1. Existe seul, independant.', gen: 1 },
+  { sym: 'struct', name: 'Quark charm', desc: 'Type compose. Generation 2 (plus complexe que les primitifs).', gen: 2 },
+  { sym: 'enum', name: 'Quark strange', desc: 'Type union. Generation 2. Peut etre plusieurs choses.', gen: 2 },
+  { sym: 'trait', name: 'Muon', desc: 'Interface/contrat. Lepton generation 2. Plus lourd que bool.', gen: 2 },
+  { sym: 'dyn', name: 'Quark top', desc: 'Trait object dynamique. Generation 3 (le plus lourd). Dispatch a lexecution.', gen: 3 },
+  { sym: 'gen', name: 'Quark bottom', desc: 'Generic/polymorphe. Generation 3. Instancie au compile-time.', gen: 3 },
+];
+
+// ═══════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════
+
+const panel = document.getElementById('particlesPanel');
+const detail = document.getElementById('detailPanel');
+let currentLevel = 0;
+let selectedSym = null;
+
+function tierClass(tier) {
+  return 'boson-' + tier;
+}
+
+function showLevel(level) {
+  currentLevel = level;
+  // Update breadcrumb
+  document.querySelectorAll('.breadcrumb span:not(.sep)').forEach((s, i) => {
+    s.className = i === level ? 'active' : '';
+  });
+  renderLevel();
+}
+
+function renderLevel() {
+  panel.innerHTML = '';
+  if (currentLevel === 0) renderLevel0();
+  else if (currentLevel === 1) renderLevel1();
+  else renderLevel2();
+}
+
+function createParticleNode(sym, name, cls, onClick) {
+  const div = document.createElement('div');
+  div.className = `particle ${cls}`;
+  div.innerHTML = `<span class="sym">${sym}</span><span class="name">${name}</span>`;
+  div.onclick = onClick;
+  return div;
+}
+
+function renderLevel0() {
+  // Rule
+  const ruleDiv = document.createElement('div');
+  ruleDiv.className = 'rule-box';
+  ruleDiv.innerHTML = '<div class="rule">A B = A(B)</div><div class="explain">Regle unique : espace = application. Tout emerge de la composition fractale a N niveaux.</div>';
+  panel.appendChild(ruleDiv);
+
+  // Compute bosons (orbital s)
+  addSection('Orbitale s — COMPUTE (2 bosons, spin 1)', 'Forces dacceleration : brisent le sequentiel');
+  const grid0 = addGrid();
+  bosons.filter(b => b.tier === 'compute').forEach(b => {
+    grid0.appendChild(createParticleNode(b.sym, b.name, tierClass(b.tier), () => selectBoson(b)));
+  });
+
+  // Structure bosons (orbital p)
+  addSection('Orbitale p — STRUCTURE (5 bosons, spin 1)', 'Construisent la matiere du programme');
+  const grid1 = addGrid();
+  bosons.filter(b => b.tier === 'structure').forEach(b => {
+    grid1.appendChild(createParticleNode(b.sym, b.name, tierClass(b.tier), () => selectBoson(b)));
+  });
+
+  // Flux bosons (orbital d)
+  addSection('Orbitale d — FLUX (6 bosons, spin 1)', 'Transforment et deplacent les donnees');
+  const grid2 = addGrid();
+  bosons.filter(b => b.tier === 'flux').forEach(b => {
+    grid2.appendChild(createParticleNode(b.sym, b.name, tierClass(b.tier), () => selectBoson(b)));
+  });
+
+  // Meta bosons (orbital f)
+  addSection('Orbitale f — META (4 bosons, spin 1)', 'Contextes specialises');
+  const grid3 = addGrid();
+  bosons.filter(b => b.tier === 'meta').forEach(b => {
+    grid3.appendChild(createParticleNode(b.sym, b.name, tierClass(b.tier), () => selectBoson(b)));
+  });
+
+  // Gluons
+  addSection('GLUONS (5 conteneurs, spin 1)', 'Force forte : confinent le code (comme les quarks dans les hadrons)');
+  const gridG = addGrid();
+  gluons.forEach(g => {
+    gridG.appendChild(createParticleNode(g.sym, g.name, 'gluon', () => selectGluon(g)));
+  });
+
+  // Separators
+  addSection('SEPARATEURS (3, spin 0)', 'Ponctuation : structurent sans agir (comme le Higgs scalaire)');
+  const gridS = addGrid();
+  separators.forEach(s => {
+    gridS.appendChild(createParticleNode(s.sym, s.name, 'separator', () => selectSeparator(s)));
+  });
+
+  // Fermions
+  addSection('FERMIONS (donnees, spin ½)', 'La matiere. Obeissent a Pauli : MOVE = une donnee a un seul endroit');
+  const gridF = addGrid();
+  fermions.forEach(f => {
+    const node = createParticleNode(f.sym, f.name, 'fermion', () => selectFermion(f));
+    const badge = document.createElement('div');
+    badge.className = 'badge';
+    badge.style.background = f.gen === 1 ? '#3fb950' : f.gen === 2 ? '#e3b341' : '#ff7b72';
+    badge.textContent = f.gen;
+    node.appendChild(badge);
+    gridF.appendChild(node);
+  });
+}
+
+function renderLevel1() {
+  addSection('18 GRAVITONS = Boson + Gluon {}', 'Spin 2 : confinent le code dans des scopes types. Comme la gravite confine la matiere.');
+  const grid = addGrid();
+  bosons.forEach(b => {
+    grid.appendChild(createParticleNode(
+      b.sym + '{}', b.graviton ? b.graviton.split('=')[0].trim() : b.name,
+      'graviton',
+      () => selectGraviton(b)
+    ));
+  });
+}
+
+function renderLevel2() {
+  addSection('TRANSDUCTEURS = Boson + Boson (colles)', 'Niveau 2 demergence. Compositions sans espace.');
+
+  // Pipe transducers
+  addSection('Pipe transducteurs (| + suffix)', '');
+  const gridPipe = addGrid();
+  const pipes = [
+    { sym: '|*', name: 'map', desc: 'Transformer chaque element dans le pipe' },
+    { sym: '|-', name: 'filter', desc: 'Garder les elements qui passent le test' },
+    { sym: '|+', name: 'fold', desc: 'Accumuler avec valeur initiale' },
+    { sym: '|!', name: 'async', desc: 'Fire-and-forget (envoyer sans attendre)' },
+    { sym: '|?', name: 'cond pipe', desc: 'Pipe conditionnel (si vrai)' },
+    { sym: '|~', name: 'fanout', desc: 'Envoyer a N destinations (1→N)' },
+  ];
+  pipes.forEach(t => {
+    gridPipe.appendChild(createParticleNode(t.sym, t.name, 'transducer', () => selectTransducer(t)));
+  });
+
+  // GPU transducers
+  addSection('GPU transducteurs (~ + suffix)', '');
+  const gridGpu = addGrid();
+  const gpuT = [
+    { sym: '~*', name: 'par map', desc: 'Map parallele (CUDA kernel)' },
+    { sym: '~+', name: 'par reduce', desc: 'Reduce parallele (GPU reduction)' },
+    { sym: '~-', name: 'par filter', desc: 'Filter parallele (stream compaction)' },
+    { sym: '~!', name: 'scatter', desc: 'Diffusion inverse (ecriture dispersee)' },
+  ];
+  gpuT.forEach(t => {
+    gridGpu.appendChild(createParticleNode(t.sym, t.name, 'transducer', () => selectTransducer(t)));
+  });
+
+  // QPU transducers
+  addSection('QPU transducteurs (^ + suffix)', '');
+  const gridQpu = addGrid();
+  const qpuT = [
+    { sym: '^!', name: 'X gate', desc: 'Bit flip (Pauli X)' },
+    { sym: '^~', name: 'Hadamard', desc: 'Superposition egale' },
+    { sym: '^|', name: 'CNOT', desc: 'Controlled-NOT (intrication)' },
+    { sym: '^+', name: 'Y gate', desc: 'Rotation spin + (Pauli Y)' },
+    { sym: '^-', name: 'Z gate', desc: 'Rotation spin - (Pauli Z)' },
+  ];
+  qpuT.forEach(t => {
+    gridQpu.appendChild(createParticleNode(t.sym, t.name, 'transducer', () => selectTransducer(t)));
+  });
+
+  // Stream fusion
+  addSection('STREAM FUSION = gravitons chaines', '*{} -{} +{} compiles en UNE boucle (zero allocation intermediaire)');
+  const gridFusion = addGrid();
+  const fusion = createParticleNode('*{} -{} +{}', 'fusion', 'graviton', () => {
+    detail.innerHTML = `
+      <div class="sym-big" style="color:#d29922">*{} -{} +{}</div>
+      <div class="meta">STREAM FUSION — Killer Feature</div>
+      <div class="desc">Map + Filter + Fold compiles en UNE SEULE boucle. Zero collection intermediaire. Fractal sur les 3 modes (CPU/GPU/QPU).</div>
+      <div class="code-label">342</div>
+      <div class="code-example">result = data
+  *{ (x) { x * 2 } }      // map
+  -{ (x) { x > 0 } }      // filter
+  +{ 0; (acc,x) { acc+x } }; // fold
+// = 1 boucle, 0 alloc</div>
+      <div class="code-label">Python equivalent</div>
+      <div class="code-example">result = sum(
+  x*2 for x in data
+  if x*2 > 0
+)
+# Aussi 1 passe (generator)</div>
+      <div class="code-label">Haskell equivalent</div>
+      <div class="code-example">result = foldl' (+) 0
+  . filter (>0)
+  . map (*2)
+  $ data
+-- Fusion via rewrite rules</div>
+    `;
+  });
+  fusion.style.width = '180px';
+  gridFusion.appendChild(fusion);
+}
+
+function addSection(title, subtitle) {
+  const div = document.createElement('div');
+  div.className = 'level-section';
+  div.innerHTML = `<div class="level-title"><span class="line"></span>${title}<span class="line"></span></div>${subtitle ? '<div style="text-align:center;color:#484f58;font-size:0.75em;margin-top:-8px;margin-bottom:12px">'+subtitle+'</div>' : ''}`;
+  panel.appendChild(div);
+}
+
+function addGrid() {
+  const grid = document.createElement('div');
+  grid.className = 'particle-grid';
+  panel.appendChild(grid);
+  return grid;
+}
+
+// ═══════════════════════════════════════
+// SELECTION HANDLERS
+// ═══════════════════════════════════════
+
+function selectBoson(b) {
+  const tierNames = { compute: 'Compute (orbitale s)', structure: 'Structure (orbitale p)', flux: 'Flux (orbitale d)', meta: 'Meta (orbitale f)' };
+  const tierColors = { compute: '#a371f7', structure: '#58a6ff', flux: '#ff7b72', meta: '#e3b341' };
+  detail.innerHTML = `
+    <div class="sym-big" style="color:${tierColors[b.tier]}">${b.sym}</div>
+    <div class="meta">BOSON — ${b.name} — Spin 1<br>
+    <span class="tag" style="background:${tierColors[b.tier]}22;color:${tierColors[b.tier]}">${tierNames[b.tier]}</span>
+    <span class="tag" style="background:#21262d;color:#8b949e">CPU: ${b.cpu}</span></div>
+    <div class="desc">${b.desc}</div>
+    ${b.graviton ? `<div class="connections"><h3>Graviton (${b.sym} + {})</h3><div class="conn-item" onclick="showLevel(1)" style="cursor:pointer">${b.graviton}</div></div>` : ''}
+    <div class="code-label">342</div>
+    <div class="code-example">${b.code342}</div>
+    ${b.codeC ? `<div class="code-label">C equivalent</div><div class="code-example">${b.codeC}</div>` : ''}
+    ${b.codePy ? `<div class="code-label">Python equivalent</div><div class="code-example">${b.codePy}</div>` : ''}
+    ${b.codeHaskell ? `<div class="code-label">Haskell equivalent</div><div class="code-example">${b.codeHaskell}</div>` : ''}
+  `;
+}
+
+function selectGluon(g) {
+  detail.innerHTML = `
+    <div class="sym-big" style="color:#3fb950">${g.sym}</div>
+    <div class="meta">GLUON — ${g.name} — Spin 1 (force forte)<br>
+    <span class="tag" style="background:#3fb95022;color:#3fb950">Conteneur</span></div>
+    <div class="desc">${g.desc}</div>
+    <div class="connections"><h3>Equivalent</h3><div class="conn-item">${g.equiv}</div></div>
+    <div class="connections"><h3>Avec chaque boson = graviton</h3>
+    ${bosons.slice(0,6).map(b => `<div class="conn-item" onclick="showLevel(1)" style="cursor:pointer"><span class="arrow">→</span> ${b.sym}${g.sym} = ${b.graviton || b.name}</div>`).join('')}
+    <div class="conn-item" style="color:#484f58">... et 12 autres</div>
+    </div>
+  `;
+}
+
+function selectSeparator(s) {
+  detail.innerHTML = `
+    <div class="sym-big" style="color:#8b949e">${s.sym}</div>
+    <div class="meta">SEPARATEUR — ${s.name} — Spin 0 (scalaire)<br>
+    <span class="tag" style="background:#8b949e22;color:#8b949e">Ponctuation</span></div>
+    <div class="desc">${s.desc}</div>
+    <div class="connections"><h3>Equivalent</h3><div class="conn-item">${s.equiv}</div></div>
+  `;
+}
+
+function selectFermion(f) {
+  const genColors = { 1: '#3fb950', 2: '#e3b341', 3: '#ff7b72' };
+  const genNames = { 1: 'Generation 1 (stable)', 2: 'Generation 2 (compose)', 3: 'Generation 3 (complexe)' };
+  detail.innerHTML = `
+    <div class="sym-big" style="color:#d2a8ff">${f.sym}</div>
+    <div class="meta">FERMION — ${f.name} — Spin ½ (Pauli/MOVE)<br>
+    <span class="tag" style="background:${genColors[f.gen]}22;color:${genColors[f.gen]}">${genNames[f.gen]}</span></div>
+    <div class="desc">${f.desc}</div>
+    <div class="connections"><h3>Principe de Pauli = MOVE</h3>
+    <div class="conn-item">Un fermion (donnee) ne peut etre qua un endroit</div>
+    <div class="conn-item">@ = emprunter en lecture (sans deplacer)</div>
+    <div class="conn-item">@@ = emprunter en ecriture (exclusif)</div>
+    <div class="conn-item">MOVE = transfert de propriete (par defaut)</div>
+    </div>
+  `;
+}
+
+function selectGraviton(b) {
+  const tierColors = { compute: '#a371f7', structure: '#58a6ff', flux: '#ff7b72', meta: '#e3b341' };
+  detail.innerHTML = `
+    <div class="sym-big" style="color:#d29922">${b.sym}{}</div>
+    <div class="meta">GRAVITON — Spin 2 (confinement)<br>
+    <span class="tag" style="background:#d2992222;color:#d29922">${b.sym} + {} = scope type</span>
+    <span class="tag" style="background:${tierColors[b.tier]}22;color:${tierColors[b.tier]}">Boson parent: ${b.tier}</span></div>
+    <div class="desc">${b.graviton || b.name}<br><br>Comme la gravite confine la matiere dans des orbites, le graviton ${b.sym}{} confine le code dans un scope type.</div>
+    <div class="code-label">342</div>
+    <div class="code-example">${b.code342}</div>
+    ${b.codeC ? `<div class="code-label">C equivalent</div><div class="code-example">${b.codeC}</div>` : ''}
+    ${b.codePy ? `<div class="code-label">Python equivalent</div><div class="code-example">${b.codePy}</div>` : ''}
+  `;
+}
+
+function selectTransducer(t) {
+  detail.innerHTML = `
+    <div class="sym-big" style="color:#79c0ff">${t.sym}</div>
+    <div class="meta">TRANSDUCTEUR — Niveau 2 demergence<br>
+    <span class="tag" style="background:#79c0ff22;color:#79c0ff">Boson + Boson (colle)</span></div>
+    <div class="desc">${t.desc}</div>
+  `;
+}
+
+// Init
+showLevel(0);
+</script>
+</body>
+</html>
