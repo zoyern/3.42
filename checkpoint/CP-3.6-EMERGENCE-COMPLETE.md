@@ -124,11 +124,11 @@ GPU n'existait pas il y a 30 ans. QPU n'existe quasi pas encore. Demain : photon
 
 **Redéfinition fondamentale** (D65) :
 
-| Boson | Ancien nom | **Nouveau nom** | Signification |
-|-------|-----------|-----------------|---------------|
-| `\|` | CPU | **SÉQUENTIEL** | Instructions une par une, ordonnées |
-| `~` | GPU | **PARALLÈLE** | Instructions simultanées, diffusées |
-| `^` | QPU | **SUPERPOSÉ** | États simultanés, probabilistes |
+| Boson | Ancien nom | **Rôle réel (D65 corrigé CP-3.7)** | Signification |
+|-------|-----------|-----------------------------------|---------------|
+| `\|` | CPU | **CONNECTER** (pipe/connexion) | Relie les étapes, le séquentiel est le DÉFAUT (pas de symbole) |
+| `~` | GPU | **PARALLÈLE** | Brise la séquentialité — instructions simultanées, diffusées |
+| `^` | QPU | **SUPERPOSÉ** | Brise le déterminisme — états simultanés, probabilistes |
 
 **Mapping automatique vers le hardware** :
 
@@ -555,7 +555,7 @@ Fichier : `342-octogones.html` (interactif, hoverable)
 | Q28 | Algèbre géométrique native | Rotors, multivecteurs, CGA comme types de première classe. Ternaire optimise les rotations (120° = natif). | ❓ OUVERTE |
 
 ### Compteurs mis à jour
-- **67 décisions** (D1-D67)
+- **73 décisions** (D1-D73, D65 corrigé, D40 obsolète)
 - **18 bosons** (inchangé)
 - **5 gluons** (inchangé)
 - **3 séparateurs** : `;` `,` espace

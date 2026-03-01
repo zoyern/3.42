@@ -42,7 +42,7 @@ Elles n'émergent pas naturellement du pipe. Elles vivent dans `:.bits` (D48).
 
 La découverte clé : les **mêmes suffixes** appliqués aux 3 bosons compute (`|`, `~`, `^`) donnent des opérations **sémantiquement cohérentes** dans chaque paradigme.
 
-| Suffixe | `|` (CPU séquentiel) | `~` (GPU parallèle) | `^` (QPU quantique) |
+| Suffixe | `|` (CONNECTER/pipe) | `~` (PARALLÈLE) | `^` (SUPERPOSÉ/quantique) |
 |---------|---------------------|---------------------|---------------------|
 | `!` | async (fire-forget) | scatter (diffusion inverse) | X gate (bit flip) |
 | `*` | map (transformer) | parallel map (kernel) | rotation gate (Rz) |

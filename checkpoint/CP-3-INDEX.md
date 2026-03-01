@@ -1,5 +1,5 @@
 # 3.42 — INDEX DE NAVIGATION — CP-3
-## Audit global + État de l'art 2025-2026
+## Audit global + État de l'art 2025-2026 + Physique profonde + Fondements révisés
 
 ---
 
@@ -11,12 +11,16 @@
 │   └── 342.peg              ← PEG formelle COURANTE (CP-2, à maj pour CP-3)
 ├── checkpoint/
 │   ├── CP-3-INDEX.md         ← CE FICHIER
-│   ├── CP-2-DECISIONS.md      ← 67 décisions (D1-D67, 1 obsolète, 2 corrigées)
-│   ├── CP-3-OPEN.md          ← Questions ouvertes (Q1-Q24 résolues, Q25-Q28 ouvertes)
+│   ├── CP-2-DECISIONS.md      ← 73 décisions (D1-D73, 1 obsolète, 3 corrigées)
+│   ├── CP-2-OPEN.md          ← Questions ouvertes (Q1-Q24 résolues, Q25-Q28 ouvertes)
 │   ├── CP-3-RESEARCH-2026.md ← État de l'art 2025-2026
 │   ├── CP-3.2-AUDIT-FINAL.md ← Audit complet logique/cohérence/perf
 │   ├── CP-3.3-SECURITY-AUDIT.md ← Audit sécurité TOCTOU/closures/async/arènes
 │   ├── CP-3.4-DEEP-ANALYSIS.md ← Émergence fractale, COBOL/Haskell, CPU mapping, tenseurs
+│   ├── CP-3.5-COMPLETE-REVIEW.md ← Revue complète + Modèle particules + Domaines
+│   ├── CP-3.6-EMERGENCE-COMPLETE.md ← Émergence fractale + Reclassification physique
+│   ├── CP-3.7-PHYSIQUE-PROFONDE.md ← Spin, ternaire, orbitales, émergence linguistique
+│   ├── CP-3.8-FONDEMENTS-REVISES.md ← Autograd symbolique, meta-spins, | threads
 │   ├── AUDIT-GEMINI.md       ← Audit conversation Gemini
 │   ├── CP-2-*                ← Archived
 │   └── CP-1-*                ← Archived
@@ -26,6 +30,7 @@
 │   ├── GRAVITONS-COMPLETE-SPEC.md ← 18 gravitons (3 tiers) spécification
 │   └── MEMORY_SAFETY_*.md         ← Sécurité mémoire formelle (Q21)
 ├── 342-sphere.html           ← Visualisation 3D interactive (Three.js)
+├── 342-particles.html        ← Visualisation particules par niveaux (interactive)
 ├── archive/                  ← Tout le reste
 └── src/                      ← Code source (trit C11, 73 tests)
 ```
@@ -41,9 +46,10 @@
 **18 gravitons** : 3 tiers (8 fondamentaux + 6 puissants + 4 spécialisés)
 **1 règle** : `A B = A(B)` (composition, profondeur N)
 **0 keywords** : `:` suffit. `type`/`trait` = sugar optionnel (D35)
-**Trio compute** : `|` CPU, `~` GPU, `^` QPU
+**Modes calcul** : séquentiel = défaut (pas de symbole), `~` = parallèle, `^` = superposé, `|` = connexion (D65 corrigé)
+**Autograd** : `.~` = dérivée, `.!` = snapshot, `.=` = apply (D70, purement symbolique)
 **Pipeline** : Source → AST → ParticleIR → MachineIR → Cranelift|LLVM → Binaire
-**Mémoire** : MOVE default + arènes O(1) + @ lecture + @@ écriture séquentielle
+**Mémoire** : MOVE default (= Pauli D66) + arènes O(1) + @ lecture + @@ écriture séquentielle
 
 ---
 
@@ -117,7 +123,7 @@
 - **Stream fusion** (D58) : `*{} -{} +{}` composent en 1 passe (zéro collection intermédiaire)
 - **Matrice symétrique** (D59) : même suffixe × |/~/^ = CPU/GPU/QPU cohérent
 - **!{} vs !?** (D60) : defer block vs lazy eval, coexistent
-- **Total** : 67 décisions, 1 obsolète (D40→D46), 2 corrigées (D41, D54), D63-D67 = CP-3.5/3.6
+- **Total** : 73 décisions (D1-D73), 1 obsolète (D40→D46), 3 corrigées (D41, D54, D65)
 
 ### CP-3.3 — Audit sécurité avancé
 - **5 concerns analysés** : TOCTOU, closures, async, arena-in-arena, atomicité
@@ -155,7 +161,7 @@
 
 ### CP-3.6 — Émergence fractale complète + Reclassification
 - **D64** : Autograd natif via Diffable = killer feature (premier langage avec autograd natif)
-- **D65** : `|` `~` `^` = modes de calcul (séquentiel/parallèle/superposé), PAS hardware spécifique
+- **D65** : Séquentiel = défaut. `~` = parallèle. `^` = superposé. `|` = connexion. PAS hardware spécifique.
 - **D66** : MOVE = principe d'exclusion de Pauli (parallèle physique exact)
 - **D67** : 4 tiers de bosons (Compute/Structure/Flux/Méta) alignés sur 4 forces physique
 - **MFENCE émergent** : `@@ + #{ ordered } + {}` = barrière mémoire par composition (pas `;{}`)
@@ -166,7 +172,24 @@
 - **Sugar + IA** : dictionnaires sugar générables par IA, pas dans le langage
 - **Q28 ouverte** : Algèbre géométrique native (rotors, multivecteurs, CGA)
 - **Fichier** : `checkpoint/CP-3.6-EMERGENCE-COMPLETE.md`
-- **Visualisation** : `342-octogones.html`
+
+### CP-3.7 — Physique profonde + Corrections majeures
+- **D65 CORRIGÉ** : Séquentiel = défaut (pas de symbole). `~` brise la séquentialité. `^` brise le déterminisme. `|` = pipe/connexion.
+- **D68** : Classification par spin physique — séparateurs=spin 0, fermions=spin ½, bosons=spin 1, gravitons=spin 2
+- **D69** : Tiers = orbitales atomiques (s→compute, p→structure, d→flux, f→méta)
+- **`#` en ternaire** : NaN/out-of-band. Trit = `+ - _`. Erreurs vivent dans le système de types (`T | #`)
+- **120°** = 360°/3 = division naturelle du cercle en 3 états (géométrie pure)
+- **Émergence = langage parlé** : bosons=lettres, gravitons=mots, expressions=phrases, sugar=dialectes
+- **Fichier** : `checkpoint/CP-3.7-PHYSIQUE-PROFONDE.md`
+- **Visualisation** : `342-particles.html`
+
+### CP-3.8 — Fondements révisés
+- **D70** : Autograd purement symbolique — `.~` = dérivée, `.!` = snapshot, `.=` = apply. Structural typing. ZÉRO mot.
+- **D71** : Spin = profondeur de composition — Spin N = N niveaux de composition. Modules = molécules, pas atomes.
+- **D72** : Meta-spins agnostiques — `#` `*` s'adaptent à la base N. Rôle constant, position variable.
+- **D73** : `|` = connexion universelle — Threads = `|{} | |{}`. GPU = `~{}` dans pipe. QPU = `^{}` dans pipe. ZÉRO keyword.
+- **Sphère de Bloch** : pas qu'une métaphore — modèle computationnel réel quand hardware le permet
+- **Fichier** : `checkpoint/CP-3.8-FONDEMENTS-REVISES.md`
 
 ---
 
