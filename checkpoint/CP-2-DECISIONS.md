@@ -102,6 +102,10 @@
 | D68 | Classification par spin physique | Séparateurs=spin 0, Fermions=spin ½ (Pauli/MOVE), Bosons=spin 1, Gravitons=spin 2. Mapping exact Modèle Standard. | ✓ PROFOND |
 | D69 | Tiers = remplissage orbital | s(2)→compute, p(5)→structure, d(6)→flux, f(4)→méta. Progression énergétique = progression de complexité. | 💡 PROPOSITION |
 | D65 | CORRIGÉ: séquentiel = défaut | Séquentiel = PAS de symbole (défaut). `~` brise la séquentialité (parallèle). `^` brise le déterminisme (superposé). `\|` = pipe/connexion, PAS un mode de calcul. | ✓ CORRIGÉ |
+| D70 | Autograd purement symbolique | `.~` = dérivée, `.!` = snapshot, `.=` = apply. Structural typing : pas besoin de nommer le trait. ZÉRO mot nécessaire. | ✓ ÉLÉGANT |
+| D71 | Spin = profondeur de composition | Spin 2 = graviton, spin 3 = graviton+matière, spin N = N niveaux. Modules = molécules (compositions), pas atomes (bosons). | ✓ COHÉRENT |
+| D72 | Meta-spins agnostiques | `#` `*` s'adaptent à la base. Base N : N premières valeurs (+ - _ # *) remplissent la base, le reste = méta hors-bande. Rôle constant. | ✓ ÉLÉGANT |
+| D73 | `\|` = connexion universelle | Threads = `\|{} \| \|{}`. GPU = `~{}` dans pipe. QPU = `^{}` dans pipe. `#{}` pour device. ZÉRO keyword. | ✓ SOLIDE |
 
 ## DÉCISIONS REJETÉES
 
