@@ -139,7 +139,7 @@
         <div class="title">3.42</div>
         <span style="font-size:13px;color:var(--text2)">Émergence Fractale</span>
         <div class="stats">
-            <div class="stat"><b>81</b> décisions</div>
+            <div class="stat"><b>83</b> décisions</div>
             <div class="stat"><b>18</b> bosons</div>
             <div class="stat"><b>5</b> gluons</div>
             <div class="stat"><b>18</b> gravitons</div>
@@ -199,7 +199,7 @@ const bosons = [
   {sym:'|',fr:'CONNECTER',en:'Connect',tier:0,cpu:'PIPE / SPSC buffer',graviton:'|{}',
     compositions:['|| = OR logique','|* = map','|- = filter','|+ = fold','|! = async','|> = pipe / import'],
     decisions:['D8','D54','D65','D73']},
-  {sym:'~',fr:'DIFFUSER',en:'Broadcast',tier:0,cpu:'SIMD / broadcast',graviton:'~{}',
+  {sym:'~',fr:'ONDULER',en:'Wave',tier:0,cpu:'SIMD / broadcast',graviton:'~{}',
     compositions:['~* = parallel map GPU','~| = reduce parallèle','~^ = quantum parallel','~f64 = float opt-in'],
     decisions:['D14','D59','D65','D75']},
   {sym:'^',fr:'SUPERPOSER',en:'Superpose',tier:0,cpu:'Qubit rotation',graviton:'^{}',
@@ -211,7 +211,7 @@ const bosons = [
   {sym:'=',fr:'LIER',en:'Bind',tier:1,cpu:'MOV / STORE',graviton:'={}',
     compositions:['= assignation','.= = apply diff (autograd)','={} = closure scope'],
     decisions:['D5','D70']},
-  {sym:'.',fr:'ACCÉDER',en:'Access',tier:1,cpu:'LOAD offset',graviton:'.{}',
+  {sym:'.',fr:'INTÉRIEUR',en:'Inner',tier:1,cpu:'LOAD offset',graviton:'.{}',
     compositions:['.~ = dérivée (autograd)','.! = snapshot / reverse','.= = apply','.. = parent'],
     decisions:['D49','D64','D70']},
   {sym:'!',fr:'INVERSER',en:'Invert',tier:1,cpu:'NOT / NEG',graviton:'!{}',
@@ -223,11 +223,11 @@ const bosons = [
   {sym:'?',fr:'MESURER',en:'Measure',tier:2,cpu:'CMP / TEST',graviton:'?{}',
     compositions:['? = if (test)','?? = while','?{} = match / switch','a ? { Dog: ...; Cat: ... }'],
     decisions:['D7']},
-  {sym:'<',fr:'SORTIR',en:'Output',tier:2,cpu:'OUT / PUSH',graviton:'<{}',
-    compositions:['<< = return','<> = I/O bidirectionnel','<{} = output scope'],
+  {sym:'<',fr:'ENTRER',en:'Input',tier:2,cpu:'IN / READ',graviton:'<{}',
+    compositions:['<< = return (ENTRER²)','<> = I/O fichier','<{} = input scope'],
     decisions:['D6']},
-  {sym:'>',fr:'ENTRER',en:'Input',tier:2,cpu:'IN / POP',graviton:'>{}',
-    compositions:['>> = continue','>< = break','>{} = input scope'],
+  {sym:'>',fr:'SORTIR',en:'Output',tier:2,cpu:'OUT / WRITE',graviton:'>{}',
+    compositions:['>> = continue (SORTIR²)','>< = break','>{} = output scope'],
     decisions:['D6','D10']},
   {sym:'+',fr:'ACCUMULER',en:'Accumulate',tier:2,cpu:'ADD / INC',graviton:'+{}',
     compositions:['+{} = fold / reduce','A + B = union types','Diamond : A + B'],

@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3.42 — trois quarante-deux | Langage · OS · IA · Internet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        /* Particle Background */
+        canvas#particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(100, 200, 255, 0.2);
+            padding: 1rem 2rem;
+        }
+
+        nav ul {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            list-style: none;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        nav a {
+            color: #a0a0ff;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        nav a:hover {
+            color: #00d4ff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.7);
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+            padding-top: 80px;
+        }
+
+        section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Header Section */
+        #header {
+            background: linear-gradient(135deg, rgba(10, 10, 15, 0.8) 0%, rgba(20, 10, 40, 0.8) 100%);
+            text-align: center;
+            padding: 6rem 2rem;
+        }
+
+        h1 {
+            font-size: clamp(3rem, 8vw, 5rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4ff, #a0a0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+            letter-spacing: 0.1em;
+        }
+
+        .subtitle {
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            color: #a0a0ff;
+            margin-bottom: 3rem;
+            font-weight: 300;
+            line-height: 1.6;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 3rem;
+            padding: 2rem;
+            background: rgba(100, 200, 255, 0.05);
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #00d4ff;
+            display: block;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.7);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #8080b0;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 0.5rem;
+        }
+
+        /* Section Headers */
+        h2 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #00d4ff, #a0a0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* The Rule Section */
+        #rule .rule-display {
+            background: rgba(100, 200, 255, 0.1);
+            border: 2px solid rgba(0, 212, 255, 0.5);
+            border-radius: 15px;
+            padding: 4rem 2rem;
+            text-align: center;
+            margin: 2rem 0;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+        }
+
+        .rule-formula {
+            font-size: clamp(2rem, 6vw, 4rem);
+            font-weight: 700;
+            color: #00d4ff;
+            font-family: 'Courier New', monospace;
+            margin: 2rem 0;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.7);
+            letter-spacing: 0.2em;
+        }
+
+        .rule-text {
+            font-size: 1.3rem;
+            color: #a0a0ff;
+            line-height: 1.8;
+            margin: 2rem 0;
+        }
+
+        .rule-composition {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .comp-box {
+            background: rgba(150, 100, 255, 0.1);
+            border: 1px solid rgba(150, 100, 255, 0.3);
+            padding: 2rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .comp-box:hover {
+            background: rgba(150, 100, 255, 0.2);
+            box-shadow: 0 0 20px rgba(150, 100, 255, 0.3);
+            border-color: rgba(150, 100, 255, 0.6);
+        }
+
+        .comp-box strong {
+            color: #ff00ff;
+            font-size: 1.2rem;
+        }
+
+        /* Periodic Table */
+        .boson-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+
+        .boson-card {
+            background: rgba(100, 100, 150, 0.1);
+            border: 2px solid rgba(100, 100, 255, 0.3);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .boson-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .boson-card:hover {
+            transform: translateY(-5px);
+            background: rgba(100, 100, 150, 0.25);
+            box-shadow: 0 0 25px rgba(100, 200, 255, 0.4);
+            border-color: rgba(100, 200, 255, 0.8);
+        }
+
+        .boson-symbol {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 1rem 0;
+            text-shadow: 0 0 15px currentColor;
+        }
+
+        .boson-name {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #a0a0ff;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+        }
+
+        .boson-tier {
+            font-size: 0.65rem;
+            color: #808080;
+            margin-top: 0.5rem;
+        }
+
+        /* Tier Colors */
+        .tier-0 { border-color: rgba(0, 212, 255, 0.5); }
+        .tier-0 .boson-symbol { color: #00d4ff; }
+        .tier-0:hover { background: rgba(0, 212, 255, 0.15); box-shadow: 0 0 25px rgba(0, 212, 255, 0.4); }
+
+        .tier-1 { border-color: rgba(100, 150, 255, 0.5); }
+        .tier-1 .boson-symbol { color: #6496ff; }
+        .tier-1:hover { background: rgba(100, 150, 255, 0.15); box-shadow: 0 0 25px rgba(100, 150, 255, 0.4); }
+
+        .tier-2 { border-color: rgba(100, 255, 150, 0.5); }
+        .tier-2 .boson-symbol { color: #64ff96; }
+        .tier-2:hover { background: rgba(100, 255, 150, 0.15); box-shadow: 0 0 25px rgba(100, 255, 150, 0.4); }
+
+        .tier-3 { border-color: rgba(255, 150, 100, 0.5); }
+        .tier-3 .boson-symbol { color: #ff9664; }
+        .tier-3:hover { background: rgba(255, 150, 100, 0.15); box-shadow: 0 0 25px rgba(255, 150, 100, 0.4); }
+
+        .tier-x { border-color: rgba(255, 200, 0, 0.5); }
+        .tier-x .boson-symbol { color: #ffc800; }
+        .tier-x:hover { background: rgba(255, 200, 0, 0.15); box-shadow: 0 0 25px rgba(255, 200, 0, 0.4); }
+
+        .gluon-section {
+            margin-top: 3rem;
+            padding-top: 3rem;
+            border-top: 1px solid rgba(100, 200, 255, 0.2);
+        }
+
+        .gluon-title {
+            font-size: 1.2rem;
+            color: #a0a0ff;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .gluon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .gluon-card {
+            background: rgba(150, 150, 100, 0.1);
+            border: 2px solid rgba(200, 180, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .gluon-card:hover {
+            background: rgba(200, 180, 0, 0.15);
+            box-shadow: 0 0 20px rgba(200, 180, 0, 0.3);
+            border-color: rgba(200, 180, 0, 0.6);
+        }
+
+        .gluon-symbol {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ffc800;
+            text-shadow: 0 0 10px rgba(255, 200, 0, 0.7);
+        }
+
+        /* Symmetry Wheel */
+        #symmetry {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .symmetry-diagram {
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 1;
+            margin: 2rem auto;
+        }
+
+        .symmetry-text {
+            text-align: center;
+            margin-top: 2rem;
+            color: #a0a0ff;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+
+        /* Hardware Mapping */
+        .hardware-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .hw-layer {
+            background: rgba(100, 100, 150, 0.15);
+            border-left: 4px solid;
+            border-radius: 8px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .hw-layer:hover {
+            background: rgba(100, 100, 150, 0.3);
+            transform: translateX(10px);
+        }
+
+        .hw-layer-1 { border-color: #6496ff; }
+        .hw-layer-2 { border-color: #64ff96; }
+        .hw-layer-3 { border-color: #ff9664; }
+        .hw-layer-4 { border-color: #ff00ff; }
+
+        .hw-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .hw-code {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            color: #64ff96;
+            margin: 1rem 0;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 1rem;
+            border-radius: 5px;
+        }
+
+        .hw-desc {
+            font-size: 0.95rem;
+            color: #b0b0d0;
+            line-height: 1.6;
+        }
+
+        /* Type System */
+        .type-tree {
+            background: rgba(100, 100, 150, 0.1);
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .type-node {
+            margin: 0.5rem 0 0.5rem 1.5rem;
+            color: #64ff96;
+        }
+
+        .type-child {
+            margin-left: 2rem;
+            color: #a0a0ff;
+            font-size: 0.9rem;
+        }
+
+        .type-innovation {
+            background: rgba(255, 150, 100, 0.15);
+            border: 2px solid rgba(255, 150, 100, 0.3);
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+            font-size: 1.3rem;
+            color: #ff9664;
+            font-weight: 600;
+        }
+
+        .type-example {
+            background: rgba(100, 200, 255, 0.1);
+            border-left: 4px solid rgba(0, 212, 255, 0.5);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            color: #00d4ff;
+        }
+
+        /* Memory Model */
+        .memory-visual {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .memory-box {
+            background: rgba(100, 100, 150, 0.15);
+            border: 2px solid rgba(100, 200, 255, 0.3);
+            border-radius: 10px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .memory-box:hover {
+            background: rgba(100, 200, 255, 0.2);
+            box-shadow: 0 0 25px rgba(100, 200, 255, 0.3);
+            border-color: rgba(100, 200, 255, 0.7);
+        }
+
+        .memory-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #00d4ff;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .memory-feature {
+            margin: 0.8rem 0;
+            color: #a0a0ff;
+            line-height: 1.6;
+        }
+
+        .memory-feature strong {
+            color: #00d4ff;
+        }
+
+        /* Roadmap */
+        .roadmap-timeline {
+            position: relative;
+            margin: 3rem 0;
+        }
+
+        .roadmap-item {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            align-items: flex-start;
+        }
+
+        .roadmap-phase {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(150, 100, 255, 0.2));
+            border: 2px solid rgba(0, 212, 255, 0.4);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            color: #00d4ff;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .roadmap-content {
+            background: rgba(100, 100, 150, 0.1);
+            border-left: 4px solid rgba(0, 212, 255, 0.5);
+            border-radius: 5px;
+            padding: 1.5rem;
+            color: #a0a0ff;
+        }
+
+        .roadmap-title {
+            font-weight: 600;
+            color: #64ff96;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .roadmap-desc {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #b0b0d0;
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(10, 10, 15, 0.95);
+            border-top: 1px solid rgba(100, 200, 255, 0.2);
+            padding: 3rem 2rem;
+            text-align: center;
+            color: #8080b0;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        footer a {
+            color: #00d4ff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        footer a:hover {
+            color: #a0a0ff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.7);
+        }
+
+        .footer-stats {
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            color: #a0a0ff;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .footer-credit {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(100, 200, 255, 0.2);
+        }
+
+        /* Animations */
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px rgba(0, 212, 255, 0.5); }
+            50% { text-shadow: 0 0 20px rgba(0, 212, 255, 0.9); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .glow-text {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav ul {
+                gap: 1rem;
+            }
+
+            nav a {
+                font-size: 0.75rem;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .stats-bar {
+                gap: 1rem;
+                padding: 1.5rem;
+            }
+
+            .stat-number {
+                font-size: 1.5rem;
+            }
+
+            .boson-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 1rem;
+            }
+
+            .roadmap-item {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .roadmap-phase {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+
+    <nav>
+        <ul>
+            <li><a href="#header">Vision</a></li>
+            <li><a href="#rule">La Règle</a></li>
+            <li><a href="#periodic">Tableaux</a></li>
+            <li><a href="#symmetry">Symétrie</a></li>
+            <li><a href="#hardware">Hardware</a></li>
+            <li><a href="#types">Types</a></li>
+            <li><a href="#memory">Mémoire</a></li>
+            <li><a href="#roadmap">Roadmap</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- HEADER SECTION -->
+        <section id="header">
+            <div class="container">
+                <h1>3.42</h1>
+                <p class="subtitle">trois quarante-deux</p>
+                <p class="subtitle">Langage · OS · IA · Internet — Tout émerge de 18 symboles</p>
+
+                <div class="stats-bar">
+                    <div class="stat">
+                        <span class="stat-number">83</span>
+                        <span class="stat-label">décisions</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">18</span>
+                        <span class="stat-label">bosons</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">5</span>
+                        <span class="stat-label">gluons</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">18</span>
+                        <span class="stat-label">gravitons</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">28/28</span>
+                        <span class="stat-label">questions</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- THE RULE SECTION -->
+        <section id="rule">
+            <div class="container">
+                <h2>La Règle — The Foundation</h2>
+
+                <div class="rule-display">
+                    <div class="rule-formula">A B = A(B)</div>
+                    <div class="rule-text">Une seule règle. Profondeur infinie. Zéro keyword.</div>
+                </div>
+
+                <div class="rule-text" style="text-align: center; margin: 2rem 0;">
+                    Composition universelle — tous les calculs, toutes les données, toutes les structures émergent d'une application simple.
+                </div>
+
+                <div class="rule-composition">
+                    <div class="comp-box">
+                        <div style="color: #00d4ff; margin-bottom: 1rem;">Fermion + Boson</div>
+                        <strong>=</strong>
+                        <div style="color: #64ff96; margin-top: 1rem;">Expression</div>
+                        <div style="font-size: 0.85rem; color: #808080; margin-top: 0.5rem;">Data meets function</div>
+                    </div>
+                    <div class="comp-box">
+                        <div style="color: #6496ff; margin-bottom: 1rem;">Boson + Gluon</div>
+                        <strong>=</strong>
+                        <div style="color: #ff9664; margin-top: 1rem;">Graviton</div>
+                        <div style="font-size: 0.85rem; color: #808080; margin-top: 0.5rem;">Function meets structure</div>
+                    </div>
+                    <div class="comp-box">
+                        <div style="color: #64ff96; margin-bottom: 1rem;">Gluon + Gluon</div>
+                        <strong>=</strong>
+                        <div style="color: #a0a0ff; margin-top: 1rem;">Nested Structure</div>
+                        <div style="font-size: 0.85rem; color: #808080; margin-top: 0.5rem;">Recursion + depth</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PERIODIC TABLE SECTION -->
+        <section id="periodic">
+            <div class="container">
+                <h2>Periodic Table of Bosons</h2>
+
+                <div style="text-align: center; margin-bottom: 2rem; color: #a0a0ff;">
+                    <p style="margin-bottom: 1rem;">18 bosons organized by orbital tier (s, p, d, f)</p>
+                </div>
+
+                <!-- Tier 0 - s (Compute) -->
+                <div style="margin-bottom: 3rem;">
+                    <h3 style="text-align: center; color: #00d4ff; margin-bottom: 1.5rem; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 0.1em;">Tier 0/s — Compute</h3>
+                    <div class="boson-grid">
+                        <div class="boson-card tier-0">
+                            <div class="boson-symbol">~</div>
+                            <div class="boson-name">Onduler</div>
+                            <div class="boson-tier">Entrypoint</div>
+                        </div>
+                        <div class="boson-card tier-0">
+                            <div class="boson-symbol">^</div>
+                            <div class="boson-name">Superposer</div>
+                            <div class="boson-tier">Fork</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tier 1 - p (Structure) -->
+                <div style="margin-bottom: 3rem;">
+                    <h3 style="text-align: center; color: #6496ff; margin-bottom: 1.5rem; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 0.1em;">Tier 1/p — Structure</h3>
+                    <div class="boson-grid">
+                        <div class="boson-card tier-1">
+                            <div class="boson-symbol">:</div>
+                            <div class="boson-name">Définir</div>
+                            <div class="boson-tier">Type</div>
+                        </div>
+                        <div class="boson-card tier-1">
+                            <div class="boson-symbol">=</div>
+                            <div class="boson-name">Lier</div>
+                            <div class="boson-tier">Bind</div>
+                        </div>
+                        <div class="boson-card tier-1">
+                            <div class="boson-symbol">.</div>
+                            <div class="boson-name">Intérieur</div>
+                            <div class="boson-tier">Scope</div>
+                        </div>
+                        <div class="boson-card tier-1">
+                            <div class="boson-symbol">!</div>
+                            <div class="boson-name">Inverser</div>
+                            <div class="boson-tier">Not</div>
+                        </div>
+                        <div class="boson-card tier-1">
+                            <div class="boson-symbol">#</div>
+                            <div class="boson-name">Configurer</div>
+                            <div class="boson-tier">Attr</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tier 2 - d (Flux) -->
+                <div style="margin-bottom: 3rem;">
+                    <h3 style="text-align: center; color: #64ff96; margin-bottom: 1.5rem; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 0.1em;">Tier 2/d — Flux</h3>
+                    <div class="boson-grid">
+                        <div class="boson-card tier-2">
+                            <div class="boson-symbol">?</div>
+                            <div class="boson-name">Mesurer</div>
+                            <div class="boson-tier">Read</div>
+                        </div>
+                        <div class="boson-card tier-2">
+                            <div class="boson-symbol">&lt;</div>
+                            <div class="boson-name">Entrer</div>
+                            <div class="boson-tier">Input</div>
+                        </div>
+                        <div class="boson-card tier-2">
+                            <div class="boson-symbol">&gt;</div>
+                            <div class="boson-name">Sortir</div>
+                            <div class="boson-tier">Output</div>
+                        </div>
+                        <div class="boson-card tier-2">
+                            <div class="boson-symbol">+</div>
+                            <div class="boson-name">Accumuler</div>
+                            <div class="boson-tier">Add</div>
+                        </div>
+                        <div class="boson-card tier-2">
+                            <div class="boson-symbol">-</div>
+                            <div class="boson-name">Réduire</div>
+                            <div class="boson-tier">Sub</div>
+                        </div>
+                        <div class="boson-card tier-2">
+                            <div class="boson-symbol">*</div>
+                            <div class="boson-name">Proportionner</div>
+                            <div class="boson-tier">Mul</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tier 3 - f (Méta) -->
+                <div style="margin-bottom: 3rem;">
+                    <h3 style="text-align: center; color: #ff9664; margin-bottom: 1.5rem; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 0.1em;">Tier 3/f — Méta</h3>
+                    <div class="boson-grid">
+                        <div class="boson-card tier-3">
+                            <div class="boson-symbol">/</div>
+                            <div class="boson-name">Diviser</div>
+                            <div class="boson-tier">Div</div>
+                        </div>
+                        <div class="boson-card tier-3">
+                            <div class="boson-symbol">%</div>
+                            <div class="boson-name">Configurer</div>
+                            <div class="boson-tier">Mod</div>
+                        </div>
+                        <div class="boson-card tier-3">
+                            <div class="boson-symbol">@</div>
+                            <div class="boson-name">Référencer</div>
+                            <div class="boson-tier">Ref</div>
+                        </div>
+                        <div class="boson-card tier-3">
+                            <div class="boson-symbol">_</div>
+                            <div class="boson-name">Ignorer</div>
+                            <div class="boson-tier">Discard</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Axle -->
+                <div style="margin-bottom: 3rem;">
+                    <h3 style="text-align: center; color: #ffc800; margin-bottom: 1.5rem; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 0.1em;">Axle Central</h3>
+                    <div class="boson-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+                        <div class="boson-card tier-x">
+                            <div class="boson-symbol">|</div>
+                            <div class="boson-name">Connecter</div>
+                            <div class="boson-tier">Pipe</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gluons -->
+                <div class="gluon-section">
+                    <div class="gluon-title">5 Gluons — Structure Elements</div>
+                    <div class="gluon-grid">
+                        <div class="gluon-card">
+                            <div class="gluon-symbol">{}</div>
+                            <div style="font-size: 0.75rem; color: #a0a0ff; margin-top: 0.5rem;">Scope</div>
+                        </div>
+                        <div class="gluon-card">
+                            <div class="gluon-symbol">()</div>
+                            <div style="font-size: 0.75rem; color: #a0a0ff; margin-top: 0.5rem;">Call</div>
+                        </div>
+                        <div class="gluon-card">
+                            <div class="gluon-symbol">[]</div>
+                            <div style="font-size: 0.75rem; color: #a0a0ff; margin-top: 0.5rem;">Index</div>
+                        </div>
+                        <div class="gluon-card">
+                            <div class="gluon-symbol">""</div>
+                            <div style="font-size: 0.75rem; color: #a0a0ff; margin-top: 0.5rem;">String</div>
+                        </div>
+                        <div class="gluon-card">
+                            <div class="gluon-symbol">''</div>
+                            <div style="font-size: 0.75rem; color: #a0a0ff; margin-top: 0.5rem;">Char</div>
+                        </div>
+                    </div>
+
+                    <div class="gluon-title" style="margin-top: 2rem;">3 Separators</div>
+                    <div class="gluon-grid">
+                        <div class="gluon-card">
+                            <div class="gluon-symbol">;</div>
+                            <div style="font-size: 0.75rem; color: #a0a0ff; margin-top: 0.5rem;">Sequence</div>
+                        </div>
+                        <div class="gluon-card">
+                            <div class="gluon-symbol">,</div>
+                            <div style="font-size: 0.75rem; color: #a0a0ff; margin-top: 0.5rem;">Tuple</div>
+                        </div>
+                        <div class="gluon-card">
+                            <div class="gluon-symbol">⎵</div>
+                            <div style="font-size: 0.75rem; color: #a0a0ff; margin-top: 0.5rem;">Space</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SYMMETRY WHEEL SECTION -->
+        <section id="symmetry">
+            <div class="container">
+                <h2>Symmetry Wheel — 9 Pairs</h2>
+
+                <svg class="symmetry-diagram" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Background circle -->
+                    <circle cx="300" cy="300" r="280" fill="rgba(100, 200, 255, 0.05)" stroke="rgba(100, 200, 255, 0.2)" stroke-width="2"/>
+
+                    <!-- Grid lines -->
+                    <line x1="300" y1="30" x2="300" y2="570" stroke="rgba(100, 200, 255, 0.1)" stroke-width="1"/>
+                    <line x1="30" y1="300" x2="570" y2="300" stroke="rgba(100, 200, 255, 0.1)" stroke-width="1"/>
+                    <line x1="110" y1="110" x2="490" y2="490" stroke="rgba(100, 200, 255, 0.1)" stroke-width="1"/>
+                    <line x1="490" y1="110" x2="110" y2="490" stroke="rgba(100, 200, 255, 0.1)" stroke-width="1"/>
+
+                    <!-- Pair 1: < > (Input/Output) -->
+                    <line x1="150" y1="300" x2="300" y2="300" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <line x1="300" y1="300" x2="450" y2="300" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <text x="120" y="290" fill="#64ff96" font-size="20" font-weight="bold">&lt;</text>
+                    <text x="460" y="290" fill="#64ff96" font-size="20" font-weight="bold">&gt;</text>
+
+                    <!-- Pair 2: + - (Accumulate/Reduce) -->
+                    <line x1="300" y1="150" x2="300" y2="300" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <line x1="300" y1="300" x2="300" y2="450" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <text x="295" y="130" fill="#64ff96" font-size="20" font-weight="bold">+</text>
+                    <text x="295" y="470" fill="#64ff96" font-size="20" font-weight="bold">-</text>
+
+                    <!-- Pair 3: * / (Multiply/Divide) -->
+                    <line x1="212" y1="388" x2="300" y2="300" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <line x1="300" y1="300" x2="388" y2="212" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <text x="200" y="410" fill="#ff9664" font-size="20" font-weight="bold">*</text>
+                    <text x="390" y="200" fill="#ff9664" font-size="20" font-weight="bold">/</text>
+
+                    <!-- Pair 4: : = (Define/Bind) -->
+                    <line x1="388" y1="388" x2="300" y2="300" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <line x1="300" y1="300" x2="212" y2="212" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <text x="390" y="410" fill="#6496ff" font-size="20" font-weight="bold">:</text>
+                    <text x="210" y="200" fill="#6496ff" font-size="20" font-weight="bold">=</text>
+
+                    <!-- Pair 5: ! ? (Invert/Measure) -->
+                    <line x1="212" y1="212" x2="300" y2="300" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <line x1="300" y1="300" x2="388" y2="388" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <text x="200" y="200" fill="#a0a0ff" font-size="20" font-weight="bold">!</text>
+                    <text x="390" y="410" fill="#a0a0ff" font-size="20" font-weight="bold">?</text>
+
+                    <!-- Pair 6: ~ ^ (Wave/Superpose) -->
+                    <line x1="250" y1="250" x2="300" y2="300" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <line x1="300" y1="300" x2="350" y2="350" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <text x="240" y="250" fill="#00d4ff" font-size="20" font-weight="bold">~</text>
+                    <text x="350" y="360" fill="#00d4ff" font-size="20" font-weight="bold">^</text>
+
+                    <!-- Center: | (Connect) -->
+                    <circle cx="300" cy="300" r="20" fill="none" stroke="#ffc800" stroke-width="3"/>
+                    <text x="295" y="308" fill="#ffc800" font-size="24" font-weight="bold">|</text>
+
+                    <!-- Pair 7: @ . (Reference/Inside) -->
+                    <line x1="350" y1="250" x2="300" y2="300" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <line x1="300" y1="300" x2="250" y2="350" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <text x="350" y="240" fill="#ff9664" font-size="20" font-weight="bold">@</text>
+                    <text x="250" y="360" fill="#ff9664" font-size="20" font-weight="bold">.</text>
+
+                    <!-- Pair 8: # _ (Configure/Ignore) -->
+                    <line x1="380" y1="300" x2="300" y2="300" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <line x1="300" y1="300" x2="220" y2="300" stroke="rgba(100, 200, 255, 0.4)" stroke-width="2"/>
+                    <text x="385" y="290" fill="#64ff96" font-size="20" font-weight="bold">#</text>
+                    <text x="210" y="290" fill="#64ff96" font-size="20" font-weight="bold">_</text>
+
+                    <!-- Pair 9: already covered with ~ ^ -->
+                </svg>
+
+                <div class="symmetry-text">
+                    <p><strong>&lt; ↔ &gt;</strong> — Input / Output Flow</p>
+                    <p><strong>+ ↔ -</strong> — Accumulation / Reduction</p>
+                    <p><strong>* ↔ /</strong> — Multiplication / Division</p>
+                    <p><strong>: ↔ =</strong> — Type Definition / Binding</p>
+                    <p><strong>! ↔ ?</strong> — Inversion / Measurement</p>
+                    <p><strong>~ ↔ ^</strong> — Wave / Superposition</p>
+                    <p><strong>@ ↔ .</strong> — Reference / Interior</p>
+                    <p><strong># ↔ _</strong> — Configuration / Ignoring</p>
+                    <p><strong>| = Central Axis</strong> — Universal Pipe</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- HARDWARE MAPPING SECTION -->
+        <section id="hardware">
+            <div class="container">
+                <h2>Hardware Mapping — 4 Compute Layers</h2>
+
+                <div class="hardware-stack">
+                    <div class="hw-layer hw-layer-1">
+                        <div class="hw-title">Sequential</div>
+                        <div class="hw-code">{}</div>
+                        <div class="hw-desc">Single thread execution. One fermion at a time. Linear causality. Base computation unit.</div>
+                        <div style="margin-top: 1rem; font-size: 0.85rem; color: #808080;">Thread: 1</div>
+                    </div>
+
+                    <div class="hw-layer hw-layer-2">
+                        <div class="hw-title">Threads (CPU)</div>
+                        <div class="hw-code">|{} | |{}</div>
+                        <div class="hw-desc">Multiple threads sharing memory. Pipe operator connects threads. POSIX-like semantics with 342 memory safety.</div>
+                        <div style="margin-top: 1rem; font-size: 0.85rem; color: #808080;">Thread: N (cores)</div>
+                    </div>
+
+                    <div class="hw-layer hw-layer-3">
+                        <div class="hw-title">SIMD / GPU</div>
+                        <div class="hw-code">~{}</div>
+                        <div class="hw-desc">Wave execution: same operation across many data elements. GPU kernels. Throughput-oriented computing.</div>
+                        <div style="margin-top: 1rem; font-size: 0.85rem; color: #808080;">Thread: ~∞ (wave)</div>
+                    </div>
+
+                    <div class="hw-layer hw-layer-4">
+                        <div class="hw-title">Quantum (QPU)</div>
+                        <div class="hw-code">^{}</div>
+                        <div class="hw-desc">Superposition: quantum state exploration. Entanglement ready. Future scalability. Interference patterns.</div>
+                        <div style="margin-top: 1rem; font-size: 0.85rem; color: #808080;">Thread: Quantum</div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 3rem; color: #a0a0ff; line-height: 2;">
+                    <p>All layers share the same semantic base: the rule <strong>A B = A(B)</strong></p>
+                    <p style="font-size: 0.9rem; color: #808080;">Escalation is automatic: compiler chooses optimal layer for task</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TYPE SYSTEM SECTION -->
+        <section id="types">
+            <div class="container">
+                <h2>Type System — Constraint as First-Class</h2>
+
+                <div class="type-innovation">
+                    TYPE = CONTRAINTE, pas représentation
+                </div>
+
+                <p style="text-align: center; color: #a0a0ff; margin-bottom: 2rem; font-size: 1.1rem;">
+                    Types are constraints discovered by range analysis, not labels. The IDE tells you which type fits.
+                </p>
+
+                <div class="type-tree">
+                    <div class="type-node">← number</div>
+                    <div class="type-child">├─ integer</div>
+                    <div class="type-child">│  ├─ i8, i16, i32, i64, i128</div>
+                    <div class="type-child">│  ├─ u8, u16, u32, u64, u128</div>
+                    <div class="type-child">│  └─ bigint (unbounded)</div>
+                    <div class="type-child">├─ rational</div>
+                    <div class="type-child">│  └─ p/q (exact fractions)</div>
+                    <div class="type-child">├─ decimal</div>
+                    <div class="type-child">│  └─ fixed-point arithmetic</div>
+                    <div class="type-child">├─ float</div>
+                    <div class="type-child">│  ├─ f16, f32, f64, f128</div>
+                    <div class="type-child">│  └─ bfloat16 (ML friendly)</div>
+                    <div class="type-child">└─ complex</div>
+                    <div class="type-child">   └─ (real, imag) pair</div>
+                </div>
+
+                <div class="type-example">
+                    x : 0..100
+                    <br>→ IDE: u8 (1 byte, range check at compile time)
+                    <br><br>y : -1000..1000
+                    <br>→ IDE: i16 (2 bytes, signed)
+                    <br><br>z : 0..(10^18)
+                    <br>→ IDE: u64 (8 bytes, unsigned)
+                </div>
+
+                <div style="background: rgba(100, 200, 255, 0.1); border: 1px solid rgba(100, 200, 255, 0.2); border-radius: 10px; padding: 2rem; margin-top: 2rem;">
+                    <h3 style="color: #00d4ff; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.1em;">Key Innovation: Automatic Type Discovery</h3>
+                    <ul style="color: #a0a0ff; line-height: 2; margin-left: 1.5rem;">
+                        <li>✓ No explicit type annotations needed for numeric ranges</li>
+                        <li>✓ Compiler infers smallest safe type for each variable</li>
+                        <li>✓ Memory-optimal: x : 0..255 automatically becomes u8</li>
+                        <li>✓ Zero runtime overhead: all decisions made at compile time</li>
+                        <li>✓ IDE shows you the type in real-time as you type constraints</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- MEMORY MODEL SECTION -->
+        <section id="memory">
+            <div class="container">
+                <h2>Memory Model — Pauli Exclusion + FIFO Channels</h2>
+
+                <div class="memory-visual">
+                    <div class="memory-box">
+                        <div class="memory-title">342 Memory</div>
+                        <div class="memory-feature"><strong>MOVE by default</strong> — Pauli exclusion: one owner at a time</div>
+                        <div class="memory-feature"><strong>@ read</strong> — Borrow for reading (shared, immutable)</div>
+                        <div class="memory-feature"><strong>@@ write</strong> — Exclusive borrow (mutable access)</div>
+                        <div class="memory-feature"><strong>Simple semantics</strong> — "It's yours until you give it away"</div>
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(100, 200, 255, 0.2); font-size: 0.85rem; color: #808080;">No complex borrow checker needed</div>
+                    </div>
+
+                    <div class="memory-box">
+                        <div class="memory-title">Arena Scoping</div>
+                        <div class="memory-feature"><strong>{} = arena scope</strong> — Creates a bounded memory region</div>
+                        <div class="memory-feature"><strong>FIFO channels</strong> — Values flow through pipes in order</div>
+                        <div class="memory-feature"><strong>Exit = FREE</strong> — Automatic deallocation at scope end</div>
+                        <div class="memory-feature"><strong>Deterministic</strong> — Know exactly when memory is freed</div>
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(100, 200, 255, 0.2); font-size: 0.85rem; color: #808080;">Like stack allocation, but composable</div>
+                    </div>
+
+                    <div class="memory-box">
+                        <div class="memory-title">vs. Alternatives</div>
+                        <div class="memory-feature"><strong>Rust:</strong> Complex borrow rules, learning curve steep</div>
+                        <div class="memory-feature"><strong>Go:</strong> Garbage collection, unpredictable pauses</div>
+                        <div class="memory-feature"><strong>342:</strong> Simple + Safe by design, Pauli physics-inspired</div>
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(100, 200, 255, 0.2); font-size: 0.85rem; color: #808080;">Physics first, then safety</div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(150, 100, 255, 0.1); border: 2px solid rgba(150, 100, 255, 0.3); border-radius: 10px; padding: 2rem; margin-top: 2rem; text-align: center;">
+                    <div style="font-size: 1.2rem; color: #ff9664; font-weight: 600; margin-bottom: 1rem;">Memory Safety Without Sacrifice</div>
+                    <div style="color: #a0a0ff; line-height: 1.8;">
+                        No null pointers. No buffer overflow. No use-after-free.<br>
+                        No double-free. No data races. All guaranteed at compile time.<br>
+                        <span style="font-size: 0.9rem; color: #808080;">And the syntax is simpler than Rust.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ROADMAP SECTION -->
+        <section id="roadmap">
+            <div class="container">
+                <h2>Development Roadmap</h2>
+
+                <div class="roadmap-timeline">
+                    <div class="roadmap-item">
+                        <div class="roadmap-phase">Phase 1</div>
+                        <div class="roadmap-content">
+                            <div class="roadmap-title">PEG Grammar + Parser</div>
+                            <div class="roadmap-desc">
+                                Formalize the complete grammar using Parsing Expression Grammar (PEG). Build a robust recursive descent parser that handles all 18 bosons, 5 gluons, and separator rules. Comprehensive error reporting and recovery.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-item">
+                        <div class="roadmap-phase">Phase 2</div>
+                        <div class="roadmap-content">
+                            <div class="roadmap-title">AST → ParticleIR</div>
+                            <div class="roadmap-desc">
+                                Convert Abstract Syntax Trees into ParticleIR (Intermediate Representation). Implement type inference, constraint solving, and the range analysis system. Validate memory safety properties.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-item">
+                        <div class="roadmap-phase">Phase 3</div>
+                        <div class="roadmap-content">
+                            <div class="roadmap-title">Cranelift POC</div>
+                            <div class="roadmap-desc">
+                                Proof of concept: compile to native code via Cranelift. Target x86-64 and ARM64. Get "hello world" running. Benchmark against C/Rust baseline. Verify memory safety properties at runtime.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-item">
+                        <div class="roadmap-phase">Phase 4</div>
+                        <div class="roadmap-content">
+                            <div class="roadmap-title">10 Example Programs</div>
+                            <div class="roadmap-desc">
+                                Implement 10 diverse programs: sorting, file I/O, networking, numeric computation, tree traversal, etc. Stress-test the type system, memory model, and core features. Gather real-world feedback.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-item">
+                        <div class="roadmap-phase">Phase 5</div>
+                        <div class="roadmap-content">
+                            <div class="roadmap-title">Sugar System</div>
+                            <div class="roadmap-desc">
+                                Implement syntactic sugar: loops, pattern matching, list comprehensions, etc. All sugar expands to core composition rule. Keep the language orthogonal and learnable without hidden complexity.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-item">
+                        <div class="roadmap-phase">Phase 6</div>
+                        <div class="roadmap-content">
+                            <div class="roadmap-title">WASM + Web Deployment</div>
+                            <div class="roadmap-desc">
+                                Compile ParticleIR to WebAssembly. Deploy browser-based IDE and online playground. Enable collaborative learning and rapid prototyping. Make 3.42 accessible to anyone with a web browser.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-stats">
+            83 décisions · 18 bosons · 5 gluons · 18 gravitons · 28 questions résolues · 4 tiers orbitaux
+        </div>
+
+        <div>
+            Créé par <strong>Alexis Mounib</strong> (almounib) — 42 Paris
+        </div>
+
+        <div class="footer-credit">
+            <p>
+                <a href="https://github.com/almounib/trois-quarante-deux" target="_blank">GitHub Repository</a>
+            </p>
+            <p style="font-size: 0.8rem; margin-top: 1rem; color: #606080;">
+                3.42 — Où la physique des particules rencontre la programmation
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Particle Background Animation
+        class ParticleBackground {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.particles = [];
+                this.particleCount = 50;
+
+                this.resize();
+                this.createParticles();
+                this.animate();
+
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            createParticles() {
+                this.particles = [];
+                for (let i = 0; i < this.particleCount; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        vx: (Math.random() - 0.5) * 0.5,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        radius: Math.random() * 2 + 1,
+                        opacity: Math.random() * 0.5 + 0.3,
+                        color: ['#00d4ff', '#a0a0ff', '#64ff96', '#ff9664', '#ffc800'][
+                            Math.floor(Math.random() * 5)
+                        ]
+                    });
+                }
+            }
+
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                for (let particle of this.particles) {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+
+                    if (particle.x < 0) particle.x = this.canvas.width;
+                    if (particle.x > this.canvas.width) particle.x = 0;
+                    if (particle.y < 0) particle.y = this.canvas.height;
+                    if (particle.y > this.canvas.height) particle.y = 0;
+
+                    this.ctx.fillStyle = particle.color;
+                    this.ctx.globalAlpha = particle.opacity;
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+
+                    // Draw connections
+                    for (let other of this.particles) {
+                        const dx = particle.x - other.x;
+                        const dy = particle.y - other.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < 150) {
+                            this.ctx.strokeStyle = particle.color;
+                            this.ctx.globalAlpha = particle.opacity * (1 - distance / 150) * 0.5;
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(particle.x, particle.y);
+                            this.ctx.lineTo(other.x, other.y);
+                            this.ctx.stroke();
+                        }
+                    }
+                }
+
+                this.ctx.globalAlpha = 1;
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('particleCanvas');
+            new ParticleBackground(canvas);
+
+            // Smooth scroll for nav links
+            document.querySelectorAll('nav a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    const href = link.getAttribute('href');
+                    const target = document.querySelector(href);
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

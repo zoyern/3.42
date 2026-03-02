@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3.42 — Référence du Langage</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0f;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, #1a1a25 0%, #0a0a0f 100%);
+            border-bottom: 2px solid #2a2a35;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            font-size: 1rem;
+            color: #a0a0aa;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 1px;
+        }
+
+        /* NAVIGATION */
+        nav {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #2a2a35;
+            z-index: 100;
+            padding: 1rem 2rem;
+            display: flex;
+            gap: 2rem;
+            overflow-x: auto;
+            align-items: center;
+        }
+
+        nav a {
+            color: #a0a0aa;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+            padding: 0.5rem 0;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        nav a:hover {
+            color: #00d4ff;
+            border-bottom-color: #00d4ff;
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* SECTIONS */
+        section {
+            margin-bottom: 4rem;
+            scroll-margin-top: 100px;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-title::before {
+            content: '◈';
+            color: #7c3aed;
+            font-size: 2rem;
+        }
+
+        .code-card {
+            background: #15151d;
+            border: 1px solid #2a2a35;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .code-card p {
+            color: #a0a0aa;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        /* CODE BLOCKS */
+        pre {
+            background: #0f0f14;
+            border-left: 4px solid #7c3aed;
+            padding: 1.5rem;
+            overflow-x: auto;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* SYNTAX HIGHLIGHTING */
+        .boson { color: #00d4ff; font-weight: 600; }
+        .gluon { color: #ffd700; font-weight: 600; }
+        .fermion { color: #ffffff; }
+        .comment { color: #6a6a7a; font-style: italic; }
+        .string { color: #4ade80; }
+        .keyword { color: #00d4ff; font-weight: 600; }
+        .symbol { color: #ff6b9d; }
+        .number { color: #f59e0b; }
+        .function { color: #60a5fa; }
+
+        /* INTERACTIVE SECTIONS */
+        .sugar-toggle {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .sugar-btn {
+            padding: 0.75rem 1.5rem;
+            background: #1a1a25;
+            border: 2px solid #2a2a35;
+            color: #a0a0aa;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .sugar-btn:hover {
+            border-color: #7c3aed;
+            color: #7c3aed;
+        }
+
+        .sugar-btn.active {
+            background: #7c3aed;
+            color: #fff;
+            border-color: #7c3aed;
+        }
+
+        .sugar-content {
+            display: none;
+        }
+
+        .sugar-content.active {
+            display: block;
+        }
+
+        /* REFERENCE TABLE */
+        .graviton-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .graviton-table th {
+            background: #1a1a25;
+            border: 1px solid #2a2a35;
+            padding: 1rem;
+            text-align: left;
+            color: #00d4ff;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        .graviton-table td {
+            border: 1px solid #2a2a35;
+            padding: 1rem;
+            color: #e0e0e0;
+        }
+
+        .graviton-table tr:hover {
+            background: #15151d;
+        }
+
+        .graviton-name {
+            font-family: 'JetBrains Mono', monospace;
+            color: #ffd700;
+            font-weight: 600;
+        }
+
+        /* FOOTER */
+        footer {
+            background: #0a0a0f;
+            border-top: 2px solid #2a2a35;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 4rem;
+            color: #6a6a7a;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: #00d4ff;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: #7c3aed;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            nav {
+                padding: 1rem;
+                gap: 1rem;
+                font-size: 0.85rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .code-card {
+                padding: 1.5rem;
+            }
+
+            pre {
+                font-size: 0.8rem;
+                padding: 1rem;
+            }
+
+            .graviton-table {
+                font-size: 0.85rem;
+            }
+
+            .graviton-table td,
+            .graviton-table th {
+                padding: 0.75rem;
+            }
+        }
+
+        /* UTILITY */
+        .highlight {
+            background: rgba(124, 58, 237, 0.2);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        .note {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 4px solid #00d4ff;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            color: #a0a0aa;
+        }
+
+        .error-note {
+            background: rgba(255, 107, 157, 0.1);
+            border-left: 4px solid #ff6b9d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>3.42 — Référence du Langage</h1>
+        <p>18 bosons · 5 gluons · Zéro keyword · Tout émerge</p>
+    </div>
+
+    <nav>
+        <a href="#basics">Basics</a>
+        <a href="#control">Control Flow</a>
+        <a href="#memory">Memory</a>
+        <a href="#oop">OOP</a>
+        <a href="#concurrence">Concurrence</a>
+        <a href="#transducteurs">Transducteurs</a>
+        <a href="#annotations">Annotations</a>
+        <a href="#infinity">Infinity</a>
+        <a href="#autograd">Autograd</a>
+        <a href="#sugar">Sugar</a>
+        <a href="#philosophers">Philosophers</a>
+        <a href="#gravitons">Gravitons</a>
+    </nav>
+
+    <div class="container">
+        <!-- SECTION 1: BASICS -->
+        <section id="basics">
+            <h2 class="section-title">Basics — Variables, Types, Fonctions</h2>
+
+            <div class="code-card">
+                <p>Pas de <span class="highlight">let</span>, <span class="highlight">var</span>, ou <span class="highlight">const</span>. Le compilateur infère les types.</p>
+                <pre><code><span class="comment">// Variables</span>
+<span class="fermion">x</span> = <span class="number">42</span>;                    <span class="comment">// entier, compilateur → i8</span>
+<span class="fermion">name</span> = <span class="string">"Alexis"</span>;           <span class="comment">// str : [char]</span>
+<span class="fermion">active</span> = <span class="boson">+</span>;                <span class="comment">// bool : { + | - }</span>
+
+<span class="comment">// Types = contraintes (pas représentations)</span>
+<span class="fermion">age</span> <span class="boson">:</span> <span class="number">0</span><span class="boson">..</span><span class="number">150</span> = <span class="number">25</span>;         <span class="comment">// range type → u8</span>
+<span class="fermion">temp</span> <span class="boson">:</span> <span class="number">-273.15</span><span class="boson">..</span><span class="symbol">+∞</span> = <span class="number">20.5</span>; <span class="comment">// rational exact</span>
+
+<span class="comment">// Fonctions</span>
+<span class="fermion">add</span> <span class="boson">:</span> (<span class="fermion">a</span><span class="boson">:</span> <span class="gluon">number</span>, <span class="fermion">b</span><span class="boson">:</span> <span class="gluon">number</span>) <span class="boson">:</span> <span class="gluon">number</span> = <span class="boson">{</span> <span class="boson"><<</span> <span class="fermion">a</span> + <span class="fermion">b</span> <span class="boson">}</span>;
+<span class="fermion">greet</span> <span class="boson">:</span> (<span class="fermion">name</span><span class="boson">:</span> <span class="gluon">str</span>) = <span class="boson">{</span> <span class="boson"><<</span> <span class="string">"Hello $name"</span> <span class="symbol">|></span> <span class="function">print</span> <span class="boson">}</span>;</code></pre>
+            </div>
+        </section>
+
+        <!-- SECTION 2: CONTROL FLOW -->
+        <section id="control">
+            <h2 class="section-title">Control Flow — ?, ??, ?{}, Boucles</h2>
+
+            <div class="code-card">
+                <p><span class="highlight">?</span> = if (MESURER), <span class="highlight">??</span> = while (MESURER²), <span class="highlight">?{}</span> = match</p>
+                <pre><code><span class="comment">// ? = if (MESURER)</span>
+<span class="fermion">x</span> <span class="boson">?</span> <span class="boson">{</span>
+    <span class="boson">+</span> <span class="boson">:</span> <span class="string">"positif"</span>;
+    <span class="boson">-</span> <span class="boson">:</span> <span class="string">"négatif"</span>;
+    <span class="boson">#</span> <span class="boson">:</span> <span class="string">"erreur"</span>
+<span class="boson">}</span>;
+
+<span class="comment">// ?? = while (MESURER²)</span>
+<span class="fermion">i</span> = <span class="number">0</span>; <span class="boson">??</span> (<span class="fermion">i</span> < <span class="number">10</span>) <span class="boson">{</span>
+    <span class="function">print</span>(<span class="fermion">i</span>);
+    <span class="fermion">i</span> = <span class="fermion">i</span> + <span class="number">1</span>
+<span class="boson">}</span>;
+
+<span class="comment">// ?{} = match</span>
+<span class="fermion">color</span> <span class="boson">?{</span>
+    <span class="string">"rouge"</span> <span class="boson">:</span> <span class="number">0xFF0000</span>;
+    <span class="string">"vert"</span>  <span class="boson">:</span> <span class="number">0x00FF00</span>;
+    <span class="boson">_</span>       <span class="boson">:</span> <span class="number">0x000000</span>;    <span class="comment">// _ = IGNORER = default</span>
+<span class="boson">}</span>;
+
+<span class="comment">// << = return, >> = continue, >< = break</span>
+<span class="boson">??</span> (<span class="gluon">true</span>) <span class="boson">{</span>
+    <span class="fermion">x</span> > <span class="number">100</span> <span class="boson">?</span> <span class="boson">{</span> <span class="boson"><<</span> <span class="fermion">x</span> <span class="boson">}</span>;  <span class="comment">// return</span>
+    <span class="fermion">x</span> == <span class="number">50</span> <span class="boson">?</span> <span class="boson">{</span> <span class="boson">>></span> <span class="boson">}</span>;        <span class="comment">// continue</span>
+    <span class="fermion">x</span> < <span class="number">0</span> <span class="boson">?</span> <span class="boson">{</span> <span class="boson">><</span> <span class="boson">}</span>;        <span class="comment">// break</span>
+<span class="boson">}</span>;</code></pre>
+            </div>
+        </section>
+
+        <!-- SECTION 3: MEMORY MODEL -->
+        <section id="memory">
+            <h2 class="section-title">Memory Model — Move, Borrow, Copy</h2>
+
+            <div class="code-card">
+                <p>MOVE par défaut (Pauli). <span class="highlight">@</span> = lecture (borrow), <span class="highlight">@@</span> = exclusive (FIFO), <span class="highlight">**</span> = copie explicite.</p>
+                <pre><code><span class="comment">// MOVE par défaut (Pauli)</span>
+<span class="fermion">a</span> = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];
+<span class="fermion">b</span> = <span class="fermion">a</span>;          <span class="comment">// a est MOVED → a n'existe plus</span>
+<span class="comment">// a + b;       // ❌ ERREUR: a consumed</span>
+
+<span class="comment">// @ = borrow (lecture)</span>
+<span class="fermion">c</span> = <span class="boson">@b</span>;         <span class="comment">// c lit b, b reste vivant</span>
+
+<span class="comment">// @@ = exclusive (écriture FIFO)</span>
+<span class="boson">@@b</span> = [<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>]; <span class="comment">// écriture séquentielle, pas de deadlock</span>
+
+<span class="comment">// ** = copie explicite</span>
+<span class="fermion">d</span> = <span class="boson">**b</span>;        <span class="comment">// copie profonde</span></code></pre>
+            </div>
+
+            <div class="note">
+                <strong>Key Insight:</strong> La sémantique FIFO de <span class="highlight">@@</span> élimine les deadlocks par construction. Pas de Mutex classique.
+            </div>
+        </section>
+
+        <!-- SECTION 4: OOP ÉMERGENTE -->
+        <section id="oop">
+            <h2 class="section-title">OOP Émergente — Types, Héritage, Diamond</h2>
+
+            <div class="code-card">
+                <p>Pas de <span class="highlight">class</span>. Types avec méthodes. Héritage via <span class="highlight">:</span>, Diamond via <span class="highlight">+</span>.</p>
+                <pre><code><span class="comment">// Types (pas de "class")</span>
+<span class="fermion">Animal</span> <span class="boson">:</span> <span class="boson">{</span>
+    <span class="fermion">name</span> <span class="boson">:</span> <span class="gluon">str</span>; <span class="fermion">age</span> <span class="boson">:</span> <span class="number">0</span><span class="boson">..</span><span class="number">50</span>;
+    <span class="boson">.</span><span class="function">new</span> <span class="boson">:</span> (<span class="fermion">name</span><span class="boson">:</span> <span class="gluon">str</span>, <span class="fermion">age</span><span class="boson">:</span> <span class="number">0</span><span class="boson">..</span><span class="number">50</span>) <span class="boson">:</span> <span class="boson">@</span> = <span class="boson">{</span> <span class="boson">@</span> = <span class="boson">{</span> <span class="fermion">name</span>, <span class="fermion">age</span> <span class="boson">}</span> <span class="boson">}</span>;
+    <span class="boson">.</span><span class="function">speak</span> <span class="boson">:</span> () <span class="boson">:</span> <span class="gluon">str</span>;         <span class="comment">// abstraite</span>
+    <span class="boson">.</span><span class="function">info</span> <span class="boson">:</span> () <span class="boson">:</span> <span class="gluon">str</span> = <span class="boson">{</span> <span class="boson"><<</span> <span class="string">"$(@.name), $(@.age) ans"</span> <span class="boson">}</span>;
+<span class="boson">}</span>;
+
+<span class="comment">// Héritage via :</span>
+<span class="fermion">Dog</span> <span class="boson">:</span> <span class="fermion">Animal</span> <span class="boson">{</span>
+    <span class="fermion">breed</span> <span class="boson">:</span> <span class="gluon">str</span>;
+    <span class="boson">.</span><span class="function">new</span> <span class="boson">:</span> (<span class="fermion">name</span>, <span class="fermion">age</span>, <span class="fermion">breed</span>) <span class="boson">:</span> <span class="boson">@</span> = <span class="boson">{</span>
+        <span class="boson">@</span> = <span class="fermion">Animal</span><span class="boson">.</span><span class="function">new</span>(<span class="fermion">name</span>, <span class="fermion">age</span>) + <span class="boson">{</span> <span class="fermion">breed</span> <span class="boson">}</span>
+    <span class="boson">}</span>;
+    <span class="boson">.</span><span class="function">speak</span> <span class="boson">:</span> () <span class="boson">:</span> <span class="gluon">str</span> = <span class="boson">{</span> <span class="boson"><<</span> <span class="string">"Woof!"</span> <span class="boson">}</span>;
+<span class="boson">}</span>;
+
+<span class="comment">// Diamond: + = union explicite</span>
+<span class="fermion">DiamondTrap</span> <span class="boson">:</span> <span class="fermion">ScavTrap</span> <span class="boson">+</span> <span class="fermion">FragTrap</span> <span class="boson">{</span>
+    <span class="boson">.</span><span class="function">attack</span> = <span class="fermion">ScavTrap</span><span class="boson">.</span><span class="function">attack</span>;   <span class="comment">// résolution explicite</span>
+<span class="boson">}</span>;
+
+<span class="comment">// Import</span>
+<span class="symbol">|></span> <span class="fermion">types</span>/<span class="fermion">dog</span>;</code></pre>
+            </div>
+        </section>
+
+        <!-- SECTION 5: CONCURRENCE -->
+        <section id="concurrence">
+            <h2 class="section-title">Concurrence — CPU, GPU, Async, QPU</h2>
+
+            <div class="code-card">
+                <p><span class="highlight">|{}</span> = CPU thread, <span class="highlight">~{}</span> = GPU/SIMD, <span class="highlight">^{}</span> = QPU, <span class="highlight">|!</span> = async fire-and-forget</p>
+                <pre><code><span class="comment">// Threads CPU: |{} | |{}</span>
+<span class="fermion">t1</span> = <span class="boson">|{</span> <span class="function">heavy_computation</span>(<span class="fermion">data1</span>) <span class="boson">}</span>;
+<span class="fermion">t2</span> = <span class="boson">|{</span> <span class="function">heavy_computation</span>(<span class="fermion">data2</span>) <span class="boson">}</span>;
+<span class="fermion">result1</span> = <span class="fermion">t1</span> <span class="boson">|</span>;    <span class="comment">// wait/join</span>
+<span class="fermion">result2</span> = <span class="fermion">t2</span> <span class="boson">|</span>;
+
+<span class="comment">// Async: |! = fire-and-forget</span>
+<span class="boson">|!</span> <span class="boson">{</span> <span class="function">log_to_server</span>(<span class="fermion">event</span>) <span class="boson">}</span>;
+
+<span class="comment">// GPU/SIMD: ~{}</span>
+<span class="boson">~{</span> <span class="function">matrix_multiply</span>(<span class="fermion">A</span>, <span class="fermion">B</span>) <span class="boson">}</span>;
+
+<span class="comment">// QPU: ^{}</span>
+<span class="boson">^{</span> <span class="function">quantum_search</span>(<span class="fermion">database</span>) <span class="boson">}</span>;
+
+<span class="comment">// Mutex: @@ = FIFO séquentiel (PAS de deadlock structurellement)</span>
+<span class="fermion">shared_counter</span> = <span class="number">0</span>;
+<span class="boson">|{</span> <span class="boson">@@</span><span class="fermion">shared_counter</span> = <span class="fermion">shared_counter</span> + <span class="number">1</span> <span class="boson">}</span> <span class="boson">|</span>
+<span class="boson">|{</span> <span class="boson">@@</span><span class="fermion">shared_counter</span> = <span class="fermion">shared_counter</span> + <span class="number">1</span> <span class="boson">}</span> <span class="boson">|</span>;</code></pre>
+            </div>
+
+            <div class="note error-note">
+                <strong>Crucial:</strong> La sémantique <span class="highlight">@@</span> FIFO élimine les deadlocks par construction. Pas besoin de Mutex traditionnel.
+            </div>
+        </section>
+
+        <!-- SECTION 6: TRANSDUCTEURS -->
+        <section id="transducteurs">
+            <h2 class="section-title">Transducteurs — Stream Fusion, Pipeline</h2>
+
+            <div class="code-card">
+                <p><span class="highlight">|*</span> = map, <span class="highlight">|-</span> = filter, <span class="highlight">|+</span> = fold. Une seule boucle, zéro allocation intermédiaire.</p>
+                <pre><code><span class="fermion">numbers</span> = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>];
+
+<span class="comment">// Pipeline (1 seule boucle, zéro allocation intermédiaire)</span>
+<span class="fermion">result</span> = <span class="fermion">numbers</span>
+    <span class="boson">|-</span> <span class="boson">{</span> <span class="fermion">n</span> <span class="symbol">|></span> <span class="fermion">n</span> % <span class="number">2</span> = <span class="number">0</span> <span class="boson">}</span>    <span class="comment">// filtre pairs</span>
+    <span class="boson">|*</span> <span class="boson">{</span> <span class="fermion">n</span> <span class="symbol">|></span> <span class="fermion">n</span> * <span class="fermion">n</span> <span class="boson">}</span>         <span class="comment">// carré</span>
+    <span class="boson">|+</span> <span class="boson">{</span> <span class="number">0</span>; (<span class="fermion">acc</span>, <span class="fermion">n</span>) <span class="symbol">|></span> <span class="fermion">acc</span> + <span class="fermion">n</span> <span class="boson">}</span>;  <span class="comment">// somme</span>
+
+<span class="comment">// GPU parallel map</span>
+<span class="boson">~</span><span class="fermion">result</span> = <span class="fermion">data</span> <span class="boson">~*</span> <span class="boson">{</span> <span class="fermion">x</span> <span class="symbol">|></span> <span class="function">process</span>(<span class="fermion">x</span>) <span class="boson">}</span>;</code></pre>
+            </div>
+        </section>
+
+        <!-- SECTION 7: ANNOTATIONS -->
+        <section id="annotations">
+            <h2 class="section-title">Annotations #{} et #key</h2>
+
+            <div class="code-card">
+                <p>Annotations scopées avec <span class="highlight">#{}</span>, clés extensibles avec <span class="highlight">#key</span>.</p>
+                <pre><code><span class="comment">// Annotations scopées</span>
+<span class="fermion">x</span> <span class="boson">:</span> <span class="gluon">rational</span> <span class="boson">#{</span> <span class="fermion">precision</span><span class="boson">:</span> <span class="gluon">fast</span> <span class="boson">}</span> = <span class="number">0.1</span>;
+<span class="boson">#{</span> <span class="fermion">precision</span><span class="boson">:</span> <span class="gluon">exact</span> <span class="boson">}</span> <span class="boson">{</span> <span class="comment">/* ... */</span> <span class="boson">}</span>;
+<span class="boson">#{</span> <span class="fermion">target</span><span class="boson">:</span> <span class="gluon">gpu</span> <span class="boson">}</span> <span class="boson">{</span> <span class="comment">/* ... */</span> <span class="boson">}</span>;
+
+<span class="comment">// #key extensible</span>
+<span class="fermion">logging</span> <span class="boson">:</span> <span class="boson">#</span><span class="gluon">key</span> <span class="boson">:</span> <span class="boson">{</span> <span class="gluon">verbose</span>, <span class="gluon">quiet</span>, <span class="gluon">off</span> <span class="boson">}</span>;
+<span class="boson">#{</span> <span class="fermion">logging</span><span class="boson">:</span> <span class="gluon">verbose</span> <span class="boson">}</span> <span class="boson">{</span> <span class="function">my_function</span>() <span class="boson">}</span>;
+
+<span class="comment">// Backend binding</span>
+<span class="fermion">target</span>.<span class="gluon">gpu</span> <span class="symbol">|></span> <span class="fermion">backend</span>.<span class="gluon">wgpu</span>;</code></pre>
+            </div>
+        </section>
+
+        <!-- SECTION 8: INFINITY -->
+        <section id="infinity">
+            <h2 class="section-title">Division par Zéro et ∞</h2>
+
+            <div class="code-card">
+                <p>∞ est un fermion valide. Propriétés algébriques : absorbant pour +, indéterminé pour ×0.</p>
+                <pre><code><span class="fermion">x</span> = <span class="number">42</span> / <span class="number">0</span>;          <span class="comment">// = ∞ (fermion valide)</span>
+<span class="symbol">∞</span> + <span class="number">1</span> = <span class="symbol">∞</span>;            <span class="comment">// absorbant</span>
+<span class="symbol">∞</span> * <span class="number">0</span> = <span class="boson">#</span>;            <span class="comment">// indéterminé</span>
+<span class="number">1</span> / <span class="symbol">∞</span> = <span class="number">0</span>;            <span class="comment">// retour à l'origine</span>
+
+<span class="comment">// Opt-out</span>
+<span class="fermion">y</span> <span class="boson">:</span> <span class="gluon">number</span> <span class="boson">!∞</span> = <span class="function">safe_div</span>(<span class="fermion">a</span>, <span class="fermion">b</span>);
+<span class="boson">#{</span> <span class="fermion">division_zero</span><span class="boson">:</span> <span class="gluon">trap</span> <span class="boson">}</span> <span class="boson">{</span> <span class="comment">/* ... */</span> <span class="boson">}</span>;</code></pre>
+            </div>
+        </section>
+
+        <!-- SECTION 9: AUTOGRAD -->
+        <section id="autograd">
+            <h2 class="section-title">Autograd — Dérivées Automatiques</h2>
+
+            <div class="code-card">
+                <p><span class="highlight">.~</span> = dérivée, <span class="highlight">.!</span> = snapshot, <span class="highlight">.=</span> = apply gradients</p>
+                <pre><code><span class="comment">// .~ = dérivée</span>
+<span class="fermion">f</span> <span class="boson">:</span> (<span class="fermion">x</span><span class="boson">:</span> <span class="gluon">number</span>) <span class="boson">:</span> <span class="gluon">number</span> = <span class="boson">{</span> <span class="boson"><<</span> <span class="fermion">x</span> * <span class="fermion">x</span> + <span class="number">3</span> * <span class="fermion">x</span> - <span class="number">7</span> <span class="boson">}</span>;
+<span class="fermion">gradient</span> = <span class="fermion">f</span><span class="boson">.</span><span class="symbol">~</span>(<span class="number">2.0</span>);   <span class="comment">// df/dx at x=2 = 2*2+3 = 7</span>
+
+<span class="comment">// .! = snapshot (capture l'état)</span>
+<span class="fermion">state</span> = <span class="fermion">model</span><span class="boson">.</span><span class="symbol">!</span>();      <span class="comment">// capture l'état</span>
+<span class="comment">// ... train ...</span>
+<span class="fermion">model</span> = <span class="fermion">state</span>;          <span class="comment">// restore</span>
+
+<span class="comment">// .= = apply gradients</span>
+<span class="fermion">model</span><span class="boson">.</span><span class="symbol">=</span>(<span class="fermion">gradients</span>);</code></pre>
+            </div>
+        </section>
+
+        <!-- SECTION 10: SUGAR SYSTEM -->
+        <section id="sugar">
+            <h2 class="section-title">Sugar System — Multi-Syntax Views</h2>
+
+            <div class="code-card">
+                <p>Même code exprimé en différents "sugar" — 342 natif, C, Python, COBOL.</p>
+
+                <div class="sugar-toggle">
+                    <button class="sugar-btn active" onclick="switchSugar('native')">342 Native</button>
+                    <button class="sugar-btn" onclick="switchSugar('c')">C Sugar</button>
+                    <button class="sugar-btn" onclick="switchSugar('python')">Python Sugar</button>
+                    <button class="sugar-btn" onclick="switchSugar('cobol')">COBOL Sugar</button>
+                </div>
+
+                <div id="sugar-native" class="sugar-content active">
+                    <pre><code><span class="fermion">x</span> = <span class="number">42</span>;
+<span class="fermion">x</span> > <span class="number">0</span> <span class="boson">?</span> <span class="boson">{</span> <span class="boson">+</span> <span class="boson">:</span> <span class="function">print</span>(<span class="string">"positif"</span>) <span class="boson">}</span>;</code></pre>
+                </div>
+
+                <div id="sugar-c" class="sugar-content">
+                    <pre><code><span class="gluon">int</span> <span class="fermion">x</span> = <span class="number">42</span>;
+<span class="boson">if</span> (<span class="fermion">x</span> > <span class="number">0</span>) <span class="boson">{</span>
+    <span class="function">printf</span>(<span class="string">"positif"</span>);
+<span class="boson">}</span></code></pre>
+                </div>
+
+                <div id="sugar-python" class="sugar-content">
+                    <pre><code><span class="fermion">x</span> = <span class="number">42</span>
+<span class="boson">if</span> <span class="fermion">x</span> > <span class="number">0</span>:
+    <span class="function">print</span>(<span class="string">"positif"</span>)</code></pre>
+                </div>
+
+                <div id="sugar-cobol" class="sugar-content">
+                    <pre><code><span class="boson">MOVE</span> <span class="number">42</span> <span class="boson">TO</span> <span class="fermion">X</span>.
+<span class="boson">IF</span> <span class="fermion">X</span> > <span class="number">0</span>
+    <span class="boson">DISPLAY</span> <span class="string">"positif"</span>.</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 11: PHILOSOPHERS -->
+        <section id="philosophers">
+            <h2 class="section-title">Dining Philosophers — Complete Example</h2>
+
+            <div class="code-card">
+                <p>La classique concurrence problem, résolu via <span class="highlight">@@</span> FIFO (pas de deadlock).</p>
+                <pre><code><span class="fermion">Fork</span> <span class="boson">:</span> <span class="boson">{</span> <span class="fermion">id</span> <span class="boson">:</span> <span class="number">0</span><span class="boson">..</span><span class="number">4</span> <span class="boson">}</span>;
+
+<span class="fermion">Philosopher</span> <span class="boson">:</span> <span class="boson">{</span>
+    <span class="fermion">id</span> <span class="boson">:</span> <span class="number">0</span><span class="boson">..</span><span class="number">4</span>;
+    <span class="fermion">left</span> <span class="boson">:</span> <span class="boson">@@</span><span class="fermion">Fork</span>; <span class="fermion">right</span> <span class="boson">:</span> <span class="boson">@@</span><span class="fermion">Fork</span>;
+
+    <span class="boson">.</span><span class="function">eat</span> <span class="boson">:</span> () = <span class="boson">{</span>
+        <span class="boson">@@</span><span class="fermion">left</span>; <span class="boson">@@</span><span class="fermion">right</span>;
+        <span class="boson"><<</span> <span class="string">"$(@.id) mange"</span> <span class="symbol">|></span> <span class="function">print</span>;
+        <span class="function">sleep</span>(<span class="number">1000</span>);
+    <span class="boson">}</span>;
+
+    <span class="boson">.</span><span class="function">think</span> <span class="boson">:</span> () = <span class="boson">{</span>
+        <span class="boson"><<</span> <span class="string">"$(@.id) pense"</span> <span class="symbol">|></span> <span class="function">print</span>;
+        <span class="function">sleep</span>(<span class="number">500</span>)
+    <span class="boson">}</span>;
+
+    <span class="boson">.</span><span class="function">run</span> <span class="boson">:</span> (<span class="fermion">meals</span> <span class="boson">:</span> <span class="number">0</span><span class="boson">..</span><span class="symbol">∞</span>) = <span class="boson">{</span>
+        <span class="number">0</span><span class="boson">..</span><span class="fermion">meals</span> <span class="boson">|*</span> <span class="boson">{</span> <span class="fermion">_</span> <span class="symbol">|></span> <span class="boson">@.</span><span class="function">eat</span>(); <span class="boson">@.</span><span class="function">think</span>() <span class="boson">}</span>;
+    <span class="boson">}</span>;
+<span class="boson">}</span>;
+
+<span class="fermion">main</span> <span class="boson">:</span> () = <span class="boson">{</span>
+    <span class="fermion">forks</span> = <span class="number">0</span><span class="boson">..</span><span class="number">4</span> <span class="boson">|*</span> <span class="boson">{</span> <span class="fermion">i</span> <span class="symbol">|></span> <span class="fermion">Fork</span> <span class="boson">{</span> <span class="fermion">id</span><span class="boson">:</span> <span class="fermion">i</span> <span class="boson">}</span> <span class="boson">}</span>;
+
+    <span class="fermion">threads</span> = <span class="number">0</span><span class="boson">..</span><span class="number">4</span> <span class="boson">|*</span> <span class="boson">{</span> <span class="fermion">i</span> <span class="symbol">|></span>
+        <span class="boson">|{</span> <span class="fermion">Philosopher</span> <span class="boson">{</span>
+            <span class="fermion">id</span><span class="boson">:</span> <span class="fermion">i</span>,
+            <span class="fermion">left</span><span class="boson">:</span> <span class="boson">@@</span><span class="fermion">forks</span>.(<span class="fermion">i</span>),
+            <span class="fermion">right</span><span class="boson">:</span> <span class="boson">@@</span><span class="fermion">forks</span>.((<span class="fermion">i</span> + <span class="number">1</span>) % <span class="number">5</span>)
+        <span class="boson">}</span>.<span class="function">run</span>(<span class="number">3</span>) <span class="boson">}</span>
+    <span class="boson">}</span>;
+
+    <span class="fermion">threads</span> <span class="boson">|*</span> <span class="boson">{</span> <span class="fermion">t</span> <span class="symbol">|></span> <span class="fermion">t</span> <span class="boson">|</span> <span class="boson">}</span>;
+    <span class="boson"><<</span> <span class="string">"Fini"</span> <span class="symbol">|></span> <span class="function">print</span>;
+<span class="boson">}</span>;</code></pre>
+            </div>
+
+            <div class="note">
+                <strong>Why it works:</strong> Les forks sont protégés par <span class="highlight">@@</span> (exclusive FIFO). L'ordre séquentiel élimine le deadlock circulaire. Pas d'arbitrage complexe requis.
+            </div>
+        </section>
+
+        <!-- SECTION 12: GRAVITONS REFERENCE TABLE -->
+        <section id="gravitons">
+            <h2 class="section-title">18 Bosons — Référence Complète</h2>
+
+            <div class="code-card">
+                <p>Table interactive de tous les bosons (constructeurs de syntaxe).</p>
+
+                <table class="graviton-table">
+                    <thead>
+                        <tr>
+                            <th>Boson</th>
+                            <th>Nom</th>
+                            <th>Rôle</th>
+                            <th>Exemple</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="graviton-name">:{}</td>
+                            <td>Type Definition</td>
+                            <td>Définir une structure de type</td>
+                            <td><code class="code">Animal : { name: str }</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">?{}</td>
+                            <td>Match Expression</td>
+                            <td>Pattern matching</td>
+                            <td><code class="code">x ?{ + : "pos" }</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">|{}</td>
+                            <td>CPU Thread Scope</td>
+                            <td>Créer un thread CPU</td>
+                            <td><code class="code">|{ heavy_work() }</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">~{}</td>
+                            <td>GPU/SIMD Scope</td>
+                            <td>Lancer sur GPU</td>
+                            <td><code class="code">~{ matrix_op() }</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">^{}</td>
+                            <td>QPU Scope</td>
+                            <td>Quantum Processing Unit</td>
+                            <td><code class="code">^{ quantum_search() }</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">!{}</td>
+                            <td>Defer Block</td>
+                            <td>Exécution différée</td>
+                            <td><code class="code">!{ cleanup() }</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">={}</td>
+                            <td>Assignment Scope</td>
+                            <td>Portée d'assignation</td>
+                            <td><code class="code">={}  new_val</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">#{}</td>
+                            <td>Annotation</td>
+                            <td>Metadonnées de compilation</td>
+                            <td><code class="code">#{ target: gpu }</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name"><{}</td>
+                            <td>Input Scope</td>
+                            <td>Entrée de flux</td>
+                            <td><code class="code"><{ stdin() }</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">>{}</td>
+                            <td>Output Scope</td>
+                            <td>Sortie de flux</td>
+                            <td><code class="code">>{ stdout() }</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">.{}</td>
+                            <td>Method Block</td>
+                            <td>Méthode d'un type</td>
+                            <td><code class="code">.eat : () = {}</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">+{}</td>
+                            <td>Fold/Accumulate</td>
+                            <td>Réduction avec accumulateur</td>
+                            <td><code class="code">|+ { 0; acc+n }</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">-{}</td>
+                            <td>Filter</td>
+                            <td>Filtrer un flux</td>
+                            <td><code class="code">|- { n % 2 = 0 }</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">*{}</td>
+                            <td>Map/Transform</td>
+                            <td>Transformer chaque élément</td>
+                            <td><code class="code">|* { n*n }</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">%{}</td>
+                            <td>Format String</td>
+                            <td>Formatage de chaîne</td>
+                            <td><code class="code">%{ "Value: {x}" }</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">@{}</td>
+                            <td>Reference Scope</td>
+                            <td>Emprunt/référence</td>
+                            <td><code class="code">c = @b</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">/{}</td>
+                            <td>Division Scope</td>
+                            <td>Gestion division/∞</td>
+                            <td><code class="code">x = 42/0</code></td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">_{}</td>
+                            <td>Ignore/Discard</td>
+                            <td>Ignorer un pattern</td>
+                            <td><code class="code">_ : default</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <h3 style="color: #ffd700; font-family: 'JetBrains Mono', monospace; margin-bottom: 1rem;">5 Gluons (Opérateurs de flux)</h3>
+                <table class="graviton-table">
+                    <thead>
+                        <tr>
+                            <th>Gluon</th>
+                            <th>Nom</th>
+                            <th>Rôle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="graviton-name"><<</td>
+                            <td>Return</td>
+                            <td>Retourner une valeur</td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">>></td>
+                            <td>Continue</td>
+                            <td>Continuer à l'itération suivante</td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">><</td>
+                            <td>Break</td>
+                            <td>Sortir de la boucle</td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">|></td>
+                            <td>Pipe</td>
+                            <td>Passer le résultat à la fonction suivante</td>
+                        </tr>
+                        <tr>
+                            <td class="graviton-name">|</td>
+                            <td>Wait/Join</td>
+                            <td>Attendre la fin d'un thread</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        3.42 — Référence Langage — 83 décisions · 18 bosons · Créé par <a href="#">Alexis Mounib (almounib)</a> — 42 Paris
+    </footer>
+
+    <script>
+        function switchSugar(view) {
+            // Hide all sugar contents
+            document.querySelectorAll('.sugar-content').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Remove active from all buttons
+            document.querySelectorAll('.sugar-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected content
+            document.getElementById('sugar-' + view).classList.add('active');
+
+            // Activate button
+            event.target.classList.add('active');
+        }
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(link.getAttribute('href'));
+                target.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        // Highlight code on load
+        document.querySelectorAll('code').forEach(block => {
+            // Already styled via CSS classes
+        });
+    </script>
+</body>
+</html>

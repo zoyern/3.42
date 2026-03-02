@@ -80,7 +80,7 @@
 | D46 | Graviton = boson + gluon (émergent) | Un boson appliqué à un gluon {} = scope typé = graviton. :{} = type/trait, \|{} = CPU, ~{} = GPU, ^{} = QPU, ?{} = match, !{} = defer block. Pas une nouvelle catégorie, émerge de A(B). | ✓ SOLIDE |
 | D47 | :. = accès natif sans keyword | :.module.fn() = accéder aux fonctions natives du langage. Remplace use/import/std. :.bits = portes logiques classiques, :.trits = ternaires, :.io = I/O. | ✓ CONCEPT |
 | D48 | Portes logiques complètes | Classiques : :.bits.{and,or,xor,not,nand,nor}. Ternaires : :.trits.{min,max,inv}. Quantiques : ^!,^~,^\|,^(θ). Les 3 paradigmes couverts. | ✓ SOLIDE |
-| D49 | .. = remonter au parent (ACCÉDER²) | . = descendre (enfant). .. = remonter (parent). Comme cd/cd .. Émergent de la composition. | ✓ CONCEPT |
+| D49 | .. = remonter au parent (INTÉRIEUR²) | . = descendre (enfant). .. = remonter (parent/contenant). Comme cd/cd .. Émergent de la composition. | ✓ CONCEPT |
 | D50 | Mutex émergent de @@ + pipe | @@ = file d'attente FIFO séquentielle. \| = buffer SPSC. Pas de lock bidirectionnel → pas de deadlock. Lecture @ = non-bloquante. Écriture @@ = séquentielle. | ✓ CONCEPT (inspiré acteurs Erlang/Pony) |
 | D51 | Sugar = dictionnaire boson→mot | Chaque sugar = un dictionnaire {boson→keyword}. C : ?→if, ??→while. Python : ?→if, ??→while (sans {}). Conversion X→342→Y = déterministe. Couches dissociées mais reliées par AST. | ✓ VISION |
 | D52 | Const émergent (pas de keyword) | Si un fermion n'est jamais @@ dans son scope → implicitement const. Le compilateur détecte et optimise (read-only, inline). Pas de const/let/mut/var. | ✓ SOLIDE |
