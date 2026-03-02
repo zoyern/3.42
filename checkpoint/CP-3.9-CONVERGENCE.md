@@ -722,7 +722,7 @@ DiamondTrap : ScavTrap + FragTrap {
 Chaque projet 42 est constructible avec les 18 bosons. Le langage se valide par les exercices.
 
 ### Compteurs
-- **81 décisions** (D1-D81)
+- **83 décisions** (D1-D83)
 - **18 bosons** | **5 gluons** | **3 séparateurs** | **18 gravitons**
 - **28 questions** (Q1-Q28 **TOUTES RÉSOLUES**)
 - **4 tiers SOLIDES** (s,p,d,f)

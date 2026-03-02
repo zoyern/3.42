@@ -114,6 +114,8 @@
 | D79 | Accessibilité par construction | IDE (range realtime) + compilateur (refuse code dangereux) + sugar (mots familiers) = sécurité haute + barrière d'entrée basse. Débutant = aussi sûr qu'expert. | ✓ SOLIDE |
 | D80 | Division par zéro = ∞ (Riemann) | `42 / 0 = ∞` (fermion valide, pas erreur). `∞ * 0 = #` (indéterminé). Sphère de Riemann/CGA. Opt-out : `!∞` ou `#{ division_zero: trap }`. | ✓ ÉMERGENT |
 | D81 | `#key` = trait émergent | `#{}` natif (boson), clés = types utilisateur via `#key` trait. Extensible : `logging : #key : { verbose, quiet }`. Backend binding via `|>`. | ✓ ÉLÉGANT |
+| D82 | `.` = INTÉRIEUR (renommé) | `.x` = intérieur de x. `a *. b` = produit intérieur (dot). `.~` = intérieur dérivée. `..` = remonter au contenant (parent). Cohérent GA + linguistique. | ✓ ÉMERGENT |
+| D83 | Mapping hardware complet (threads CPU) | `\|{} \| \|{}` = threads CPU (pthread). `\|!` = async/detach. `~{}` = SIMD/AVX sur CPU OU compute GPU. `^{}` = QPU/simulation. `@@` = mutex FIFO. | ✓ SOLIDE |
 
 ## DÉCISIONS REJETÉES
 
