@@ -555,7 +555,7 @@ Fichier : `342-octogones.html` (interactif, hoverable)
 | Q28 | Algèbre géométrique native | ✅ RÉSOLU CP-3.9 (D77) : émergente des bosons existants (`*^` wedge, `*.` dot, `.!` reverse). | ✅ FERMÉE |
 
 ### Compteurs mis à jour
-- **79 décisions** (D1-D79, D65 corrigé, D40 obsolète)
+- **81 décisions** (D1-D81, D65 corrigé, D40 obsolète)
 - **18 bosons** (inchangé)
 - **5 gluons** (inchangé)
 - **3 séparateurs** : `;` `,` espace
