@@ -112,6 +112,8 @@
 | D77 | Algèbre géométrique émergente | Rotors, multivecteurs, CGA = compositions de bosons (`*`, `*^`, `*.`, `.!`). 360°/N adaptatif (D28). Aucun boson ajouté. | ✓ ÉMERGENT |
 | D78 | Stack : SDL3 + wgpu + Cranelift | SDL3 3.4.2 = fenêtrage/input/audio. wgpu = GPU cross-platform + WebGPU. Cranelift = proto + WASM. LLVM = prod future. | ✓ SOLIDE |
 | D79 | Accessibilité par construction | IDE (range realtime) + compilateur (refuse code dangereux) + sugar (mots familiers) = sécurité haute + barrière d'entrée basse. Débutant = aussi sûr qu'expert. | ✓ SOLIDE |
+| D80 | Division par zéro = ∞ (Riemann) | `42 / 0 = ∞` (fermion valide, pas erreur). `∞ * 0 = #` (indéterminé). Sphère de Riemann/CGA. Opt-out : `!∞` ou `#{ division_zero: trap }`. | ✓ ÉMERGENT |
+| D81 | `#key` = trait émergent | `#{}` natif (boson), clés = types utilisateur via `#key` trait. Extensible : `logging : #key : { verbose, quiet }`. Backend binding via `|>`. | ✓ ÉLÉGANT |
 
 ## DÉCISIONS REJETÉES
 

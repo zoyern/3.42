@@ -11,7 +11,7 @@
 │   └── 342.peg              ← PEG formelle COURANTE (CP-2, à maj pour CP-3)
 ├── checkpoint/
 │   ├── CP-3-INDEX.md         ← CE FICHIER
-│   ├── CP-2-DECISIONS.md      ← 79 décisions (D1-D79, 1 obsolète, 3 corrigées)
+│   ├── CP-2-DECISIONS.md      ← 81 décisions (D1-D81, 1 obsolète, 3 corrigées)
 │   ├── CP-2-OPEN.md          ← Questions (Q1-Q28 TOUTES RÉSOLUES)
 │   ├── CP-3-RESEARCH-2026.md ← État de l'art 2025-2026
 │   ├── CP-3.2-AUDIT-FINAL.md ← Audit complet logique/cohérence/perf
@@ -124,7 +124,7 @@
 - **Stream fusion** (D58) : `*{} -{} +{}` composent en 1 passe (zéro collection intermédiaire)
 - **Matrice symétrique** (D59) : même suffixe × |/~/^ = CPU/GPU/QPU cohérent
 - **!{} vs !?** (D60) : defer block vs lazy eval, coexistent
-- **Total** : 79 décisions (D1-D79), 1 obsolète (D40→D46), 3 corrigées (D41, D54, D65)
+- **Total** : 81 décisions (D1-D81), 1 obsolète (D40→D46), 3 corrigées (D41, D54, D65)
 
 ### CP-3.3 — Audit sécurité avancé
 - **5 concerns analysés** : TOCTOU, closures, async, arena-in-arena, atomicité
@@ -203,6 +203,11 @@
 - **Multi-fichier/POO** : `|>` import, `:` héritage, `@` self, `.` méthodes. Zéro keyword OOP.
 - **Annotations `#{}`** : scopées (variable/bloc/fonction/fichier), registre de clés connues.
 - **Overflow** : pas de clamp implicite. `?` gère, `|> clamp()` explicite, `#{ overflow: saturate }` opt-in.
+- **D80** : Division par zéro = ∞ (Riemann/CGA). Fermion valide, opt-out possible.
+- **D81** : `#key` = trait émergent. `#{}` natif, clés extensibles par l'utilisateur.
+- **Prelude** : `str : [char]`, `bool : { + | - }`, `byte : 0..255` — fichier .342 normal, pas hardcodé.
+- **Diamond problem** : `+` union explicite, compilateur refuse si conflit non résolu.
+- **Projets 42** : libft→webserv tous constructibles avec 18 bosons (tableau validation §18).
 - **Q25-Q28 TOUTES FERMÉES** — 28/28 questions résolues
 - **Fichier** : `checkpoint/CP-3.9-CONVERGENCE.md`
 

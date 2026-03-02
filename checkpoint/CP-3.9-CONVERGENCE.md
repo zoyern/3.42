@@ -613,8 +613,116 @@ x : -1000..1000 #{ overflow: saturate } = calc();  // → clamp auto
 
 Philosophie : **ne jamais perdre d'information silencieusement.**
 
+### §14 — DIVISION PAR ZÉRO = PROJECTION À L'INFINI
+
+La sphère de Riemann a 2 pôles : 0 (sud) et ∞ (nord). `* 0` = collapse vers 0. `/ 0` = projection vers ∞. Ce sont des transformations géométriques, pas des erreurs.
+
+```
+x = 42 / 0;        // = ∞ (fermion valide, PAS une erreur)
+x : number | ∞;     // ∞ est dans le système de types
+
+// Arithmétique cohérente :
+∞ + 1 = ∞;          // absorbant
+∞ * 0 = #;          // indéterminé → # (out-of-band)
+1 / ∞ = 0;          // retour à l'origine
+-1 / 0 = -∞;        // infini signé
+
+// Range analysis :
+y = 42 / z;
+// z : 1..100 → type = number (pas de /0)
+// z : 0..100 → type = number | ∞ (IDE: "⚠️ z peut être 0")
+
+// Opt-out vers erreur :
+y : number !∞ = 42 / z;              // !∞ = erreur si /0
+#{ division_zero: trap } { y = 42 / z; };  // idem via annotation
+```
+
+`∞` est un **fermion** (valeur/donnée, spin ½), PAS un boson. Comme `0`, `+` (true), `-` (false), `#` (erreur). 18 bosons inchangés.
+
+→ **D80 : Division par zéro = ∞ (Riemann/CGA). Fermion valide. `∞ * 0 = #`. Opt-out : `!∞` ou `#{ division_zero: trap }`.**
+
+### §15 — `#key` ÉMERGENT (PAS HARDCODÉ)
+
+Le boson `#` est natif. Les clés dans `#{}` sont des **types définis par le langage** :
+
+```
+// Dans prelude.342 (standard, pas hardcodé) :
+precision : #key : { fast, exact, fixed(n: 0..128) };
+overflow  : #key : { trap, saturate, wrap };
+target    : #key : { cpu, gpu, qpu, auto };
+
+// #key = trait "ce qui peut aller dans #{}"
+// Le dev peut créer ses propres clés :
+logging : #key : { verbose, quiet, off };
+#{ logging: verbose } { my_function(); };
+
+// Backend binding (liaison) :
+target.gpu  |> backend.wgpu;    // le compilateur dispatch
+target.qpu  |> backend.qiskit;
+// Chaque variante implémente .compile() et .execute()
+```
+
+→ **D81 : `#key` = trait émergent. `#{}` natif, clés = types utilisateur. Extensible sans modifier le compilateur.**
+
+### §16 — PRELUDE : `str` ET TYPES DE BASE
+
+Tout émerge des bosons, mais il faut un socle. Le **prelude** est un fichier .342 normal chargé implicitement :
+
+```
+// prelude.342 — PAS du hardcoding, réécritable
+char : 0..1_114_111;          // point Unicode → u32 (range type)
+str  : [char];                // liste de chars (gluon [] + contenu)
+bool : { + | - };             // spin positif ou négatif
+byte : 0..255;                // u8
+
+// "" est le gluon qui crée un str :
+name = "Rex";                 // = [82, 101, 120] : str
+
+// StringBuilder émerge aussi :
+builder = [];                 // [char] vide
+@@builder = builder + "hello";  // concaténation
+@@builder = builder + " world";
+result = builder |> str;        // conversion → "hello world"
+
+// Ou via pipe (stream) :
+result = ["hello", " ", "world"] +{ ""; (acc, s) { acc + s } };
+```
+
+### §17 — DIAMOND PROBLEM : RÉSOLUTION PAR `+` EXPLICITE
+
+```
+DiamondTrap : ScavTrap + FragTrap {
+    // "+" = union. Le compilateur REFUSE si conflit non résolu :
+    // ❌ ".attack existe dans ScavTrap ET FragTrap"
+
+    .attack = ScavTrap.attack;     // résolution explicite
+    // "..Parent.new()" = spread (copie les champs, pas de duplication)
+};
+// Pas de virtual inheritance, pas de vtable cachée.
+// Le dev choisit, le compilateur vérifie.
+```
+
+### §18 — VALIDATION : PROJETS 42 EN 342
+
+| Projet 42 | Concept testé | Émergence 342 |
+|-----------|---------------|----------------|
+| libft | Types de base, strings, listes | `str : [char]`, `[T]`, `|*` map, `+{}` fold |
+| ft_printf | Format strings, variadics | `%"fmt"` (boson PROPORTIONNER + gluon "") |
+| push_swap | Algo, piles, complexité | `[T]`, `+{}` fold, range analysis optimise |
+| pipex | Pipes, fork, exec, fd | `\|` pipe natif, `\|{}` process scope |
+| minitalk | Signaux, bits, protocoles | `:.bits`, `\|!` async, `#{}` protocole |
+| so_long | Graphique 2D, events | SDL3 + wgpu, `~{}` rendu GPU |
+| philosophers | Threads, mutex, deadlock | `\|{} \| \|{}` threads, `@@` séquentiel (zéro deadlock) |
+| cub3d | Raycasting, maths 3D | `*^` wedge, rotors GA, `~{}` GPU |
+| ft_irc | Réseau, protocoles, multi-client | `\|!` async, `<>{}` I/O, `#{} ` protocole |
+| webserv | HTTP, parsing, concurrence | `\|{}` workers, `?{}` routing, `str` parsing |
+| inception | Containers, isolation | `@{}` scope isolation, `#{ target }` dispatch |
+| CPP modules | OOP, templates, diamond | `:` héritage, `+` union, `()` génériques |
+
+Chaque projet 42 est constructible avec les 18 bosons. Le langage se valide par les exercices.
+
 ### Compteurs
-- **79 décisions** (D1-D79)
+- **81 décisions** (D1-D81)
 - **18 bosons** | **5 gluons** | **3 séparateurs** | **18 gravitons**
 - **28 questions** (Q1-Q28 **TOUTES RÉSOLUES**)
 - **4 tiers SOLIDES** (s,p,d,f)
