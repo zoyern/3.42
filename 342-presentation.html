@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3.42 — Écosystème Numérique Humaniste</title>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface2: #1a1a28;
+  --border: #2a2a3a;
+  --text: #e0e0ee;
+  --text2: #8888aa;
+  --accent: #6c5ce7;
+  --accent2: #a29bfe;
+  --green: #00b894;
+  --orange: #fdcb6e;
+  --red: #e17055;
+  --blue: #74b9ff;
+  --pink: #fd79a8;
+  --radius: 8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+a { color: var(--accent2); text-decoration:none; }
+a:hover { text-decoration: underline; }
+
+/* ===== HERO ===== */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(108,92,231,0.15) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.hero h1 {
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--accent2), var(--pink), var(--blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+.hero .subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: var(--text2);
+  max-width: 700px;
+  margin-bottom: 2rem;
+}
+.hero .stats {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+}
+.hero .stat {
+  text-align: center;
+}
+.hero .stat .num {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--accent2);
+}
+.hero .stat .label {
+  font-size: 0.85rem;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.scroll-hint {
+  position: absolute;
+  bottom: 2rem;
+  animation: bounce 2s infinite;
+  color: var(--text2);
+  font-size: 1.5rem;
+}
+@keyframes bounce {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(10px); }
+}
+
+/* ===== NAV ===== */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10,10,15,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0;
+  overflow-x: auto;
+}
+nav .nav-inner {
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+  white-space: nowrap;
+}
+nav button {
+  background: none;
+  border: none;
+  color: var(--text2);
+  padding: 0.9rem 1.2rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+nav button:hover { color: var(--text); }
+nav button.active {
+  color: var(--accent2);
+  border-bottom-color: var(--accent);
+}
+
+/* ===== SECTIONS ===== */
+.sections { max-width: 960px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+.section { display: none; padding-top: 2rem; }
+.section.active { display: block; }
+.section h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  color: var(--accent2);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+.section h3 {
+  font-size: 1.2rem;
+  margin: 1.8rem 0 0.8rem;
+  color: var(--text);
+}
+.section p, .section li {
+  color: var(--text);
+  margin-bottom: 0.6rem;
+}
+.section ul, .section ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+/* ===== CODE ===== */
+pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0.8rem 0 1.2rem;
+  color: var(--text);
+}
+code {
+  font-family: 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.88em;
+  background: var(--surface2);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+}
+pre code { background: none; padding: 0; }
+.comment { color: #636e88; }
+.keyword { color: var(--accent2); }
+.string { color: var(--green); }
+.number { color: var(--orange); }
+.type { color: var(--pink); }
+
+/* ===== CARDS ===== */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.2rem;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--accent); }
+.card h4 {
+  color: var(--accent2);
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+.card p { font-size: 0.9rem; color: var(--text2); }
+
+/* ===== BOSON TABLE ===== */
+.boson-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.85rem;
+}
+.boson-table th {
+  background: var(--surface2);
+  color: var(--accent2);
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+  border-bottom: 2px solid var(--accent);
+}
+.boson-table td {
+  padding: 0.5rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+.boson-table tr:hover { background: var(--surface); }
+.boson-table .sym {
+  font-family: monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent2);
+  width: 40px;
+  text-align: center;
+}
+.tier-label {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.tier-s { background: rgba(108,92,231,0.2); color: var(--accent2); }
+.tier-p { background: rgba(0,184,148,0.2); color: var(--green); }
+.tier-d { background: rgba(116,185,255,0.2); color: var(--blue); }
+.tier-f { background: rgba(253,121,168,0.2); color: var(--pink); }
+
+/* ===== COMPARISON TABLE ===== */
+.comp-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.85rem;
+}
+.comp-table th {
+  background: var(--surface2);
+  color: var(--text);
+  padding: 0.6rem;
+  text-align: left;
+}
+.comp-table td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ===== BADGES ===== */
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.badge-ok { background: rgba(0,184,148,0.2); color: var(--green); }
+.badge-wip { background: rgba(253,203,110,0.2); color: var(--orange); }
+.badge-idea { background: rgba(116,185,255,0.2); color: var(--blue); }
+
+/* ===== PILLAR DIAGRAM ===== */
+.pillars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+.pillar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  border-top: 3px solid var(--accent);
+}
+.pillar:nth-child(2) { border-top-color: var(--green); }
+.pillar:nth-child(3) { border-top-color: var(--pink); }
+.pillar h4 { margin-bottom: 0.5rem; }
+.pillar .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+
+/* ===== TIMELINE ===== */
+.timeline { position: relative; padding-left: 2rem; margin: 1.5rem 0; }
+.timeline::before {
+  content:'';
+  position: absolute;
+  left: 0.5rem;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+.timeline-item {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+.timeline-item::before {
+  content:'';
+  position: absolute;
+  left: -1.65rem;
+  top: 0.4rem;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.timeline-item h4 { color: var(--accent2); font-size: 0.95rem; }
+.timeline-item p { font-size: 0.88rem; color: var(--text2); }
+
+/* ===== SYMMETRY ===== */
+.symmetry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.sym-pair {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem;
+  text-align: center;
+  font-family: monospace;
+  font-size: 0.95rem;
+}
+.sym-pair .arrow { color: var(--text2); margin: 0 0.3rem; }
+
+/* ===== FOOTER ===== */
+footer {
+  text-align: center;
+  padding: 3rem 1rem;
+  border-top: 1px solid var(--border);
+  color: var(--text2);
+  font-size: 0.85rem;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .pillars { grid-template-columns: 1fr; }
+  .hero .stats { gap: 1rem; }
+  nav button { padding: 0.7rem 0.8rem; font-size: 0.78rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<div class="hero" id="top">
+  <h1>3.42</h1>
+  <p class="subtitle">Un écosystème OS / IA / Internet unifié, inspiré par la physique des particules.<br>18 symboles. Zéro mot-clé. Tout émerge.</p>
+  <div class="stats">
+    <div class="stat"><div class="num">18</div><div class="label">Bosons</div></div>
+    <div class="stat"><div class="num">83</div><div class="label">Décisions</div></div>
+    <div class="stat"><div class="num">28</div><div class="label">Questions résolues</div></div>
+    <div class="stat"><div class="num">0</div><div class="label">Mots-clés</div></div>
+  </div>
+  <div style="display:flex; gap:0.8rem; flex-wrap:wrap; justify-content:center;">
+    <a href="https://github.com/zoyern" target="_blank" style="background:var(--accent); color:#fff; padding:0.6rem 1.5rem; border-radius:var(--radius); font-weight:600;">GitHub</a>
+    <a href="#" onclick="showSection('langage');return false;" style="background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:0.6rem 1.5rem; border-radius:var(--radius); font-weight:600;">Explorer</a>
+  </div>
+  <div class="scroll-hint">&#x25BC;</div>
+</div>
+
+<!-- ===== NAV ===== -->
+<nav>
+  <div class="nav-inner">
+    <button onclick="showSection('vision')" data-section="vision">Vision</button>
+    <button onclick="showSection('langage')" data-section="langage">Langage</button>
+    <button onclick="showSection('securite')" data-section="securite">Identité</button>
+    <button onclick="showSection('ip')" data-section="ip">Propriété</button>
+    <button onclick="showSection('economie')" data-section="economie">Économie</button>
+    <button onclick="showSection('ia')" data-section="ia">IA</button>
+    <button onclick="showSection('internet')" data-section="internet">Internet</button>
+    <button onclick="showSection('science')" data-section="science">Science</button>
+    <button onclick="showSection('os')" data-section="os">OS</button>
+    <button onclick="showSection('rendu')" data-section="rendu">Rendu</button>
+    <button onclick="showSection('archi')" data-section="archi">Architecture</button>
+    <button onclick="showSection('roadmap')" data-section="roadmap">Roadmap</button>
+  </div>
+</nav>
+
+<!-- ===== CONTENT ===== -->
+<div class="sections">
+
+<!-- ===== VISION ===== -->
+<div class="section active" id="s-vision">
+  <h2>Vision et Philosophie</h2>
+
+  <h3>Le problème : Internet est cassé</h3>
+  <div class="card-grid">
+    <div class="card"><h4>Monopoles de données</h4><p>Google, Meta, Amazon, Microsoft contrôlent 70% des données mondiales. Vous ne savez pas ce qu'ils savent de vous.</p></div>
+    <div class="card"><h4>Identité inexistante</h4><p>50+ comptes, 50+ mots de passe. Pas de standard mondial. Impersonation triviale.</p></div>
+    <div class="card"><h4>IA incontrôlée</h4><p>Entraînée sur des œuvres volées, sans consentement, sans compensation.</p></div>
+    <div class="card"><h4>Code fragmenté</h4><p>1000 langages, impossibilité d'interopérabilité. 30% du temps à intégrer.</p></div>
+    <div class="card"><h4>Pas de propriété réelle</h4><p>Vous « louez » votre téléphone, vos apps, vos fichiers.</p></div>
+    <div class="card"><h4>Sécurité en faillite</h4><p>2000 CVE par jour. Mots de passe hackés toutes les 2 secondes.</p></div>
+  </div>
+
+  <h3>La solution : trois piliers interconnectés</h3>
+  <div class="pillars">
+    <div class="pillar">
+      <div class="icon">{ }</div>
+      <h4>Langage 3.42</h4>
+      <p>18 symboles universels. Zéro mot-clé. Sécurité mémoire naturelle par arènes.</p>
+    </div>
+    <div class="pillar">
+      <div class="icon">&#9881;</div>
+      <h4>Kernel 3.42</h4>
+      <p>OS entièrement en 3.42. Abstraction matériel. Temps réel O(1).</p>
+    </div>
+    <div class="pillar">
+      <div class="icon">&#127760;</div>
+      <h4>3.42-Net</h4>
+      <p>P2P décentralisé. Identité vérifiable. Propriété intégrée.</p>
+    </div>
+  </div>
+
+  <h3>Philosophie humaniste</h3>
+  <ol>
+    <li><strong>Accessibilité par conception</strong> — technologie pour tous, pas pour les experts</li>
+    <li><strong>Propriété réelle</strong> — vos données, vos créations, votre contrôle</li>
+    <li><strong>Transparence radicale</strong> — comprendre le code, les décisions, les risques</li>
+    <li><strong>Autonomie progressive</strong> — apprentissage par étapes, du simple au complexe</li>
+  </ol>
+
+  <h3>Étymologie</h3>
+  <p><strong>3</strong> = ternaire (base-3, plus efficace que le binaire) &middot; <strong>.</strong> = point de passage &middot; <strong>42</strong> = École 42 Paris + la Réponse à Tout (Douglas Adams).</p>
+  <p><strong>3,42 rad &approx; 196°</strong> &mdash; un demi-tour vers une nouvelle direction numérique.</p>
+
+  <h3>Auteur</h3>
+  <p><strong>Alexis Mounib</strong>, 23 ans, étudiant à 42 Paris. Hyperfocalisation, pensée systémique, patterns logiques — une façon de penser qui est devenue le moteur du projet. Assisté par Claude (Anthropic).</p>
+</div>
+
+<!-- ===== LANGAGE ===== -->
+<div class="section" id="s-langage">
+  <h2>Le Langage 3.42</h2>
+
+  <h3>Concept : le modèle des bosons</h3>
+  <p>La physique : 4 forces fondamentales, 18 particules élémentaires &rarr; toute la matière.<br>
+  3.42 : <strong>18 symboles (bosons)</strong> &rarr; tout programme. Composition universelle : <code>A B = A(B)</code></p>
+
+  <h3>Table périodique des 18 bosons</h3>
+  <table class="boson-table">
+    <tr><th>Sym</th><th>Nom</th><th>Tier</th><th>Compositions clés</th></tr>
+    <tr><td class="sym">~</td><td>ONDULER</td><td><span class="tier-label tier-s">0/s</span></td><td><code>~{}</code> GPU/SIMD, <code>~f64</code> float opt-in</td></tr>
+    <tr><td class="sym">^</td><td>SUPERPOSER</td><td><span class="tier-label tier-s">0/s</span></td><td><code>^{}</code> QPU, <code>^!</code> X gate, <code>*^</code> wedge</td></tr>
+    <tr><td class="sym">:</td><td>DÉFINIR</td><td><span class="tier-label tier-p">1/p</span></td><td><code>x : type</code>, <code>A : B</code> héritage, <code>:{}</code> type-def</td></tr>
+    <tr><td class="sym">=</td><td>LIER</td><td><span class="tier-label tier-p">1/p</span></td><td><code>x = 42</code>, <code>={}</code> assign-block</td></tr>
+    <tr><td class="sym">.</td><td>INTÉRIEUR</td><td><span class="tier-label tier-p">1/p</span></td><td><code>.x</code> champ, <code>*.</code> dot product, <code>..</code> parent (D82)</td></tr>
+    <tr><td class="sym">!</td><td>INVERSER</td><td><span class="tier-label tier-p">1/p</span></td><td><code>!x</code> not, <code>!?</code> defer, <code>!{}</code> defer-block</td></tr>
+    <tr><td class="sym">#</td><td>CONFIGURER</td><td><span class="tier-label tier-p">1/p</span></td><td><code>#{}</code> annotations, <code>#</code> erreur/OOB (D81)</td></tr>
+    <tr><td class="sym">?</td><td>MESURER</td><td><span class="tier-label tier-d">2/d</span></td><td><code>?</code> if, <code>??</code> while, <code>?{}</code> match</td></tr>
+    <tr><td class="sym">&lt;</td><td>ENTRER</td><td><span class="tier-label tier-d">2/d</span></td><td><code>&lt;&lt;</code> return, <code>&lt;</code> read, <code>&lt;&gt;</code> fichier</td></tr>
+    <tr><td class="sym">&gt;</td><td>SORTIR</td><td><span class="tier-label tier-d">2/d</span></td><td><code>&gt;&gt;</code> continue, <code>&gt;&lt;</code> break, <code>&gt;</code> write</td></tr>
+    <tr><td class="sym">+</td><td>ACCUMULER</td><td><span class="tier-label tier-d">2/d</span></td><td><code>A + B</code> union, <code>+{}</code> fold, <code>|+</code> transducteur</td></tr>
+    <tr><td class="sym">-</td><td>RÉDUIRE</td><td><span class="tier-label tier-d">2/d</span></td><td><code>-{}</code> filter, <code>-x</code> negate, <code>|-</code> transducteur</td></tr>
+    <tr><td class="sym">*</td><td>TRANSFORMER</td><td><span class="tier-label tier-d">2/d</span></td><td><code>*{}</code> map, <code>*^</code> wedge, <code>*.</code> dot, <code>|*</code> transducteur</td></tr>
+    <tr><td class="sym">%</td><td>PROPORTIONNER</td><td><span class="tier-label tier-f">3/f</span></td><td><code>%"fmt"</code> printf, <code>%?</code> probabilité</td></tr>
+    <tr><td class="sym">@</td><td>RÉFÉRENCER</td><td><span class="tier-label tier-f">3/f</span></td><td><code>@</code> self, <code>@@</code> exclusif (mutex FIFO), borrow</td></tr>
+    <tr><td class="sym">/</td><td>DIVISER</td><td><span class="tier-label tier-f">3/f</span></td><td><code>//</code> commentaire, <code>/* */</code> block, <code>/x</code> division</td></tr>
+    <tr><td class="sym">_</td><td>IGNORER</td><td><span class="tier-label tier-f">3/f</span></td><td>placeholder, trou typé, wildcard (D39)</td></tr>
+    <tr style="background:var(--surface2);"><td class="sym">|</td><td>CONNECTER</td><td style="color:var(--orange);">axe</td><td><code>|{}</code> thread, <code>|></code> import, <code>|*</code> map, <code>|-</code> filter, <code>|+</code> fold</td></tr>
+  </table>
+  <p style="color:var(--text2); font-size:0.85rem; margin-top:0.5rem;">+ 5 gluons : <code>{} () [] "" ''</code> &middot; 3 séparateurs : <code>; , espace</code> (D55, D63 — ponctuation, PAS bosons)</p>
+
+  <h3>Symétrie : 9 paires + 1 axe (D45)</h3>
+  <div class="symmetry-grid">
+    <div class="sym-pair"><span class="keyword">&lt;</span> <span class="arrow">&harr;</span> <span class="keyword">&gt;</span><br><small>ENTRER / SORTIR</small></div>
+    <div class="sym-pair"><span class="keyword">+</span> <span class="arrow">&harr;</span> <span class="keyword">-</span><br><small>ACCUMULER / RÉDUIRE</small></div>
+    <div class="sym-pair"><span class="keyword">*</span> <span class="arrow">&harr;</span> <span class="keyword">/</span><br><small>TRANSFORMER / DIVISER</small></div>
+    <div class="sym-pair"><span class="keyword">:</span> <span class="arrow">&harr;</span> <span class="keyword">=</span><br><small>DÉFINIR / LIER</small></div>
+    <div class="sym-pair"><span class="keyword">!</span> <span class="arrow">&harr;</span> <span class="keyword">?</span><br><small>INVERSER / MESURER</small></div>
+    <div class="sym-pair"><span class="keyword">~</span> <span class="arrow">&harr;</span> <span class="keyword">^</span><br><small>ONDULER / SUPERPOSER</small></div>
+    <div class="sym-pair"><span class="keyword">@</span> <span class="arrow">&harr;</span> <span class="keyword">.</span><br><small>RÉFÉRENCER / INTÉRIEUR</small></div>
+    <div class="sym-pair"><span class="keyword">#</span> <span class="arrow">&harr;</span> <span class="keyword">_</span><br><small>CONFIGURER / IGNORER</small></div>
+    <div class="sym-pair" style="grid-column: span 2;"><span class="keyword">|</span> <span class="arrow">=</span> axe central<br><small>CONNECTER — l'opérateur universel</small></div>
+  </div>
+
+  <h3>Concepts émergents — zéro mot-clé</h3>
+  <table class="comp-table">
+    <tr><th>Concept</th><th>Code 3.42</th><th>Bosons</th></tr>
+    <tr><td>If/else</td><td><code>cond ?{ + : x; - : y }</code></td><td>? + {} + :</td></tr>
+    <tr><td>While</td><td><code>?? cond { body }</code></td><td>?? (MESURER²)</td></tr>
+    <tr><td>Fonction</td><td><code>f : (x : T) : R = { body }</code></td><td>: = {}</td></tr>
+    <tr><td>Closure</td><td><code>{x |> x * 2}</code></td><td>{} |></td></tr>
+    <tr><td>Return</td><td><code>&lt;&lt; value</code></td><td>&lt;&lt; (ENTRER²)</td></tr>
+    <tr><td>Erreurs</td><td><code>result ?{ + : use; # : handle }</code></td><td>? #</td></tr>
+    <tr><td>Import</td><td><code>|> module/path</code></td><td>|> /</td></tr>
+    <tr><td>Self</td><td><code>@.name</code></td><td>@ .</td></tr>
+  </table>
+
+  <h3>Fibonacci — aucun mot-clé</h3>
+<pre><span class="comment">// Fibonacci en 3.42 — aucun if/while/return</span>
+fib <span class="keyword">:</span> (x <span class="keyword">:</span> <span class="type">number</span>) <span class="keyword">:</span> <span class="type">number</span> <span class="keyword">=</span> {
+    <span class="keyword">&lt;&lt;</span> x <span class="keyword">?{</span> <span class="number">0</span>..<span class="number">1</span> <span class="keyword">:</span> x; _ <span class="keyword">:</span> fib(x <span class="keyword">-</span> <span class="number">1</span>) <span class="keyword">+</span> fib(x <span class="keyword">-</span> <span class="number">2</span>) <span class="keyword">}</span>;
+};
+<span class="comment">// ?{} = match, &lt;&lt; = return, 0..1 = range (D76), _ = wildcard</span></pre>
+
+  <h3>Types = contraintes (D76)</h3>
+<pre>age <span class="keyword">:</span> <span class="number">0</span>..<span class="number">150</span>;              <span class="comment">// compilateur &rarr; u8</span>
+temperature <span class="keyword">:</span> <span class="number">-273.15</span>..<span class="number">&infin;</span>;  <span class="comment">// domaine physique &rarr; rational exact (D75)</span>
+probability <span class="keyword">:</span> <span class="number">0.0</span>..<span class="number">1.0</span>;    <span class="comment">// limite math &rarr; fixed-point optimal</span></pre>
+
+  <h3>Mémoire : arènes O(1) — pas de GC, pas de borrow checker</h3>
+<pre><span class="comment">// Chaque {} EST une arène (D4, D35)</span>
+{
+    x <span class="keyword">=</span> <span class="number">10</span>;
+    y <span class="keyword">=</span> <span class="number">20</span>;
+    z <span class="keyword">=</span> x <span class="keyword">+</span> y;
+};
+<span class="comment">// Fin du bloc &rarr; mémoire libérée. O(1) deallocation.</span></pre>
+
+  <h3>Concurrence : même code, matériel différent (D83)</h3>
+<pre><span class="comment">// CPU : threads</span>
+<span class="keyword">|{</span> task1 = expensive(); <span class="keyword">}</span>;        <span class="comment">// |{} = spawn thread</span>
+
+<span class="comment">// GPU : parallélisme massif</span>
+<span class="keyword">~{</span> parallel_compute(<span class="number">1000000</span>) <span class="keyword">}</span>;  <span class="comment">// ~{} = mode SIMD/GPU</span>
+
+<span class="comment">// Quantum : superposition</span>
+<span class="keyword">^{</span> quantum_search(db) <span class="keyword">}</span>;         <span class="comment">// ^{} = mode QPU</span>
+
+<span class="comment">// Mutex FIFO : @@ (D41 — zéro deadlock)</span>
+@@counter <span class="keyword">=</span> @@counter <span class="keyword">+</span> <span class="number">1</span>;</pre>
+
+  <h3>Décimal exact (D75) + Riemann (D80)</h3>
+<pre><span class="number">0.1</span> <span class="keyword">+</span> <span class="number">0.2</span> <span class="keyword">=</span> <span class="number">0.3</span>;     <span class="comment">// garanti (rationnel 1/10 + 2/10 = 3/10)</span>
+x <span class="keyword">:</span> <span class="type">~f64</span> <span class="keyword">=</span> <span class="number">0.1</span>;       <span class="comment">// float IEEE 754 opt-in via ~ (ONDULER)</span>
+
+<span class="number">42</span> <span class="keyword">/</span> <span class="number">0</span> <span class="keyword">=</span> <span class="number">&infin;</span>;          <span class="comment">// Sphère de Riemann — valide (D80)</span>
+<span class="number">&infin;</span> <span class="keyword">*</span> <span class="number">0</span> <span class="keyword">=</span> <span class="keyword">#</span>;          <span class="comment">// Indéterminé &rarr; erreur spin (PAS NaN)</span></pre>
+
+  <h3>Autograd natif (D64, D70)</h3>
+<pre>loss <span class="keyword">:</span> (w <span class="keyword">:</span> <span class="type">number</span>) <span class="keyword">:</span> <span class="type">number</span> <span class="keyword">=</span> { <span class="keyword">&lt;&lt;</span> (w <span class="keyword">*</span> <span class="number">2</span> <span class="keyword">-</span> <span class="number">3</span>) <span class="keyword">*</span> (w <span class="keyword">*</span> <span class="number">2</span> <span class="keyword">-</span> <span class="number">3</span>) };
+
+dw <span class="keyword">=</span> loss<span class="keyword">.~</span>(w);         <span class="comment">// .~ = dérivée (INTÉRIEUR+ONDULER)</span>
+state <span class="keyword">=</span> model<span class="keyword">.!</span>();       <span class="comment">// .! = snapshot (INTÉRIEUR+INVERSER)</span>
+model<span class="keyword">.=</span>(gradients);      <span class="comment">// .= = apply (INTÉRIEUR+LIER)</span></pre>
+
+  <h3>Sugar : même code, toutes les syntaxes (D12, D51)</h3>
+<pre><span class="comment">// NATIF 3.42</span>
+fib <span class="keyword">:</span> (x <span class="keyword">:</span> <span class="type">number</span>) <span class="keyword">:</span> <span class="type">number</span> <span class="keyword">=</span> {
+    <span class="keyword">&lt;&lt;</span> x <span class="keyword">?{</span> <span class="number">0</span>..<span class="number">1</span> <span class="keyword">:</span> x; _ <span class="keyword">:</span> fib(x - <span class="number">1</span>) + fib(x - <span class="number">2</span>) <span class="keyword">}</span>;
+};
+
+<span class="comment">// SUGAR → C</span>
+int fib(int x) { return x &lt; 2 ? x : fib(x-1) + fib(x-2); }
+
+<span class="comment">// SUGAR → Python</span>
+def fib(x): return x if x &lt; 2 else fib(x-1) + fib(x-2)</pre>
+</div>
+
+<!-- ===== SECURITE ===== -->
+<div class="section" id="s-securite">
+  <h2>Identité et Sécurité</h2>
+
+  <h3>Identifiants Décentralisés (DID)</h3>
+  <p>Un <strong>DID</strong> (Decentralized Identifier, standard W3C) est une adresse cryptographique universelle :</p>
+<pre>did:3.42:aBcD1234efgh5678ijkl9...
+
+<span class="comment">// Contrôlée par vous (paire clé publique/privée)</span>
+<span class="comment">// Universelle, non révocable, transparente</span></pre>
+
+  <h3>Preuve de Personnalité</h3>
+  <p>Prouver que vous êtes humain sans révéler qui vous êtes :</p>
+  <ul>
+    <li><strong>Biométrie zéro-connaissance</strong> — scanner iris &rarr; hash &rarr; preuve sans révéler l'iris</li>
+    <li><strong>Preuve de vie</strong> — défi que seul un humain peut résoudre</li>
+    <li><strong>Graphe social</strong> — attesté par amis/collègues (Web of Trust)</li>
+  </ul>
+
+  <h3>Certification des IA et Bots</h3>
+  <p>Chaque IA doit s'identifier via annotations <code>#{}</code> (D81) :</p>
+<pre>#{
+    ai_name <span class="keyword">:</span> <span class="string">"Claude 3.42"</span>;
+    creator_did <span class="keyword">:</span> <span class="string">"did:3.42:anthropic_..."</span>;
+    training_data_license <span class="keyword">:</span> <span class="string">"CC-BY-4.0"</span>;
+}</pre>
+</div>
+
+<!-- ===== IP ===== -->
+<div class="section" id="s-ip">
+  <h2>Propriété Intellectuelle</h2>
+
+  <h3>Certification blockchain automatique</h3>
+  <p>Chaque création a une preuve cryptographique immuable :</p>
+<pre>code <span class="keyword">=</span> {
+    #{
+        timestamp <span class="keyword">:</span> <span class="string">"2026-03-02T14:32:15Z"</span>;
+        creator_did <span class="keyword">:</span> <span class="string">"did:3.42:alexis..."</span>;
+        content_hash <span class="keyword">:</span> <span class="string">"sha256:abc123..."</span>;
+        license <span class="keyword">:</span> <span class="string">"GPL-3.0"</span>;
+    }
+    source <span class="keyword">:</span> <span class="string">"fib : (x : number) : number = { ... }"</span>;
+};</pre>
+
+  <h3>L'IA comme arbitre intelligent</h3>
+  <p>L'IA résout les conflits de propriété intellectuelle :</p>
+  <ul>
+    <li><strong>Détection plagiat vs remake</strong> — normes définies avec la communauté</li>
+    <li><strong>Contrats intelligents</strong> — conditions automatisées, transparentes</li>
+    <li><strong>Médiation objective</strong> — faits et normes, pas de manipulation</li>
+    <li><strong>Exception santé</strong> — recherche médicale accessible, création reconnue et rémunérée</li>
+  </ul>
+
+  <h3>Sugar comme pont intellectuel</h3>
+  <p>AST universel &rarr; attribution partagée, traçabilité des contributions, fusion sans conflits.</p>
+</div>
+
+<!-- ===== ECONOMIE ===== -->
+<div class="section" id="s-economie">
+  <h2>Économie</h2>
+
+  <h3>Créateurs possèdent 100%</h3>
+  <table class="comp-table">
+    <tr><th>Modèle</th><th>Créateur</th><th>Plateforme</th></tr>
+    <tr><td>App Store</td><td>70%</td><td>Apple 30%</td></tr>
+    <tr><td>GitHub</td><td>0% (libre)</td><td>Microsoft</td></tr>
+    <tr><td style="color:var(--accent2);">3.42 Marketplace</td><td style="color:var(--green);">100%</td><td>Aucun</td></tr>
+  </table>
+
+  <h3>Micro-transactions décentralisées</h3>
+  <p>Payez à l'usage : 1 film = 0.50€, 1 article = 0.05€, 1 appel API = 0.001€. Total &lt; abonnement forfait.</p>
+
+  <h3>Contribution = Valeur</h3>
+  <p>Contributeurs open-source reçoivent des tokens convertibles (monnaie fiat, accès premium, mentorat).</p>
+</div>
+
+<!-- ===== IA ===== -->
+<div class="section" id="s-ia">
+  <h2>IA Personnelle</h2>
+
+  <h3>IA locale — zéro envoi de données</h3>
+  <p>Contrairement à ChatGPT (envoi serveur), 3.42 fait tourner l'IA sur votre GPU local. Aucune donnée ne quitte votre machine.</p>
+
+  <div class="card-grid">
+    <div class="card"><h4>Desktop (GPU haute fin)</h4><p>Modèles LLM 7B-70B</p></div>
+    <div class="card"><h4>Laptop (GPU intégré)</h4><p>Modèles 3B-13B</p></div>
+    <div class="card"><h4>Mobile</h4><p>Modèles 0.5B-3B</p></div>
+  </div>
+
+  <h3>Fine-tuning personnel</h3>
+  <p>Adaptez un modèle généraliste à vos données (emails, documents). 1-4h sur GPU moderne, 0€, 100% privé.</p>
+
+  <h3>Gouvernance personnelle</h3>
+<pre>ai_settings <span class="keyword">:</span> {
+    access_emails <span class="keyword">:</span> <span class="keyword">+</span>;              <span class="comment">// true</span>
+    access_calendar <span class="keyword">:</span> <span class="keyword">-</span>;           <span class="comment">// false</span>
+    access_files <span class="keyword">:</span> <span class="string">"*.txt"</span>;        <span class="comment">// seulement texte</span>
+    retention <span class="keyword">:</span> <span class="string">"3_months"</span>;        <span class="comment">// oublie &gt; 3 mois</span>
+};</pre>
+
+  <h3>Optimisation matériel via ~{} (D65)</h3>
+<pre>ai_infer <span class="keyword">:</span> (prompt <span class="keyword">:</span> <span class="type">str</span>) <span class="keyword">:</span> <span class="type">str</span> <span class="keyword">=</span> {
+    embeddings <span class="keyword">=</span> tokenize(prompt);
+    <span class="keyword">~{</span>                                  <span class="comment">// mode GPU</span>
+        attention <span class="keyword">=</span> embeddings <span class="keyword">|*</span> {e <span class="keyword">|></span> compute_attention(e)};
+    <span class="keyword">}</span>;
+    <span class="keyword">&lt;&lt;</span> decode(attention);
+};</pre>
+</div>
+
+<!-- ===== INTERNET ===== -->
+<div class="section" id="s-internet">
+  <h2>Internet Décentralisé</h2>
+
+  <h3>Réseau P2P — chaque nœud est souverain</h3>
+  <p>Chaque ordinateur = serveur + client. Couper un lien ? Le réseau contourne. Pas de point central.</p>
+
+  <h3>Contenu adressé par son contenu</h3>
+  <table class="comp-table">
+    <tr><th></th><th>DNS classique</th><th>3.42-Net</th></tr>
+    <tr><td>Confiance</td><td>Le serveur est honnête</td><td>La cryptographie</td></tr>
+    <tr><td>Identifiant</td><td>URL (modifiable)</td><td>Hash SHA256 (immuable)</td></tr>
+    <tr><td>Censure</td><td>Couper le serveur</td><td>Impossible (distribué)</td></tr>
+  </table>
+
+  <h3>Blockchain optionnelle</h3>
+  <ul>
+    <li>Propriété intellectuelle (preuve création)</li>
+    <li>Crédibilité (votes, décisions)</li>
+    <li>Compensation (tokens)</li>
+    <li>PAS nécessaire pour stockage (IPFS) ni messages (P2P)</li>
+  </ul>
+
+  <h3>Certification des connaissances</h3>
+  <p>Diplômes, certifications, compétences = preuve blockchain vérifiable instantanément. Faux diplômes impossibles. CV vivant mis à jour automatiquement.</p>
+
+  <h3>Vie privée : chiffrement par défaut</h3>
+  <p>AES-256 sur tous fichiers et communications. Vous seul déchiffrez. Zéro serveur central.</p>
+</div>
+
+<!-- ===== SCIENCE ===== -->
+<div class="section" id="s-science">
+  <h2>Fondements Scientifiques</h2>
+
+  <h3>Physique des particules &rarr; Architecture</h3>
+  <table class="comp-table">
+    <tr><th>Physique</th><th>3.42</th></tr>
+    <tr><td>Fermions (matière)</td><td>Données (variables)</td></tr>
+    <tr><td>Bosons (forces)</td><td>Opérateurs (18 symboles)</td></tr>
+    <tr><td>Gluons (liaison)</td><td>Conteneurs ({} [] ())</td></tr>
+    <tr><td>Symétrie gauge</td><td>Morphisme de type</td></tr>
+  </table>
+
+  <h3>Sphère de Bloch</h3>
+  <p>État quantique = point sur sphère. 3.42 utilise ce modèle pour la représentation universelle des états et le debugging visuel.</p>
+
+  <h3>Algèbre géométrique conforme (CGA, D77)</h3>
+  <table class="comp-table">
+    <tr><th>Opération</th><th>Code 3.42</th><th>Bosons</th></tr>
+    <tr><td>Produit géométrique</td><td><code>a * b</code></td><td>*</td></tr>
+    <tr><td>Wedge (extérieur)</td><td><code>a *^ b</code></td><td>* + ^</td></tr>
+    <tr><td>Dot (intérieur)</td><td><code>a *. b</code></td><td>* + .</td></tr>
+    <tr><td>Reverse</td><td><code>r.!()</code></td><td>. + !</td></tr>
+    <tr><td>Rotation</td><td><code>r * v * r.!()</code></td><td>sandwich product</td></tr>
+  </table>
+
+  <h3>Sphère de Riemann (D80)</h3>
+  <p>Division par zéro = ∞ (point valide). <code>∞ * 0 = #</code> (erreur spin). Cohérent mathématiquement, GPU-friendly.</p>
+
+  <h3>Informatique ternaire</h3>
+  <p>3 états au lieu de 2. Plus efficace, moins de chaleur. 3.42 agnostique bit/trit/qbit (D28) — meta-spins s'adaptent à la base (D72).</p>
+
+  <h3>4 niveaux orbitaux (curriculum)</h3>
+  <div class="card-grid">
+    <div class="card"><h4><span class="tier-label tier-s">S — Simple</span></h4><p>Variables, arithmétique, bases</p></div>
+    <div class="card"><h4><span class="tier-label tier-p">P — Patterns</span></h4><p>Composition, récursion, types</p></div>
+    <div class="card"><h4><span class="tier-label tier-d">D — Distributed</span></h4><p>Systèmes, réseaux, IA</p></div>
+    <div class="card"><h4><span class="tier-label tier-f">F — Final</span></h4><p>Recherche, innovation</p></div>
+  </div>
+</div>
+
+<!-- ===== OS ===== -->
+<div class="section" id="s-os">
+  <h2>Système d'Exploitation</h2>
+
+  <h3>Kernel en 3.42 — zéro C/Assembly</h3>
+<pre><span class="comment">// os/kernel.3.42</span>
+kernel_main <span class="keyword">:</span> () <span class="keyword">=</span> {
+    memory.init();
+    scheduler.init();
+    <span class="keyword">??</span> <span class="keyword">+</span> {                       <span class="comment">// ?? = while (MESURER²)</span>
+        task <span class="keyword">=</span> scheduler.next();
+        task <span class="keyword">|></span> execute;           <span class="comment">// |> = pipe (CONNECTER)</span>
+    };
+};</pre>
+
+  <h3>Modes matériel</h3>
+<pre><span class="keyword">|{</span> task1; task2 <span class="keyword">}</span>;             <span class="comment">// CPU threads (D37)</span>
+<span class="keyword">~{</span> parallel_compute(N) <span class="keyword">}</span>;      <span class="comment">// GPU massif (D65)</span>
+<span class="keyword">^{</span> entangle(q1, q2) <span class="keyword">}</span>;         <span class="comment">// Quantum (D14)</span></pre>
+
+  <h3>Isolation : chaque {} = arène</h3>
+  <p>Processus A et B isolés naturellement. Pas de keyword <code>arena</code>. Zéro corruption (D4, D38).</p>
+
+  <h3>IPC (Inter-Process Communication)</h3>
+<pre>channel <span class="keyword">=</span> create_channel();
+channel <span class="keyword">></span> data_from_A;          <span class="comment">// > SORTIR = envoyer</span>
+data <span class="keyword">=</span> channel <span class="keyword"><</span>;              <span class="comment">// < ENTRER = recevoir</span></pre>
+
+  <h3>Pilotes = dictionnaires Sugar</h3>
+<pre>nvidia_driver <span class="keyword">:</span> {
+    .init <span class="keyword">:</span> () <span class="keyword">=</span> { cuda_init() };
+    .render <span class="keyword">:</span> (target) <span class="keyword">=</span> { cuda_render(target) };
+    .cleanup <span class="keyword">:</span> () <span class="keyword">=</span> { cuda_shutdown() };
+};</pre>
+
+  <h3>Temps réel : O(1) allocation</h3>
+  <p>Arènes = allocation déterministe. Aucune pause GC. Idéal : robotique, automobile, aéronautique, embarqué.</p>
+</div>
+
+<!-- ===== RENDU ===== -->
+<div class="section" id="s-rendu">
+  <h2>Moteur Physique et Rendu</h2>
+
+  <h3>CGA native — rotation 3D</h3>
+<pre>v <span class="keyword">:</span> { x <span class="keyword">:</span> <span class="type">f64</span>; y <span class="keyword">:</span> <span class="type">f64</span>; z <span class="keyword">:</span> <span class="type">f64</span> } <span class="keyword">=</span> { <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span> };
+R <span class="keyword">=</span> rotor(axis, angle);
+v_rotated <span class="keyword">=</span> R <span class="keyword">*</span> v <span class="keyword">*</span> R<span class="keyword">.!</span>();   <span class="comment">// sandwich product (D77)</span></pre>
+
+  <h3>SDF — Signed Distance Fields</h3>
+  <p>Objets = fonctions mathématiques. Un mathématicien écrit des équations, obtient un rendu 2D/3D direct. Mode <code>~{}</code> (GPU) pour calcul parallèle massif. Rendu continu, zoom infini, pas de polygones.</p>
+
+  <h3>Multi-cibles via wgpu</h3>
+  <div class="card-grid">
+    <div class="card"><h4>Vulkan</h4><p>Linux — performant</p></div>
+    <div class="card"><h4>Metal</h4><p>macOS — natif</p></div>
+    <div class="card"><h4>D3D12</h4><p>Windows — performant</p></div>
+    <div class="card"><h4>WebGPU</h4><p>Navigateur — universel</p></div>
+  </div>
+
+  <h3>Multi-échelle</h3>
+  <p>Même moteur physique simule du quantique (10⁻³⁵ m) à l'univers observable (10²⁶ m). Mêmes formules CGA, changement d'échelle.</p>
+</div>
+
+<!-- ===== ARCHI ===== -->
+<div class="section" id="s-archi">
+  <h2>Architecture Technique</h2>
+
+  <h3>Pipeline : Source → Exécutable</h3>
+<pre>source.342
+    &darr;
+[Parser PEG]  &rarr;  AST
+    &darr;
+[Sugar resolver]  &rarr;  formes canoniques
+    &darr;
+ParticleIR  &rarr;  [Typechecker]
+    &darr;
+MachineIR  &rarr;  [Backend]
+    &darr;
+Binaire natif (x86-64, ARM, WASM)</pre>
+
+  <h3>Stack : Cranelift (proto) → LLVM (prod)</h3>
+  <table class="comp-table">
+    <tr><th>Phase</th><th>Backend</th><th>Usage</th></tr>
+    <tr><td>1 (2026)</td><td>Rust bootstrap</td><td>Parser + ParticleIR</td></tr>
+    <tr><td>2</td><td>Cranelift</td><td>Interprète rapide, prototypage</td></tr>
+    <tr><td>3+</td><td>LLVM</td><td>Production, optimisations</td></tr>
+  </table>
+
+  <h3>Graphiques : SDL3 3.4.2 + wgpu (D78)</h3>
+  <p>SDL3 pour fenêtrage/input/audio. wgpu pour abstraction GPU multi-plateforme.</p>
+
+  <h3>WASM : Web quasi-gratuit</h3>
+<pre><span class="comment">// $ 3.42 --target wasm32 fibonacci.342</span>
+<span class="comment">//   &rarr; fibonacci.wasm (50 KB)</span>
+<span class="comment">// S'exécute partout : desktop, web, mobile</span></pre>
+
+  <h3>83 décisions architecturales (D1-D83)</h3>
+  <p>Chaque décision documentée dans <code>CP-2-DECISIONS.md</code>. Référence technique complète dans <code>CP-4-UNIFIED.md</code> (16 sections).</p>
+</div>
+
+<!-- ===== ROADMAP ===== -->
+<div class="section" id="s-roadmap">
+  <h2>Feuille de Route</h2>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <h4>Phase 1 — Prototype du langage (2026)</h4>
+      <p>Grammaire PEG finalisée. Parser Rust. ParticleIR. Cranelift backend. 50 programmes exemples. Benchmarks arènes vs malloc. Open source release.</p>
+    </div>
+    <div class="timeline-item">
+      <h4>Phase 2 — Écosystème (2026-2027)</h4>
+      <p>Self-hosting compiler (3.42 compile 3.42). Sugar system complet (C, Python, Rust, COBOL). WASM production-ready. IDE avec range analysis. Autograd POC.</p>
+    </div>
+    <div class="timeline-item">
+      <h4>Phase 3 — OS + Network (2027-2028)</h4>
+      <p>Kernel prototype. Arènes pleinement fonctionnelles. P2P network. DID system (W3C). IPFS integration. IDE debugger (Bloch sphere).</p>
+    </div>
+    <div class="timeline-item">
+      <h4>Phase 4 — Écosystème complet (2028+)</h4>
+      <p>Personal AI (fine-tuning local). Marketplace décentralisée. Certification blockchain des connaissances. Gouvernance communautaire. Production OS.</p>
+    </div>
+  </div>
+
+  <h3>28 questions résolues</h3>
+  <div class="card-grid">
+    <div class="card"><h4>Q1 — 18 symboles suffisent ?</h4><p>Composition universelle A B = A(B)</p></div>
+    <div class="card"><h4>Q3 — Sécurité mémoire ?</h4><p>Arènes O(1), zéro GC</p></div>
+    <div class="card"><h4>Q4 — Concurrence ?</h4><p>Modes : |{} CPU, ~{} GPU, ^{} QPU</p></div>
+    <div class="card"><h4>Q6 — Division par zéro ?</h4><p>Sphère Riemann : 1/0 = ∞</p></div>
+    <div class="card"><h4>Q15 — Précision numérique ?</h4><p>Décimal exact par défaut (D75)</p></div>
+    <div class="card"><h4>Q16 — Interopérabilité ?</h4><p>Sugar → AST universel</p></div>
+    <div class="card"><h4>Q17 — IA intégrée ?</h4><p>Autograd natif + modes GPU</p></div>
+    <div class="card"><h4>Q18 — Décentralisation ?</h4><p>P2P + content-addressed + DID</p></div>
+  </div>
+  <p style="color:var(--text2); margin-top:0.5rem; font-size:0.85rem;">28/28 questions résolues — voir Blueprint v6.0, Partie XIX pour la liste complète.</p>
+
+  <h3>Métriques</h3>
+  <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+    <div class="card" style="text-align:center;"><div style="font-size:1.8rem; font-weight:800; color:var(--accent2);">18</div><small>Bosons</small></div>
+    <div class="card" style="text-align:center;"><div style="font-size:1.8rem; font-weight:800; color:var(--green);">5</div><small>Gluons</small></div>
+    <div class="card" style="text-align:center;"><div style="font-size:1.8rem; font-weight:800; color:var(--blue);">18</div><small>Gravitons</small></div>
+    <div class="card" style="text-align:center;"><div style="font-size:1.8rem; font-weight:800; color:var(--orange);">83</div><small>Décisions</small></div>
+    <div class="card" style="text-align:center;"><div style="font-size:1.8rem; font-weight:800; color:var(--pink);">28/28</div><small>Questions</small></div>
+    <div class="card" style="text-align:center;"><div style="font-size:1.8rem; font-weight:800; color:var(--text);">4</div><small>Tiers (s/p/d/f)</small></div>
+  </div>
+</div>
+
+</div> <!-- end sections -->
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <p><strong>3.42</strong> &mdash; Alexis Mounib (almounib), 42 Paris &middot; <a href="https://github.com/zoyern" target="_blank">github.com/zoyern</a></p>
+  <p>Blueprint v6.0 &middot; CP-4 Unified &middot; Mars 2026</p>
+  <p style="margin-top:0.5rem;">Assisté par Claude (Anthropic)</p>
+</footer>
+
+<script>
+const sections = document.querySelectorAll('.section');
+const navBtns = document.querySelectorAll('nav button');
+
+function showSection(id) {
+  sections.forEach(s => s.classList.remove('active'));
+  navBtns.forEach(b => b.classList.remove('active'));
+  const target = document.getElementById('s-' + id);
+  if (target) {
+    target.classList.add('active');
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  const btn = document.querySelector(`nav button[data-section="${id}"]`);
+  if (btn) btn.classList.add('active');
+}
+
+// Activate first tab
+navBtns[0].classList.add('active');
+
+// Smooth scroll past hero
+document.querySelector('.scroll-hint').addEventListener('click', () => {
+  document.querySelector('nav').scrollIntoView({ behavior: 'smooth' });
+  showSection('vision');
+});
+</script>
+</body>
+</html>

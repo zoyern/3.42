@@ -37,7 +37,7 @@
 | `%` | PROPORTIONNER | 3/f | DIV(rem) | `%"fmt"` printf, `%?` probabilité, `%{} meta` |
 | `/` | DIVISER | 3/f | DIV(quot) | `//` commentaire, `/* */` block comment, `/x` division |
 | `:` | DÉFINIR | 1/p | — | `x : type`, `A : B` héritage, `:{}` type-def |
-| `=` | LIER | 1/p | MOV/STORE | `x = 42`, `={}` assign-block, `=>` arrow |
+| `=` | LIER | 1/p | MOV/STORE | `x = 42`, `={}` assign-block |
 | `+` | ACCUMULER | 2/d | ADD | `A + B` union, `+{}` fold, `+x` positive |
 | `-` | RÉDUIRE | 2/d | SUB | `-{}` filter, `-x` negate, `- y` réduction |
 | `*` | TRANSFORMER | 2/d | MUL | `*{}` map, `*^` wedge, `*.` dot, `*` déréférence |
@@ -96,6 +96,15 @@ _ (indéfini/placeholder)
 
 **Nota** : `*` = flag wildcard (pas un 5ème spin)
 
+### Meta-spins agnostiques (D72)
+
+Les spins `# * + - _` s'adaptent à la base d'exécution :
+- **Base 2 (bit)** : `+` = 1, `-` = 0, `#` = erreur, `_` = indéfini
+- **Base 3 (trit)** : `+` = 2, `-` = 0, `_` = 1, `#` = erreur
+- **Base N** : les N premières valeurs remplissent la base, le reste = méta hors-bande
+
+Le rôle sémantique de chaque spin reste **constant** quelle que soit la base — seule la représentation change. Le langage est donc agnostique bit/trit/qbit (D28) sans aucune modification syntaxique.
+
 ### Fermions spéciaux
 
 ```
@@ -135,9 +144,9 @@ Un **graviton** combine un boson avec le gluon `{}` pour créer un contexte loca
 Exemple de graviton `?{}` (match) :
 ```
 result ?{
-  0 => "zéro",
-  1..10 => "petit",
-  _ => "grand"
+  0 : "zéro",
+  1..10 : "petit",
+  _ : "grand"
 }
 ```
 
@@ -223,7 +232,7 @@ z = x + y          // IDE : avertissement (0..20)
 x : u8 = 255 + 1    // ≠ 0 automatiquement
 
 // ✓ Ceci : gestion explicite
-x : u8 = (255 + 1) ? { # => 0, v => v }     // match
+x : u8 = (255 + 1) ? { # : 0, v : v }     // match
 x : u8 = (255 + 1) |> clamp(0, 255)         // pipe vers clamp
 ```
 
@@ -254,7 +263,7 @@ int : -∞..∞                            // entiers
 float : ~f64                           // IEEE opt-in
 
 // Types composés
-pair(A, B) : { fst : A, snd : B }
+pair(A, B) : { fst : A; snd : B }
 list(A) : [] A
 option(A) : { some : A | none }
 result(A, E) : { ok : A | err : E }
@@ -413,7 +422,7 @@ combined = r1 + r2
 #### SIMD/GPU
 ```
 ~{
-  [1, 2, 3, 4] |* (x => x * 2)   // broadcast multiply sur GPU
+  [1, 2, 3, 4] |* {x |> x * 2}   // broadcast multiply sur GPU
 }
 ```
 
@@ -441,9 +450,9 @@ counter = 0
 
 ```
 Philosopher : {
-  id : nat,
-  left_fork : fork,
-  right_fork : fork,
+  id : nat;
+  left_fork : fork;
+  right_fork : fork;
 
   think() = {
     >{} ("Philosopher " + (id |> str) + " thinks")
@@ -460,14 +469,14 @@ Philosopher : {
 
 main() = {
   philosophers = [5]Philosopher
-  philosophers |* (p => |{
+  philosophers |* {p |> |{
     ? {
       p.think()
       p.eat()
     } ?{
       ? { p.eat() } ?{ p.think() }
     }
-  })
+  }}
 }
 ```
 
@@ -483,16 +492,16 @@ main() = {
 
 ```
 Animal : {
-  name : str,
-  age : nat,
+  name : str;
+  age : nat;
 
-  speak() = { >{} self.name }
+  speak() = { >{} @.name }
 }
 
 Dog : Animal {
-  breed : str,
+  breed : str;
 
-  speak() = { >{} (self.name + " woof") }
+  speak() = { >{} (@.name + " woof") }
 }
 
 dog = Dog { name = "Rex", age = 3, breed = "Labrador" }
@@ -503,17 +512,17 @@ dog.speak()         // "Rex woof"
 
 ```
 Point : {
-  x : i32,
-  y : i32,
+  x : i32;
+  y : i32;
 
   .distance_origin() = {
-    ((self.x * self.x) + (self.y * self.y)) | sqrt
+    ((@.x * @.x) + (@.y * @.y)) | sqrt
   },
 
   .move_by(dx, dy) = {
-    @@ self ?{
-      self.x = self.x + dx
-      self.y = self.y + dy
+    @@ ?{
+      @.x = @.x + dx
+      @.y = @.y + dy
     }
   }
 }
@@ -528,7 +537,7 @@ d = p.distance_origin()    // 5
 .method() = {
   @                 // self courant
   @.field           // accès au champ
-  @@ self = ...     // écriture exclusive
+  @@ = ...          // écriture exclusive
 }
 ```
 
@@ -675,10 +684,10 @@ new_params = params .= (params - 0.01 * grad)
 
 ```
 Diffable : {
-  compute() => résultat,
-  .~ => dérivée symbolique,
-  .! => snapshot,
-  .= => apply gradient
+  compute() : résultat;
+  .~ : dérivée symbolique;
+  .! : snapshot;
+  .= : apply gradient
 }
 
 // Type-agnostic : tout trait Diffable fonctionne
@@ -704,7 +713,7 @@ state_v1 = compute()
 state_v1.!
 // snapshot créé
 
-state_v2 = state_v1 ? { condition => modify() | else => original }
+state_v2 = state_v1 ? { condition : modify() | else : original }
 // merge de branches
 ```
 
@@ -727,7 +736,7 @@ x = 0.1 + 0.2      // = 0.3 (décimal exact)
 
 #{ target: gpu }
 ~{
-  [1, 2, 3] |* (x => x * 2)    // sur GPU
+  [1, 2, 3] |* {x |> x * 2}    // sur GPU
 }
 ```
 
@@ -735,12 +744,12 @@ x = 0.1 + 0.2      // = 0.3 (décimal exact)
 
 ```
 #key trait Identity {
-  id : nat
+  id : nat;
 }
 
 User : Identity {
-  name : str,
-  id : nat                      // clé
+  name : str;
+  id : nat;
 }
 
 // Lookup par clé
@@ -776,11 +785,11 @@ cache           // off | on | ttl(duration)
 ```
 // Default sugar (English-like)
 if x > 0 then y else z
-  ≡ x ? { + => y | - => z }
+  ≡ x ? { + : y | - : z }
 
 // Alternative sugar (French)
 si x > 0 alors y sinon z
-  ≡ x ? { + => y | - => z }
+  ≡ x ? { + : y | - : z }
 
 // Alternative sugar (Python-like)
 def f(x): return x + 1
@@ -797,16 +806,16 @@ DISPLAY output
 
 ```
 // Algorithme : transduction boson→mot
-canonique = "x ? { + => y | - => z }"   // AST
+canonique = "x ? { + : y | - : z }"   // AST
 
 sugar_english = transduct(canonique, dict_english)
-// => "if x then y else z"
+// = "if x then y else z"
 
 sugar_french = transduct(canonique, dict_french)
-// => "si x alors y sinon z"
+// = "si x alors y sinon z"
 
 sugar_python = transduct(canonique, dict_python)
-// => "y if x > 0 else z"
+// = "y if x > 0 else z"
 ```
 
 ### AST canonique = source de vérité
@@ -824,11 +833,7 @@ sugar_python = transduct(canonique, dict_python)
 // Bloc 1 : Rust-like
 #{ sugar: rust }
 {
-  if x > 0 {
-    y
-  } else {
-    z
-  }
+  x > 0 ? { + : y | - : z }
 }
 
 // Bloc 2 : Lisp-like
@@ -840,7 +845,7 @@ sugar_python = transduct(canonique, dict_python)
 // Bloc 3 : Python-like
 #{ sugar: python }
 {
-  y if x > 0 else z
+  y ? x > 0 : z
 }
 ```
 
@@ -932,7 +937,7 @@ s : str = "42"
 x = s |> i32        // 42 : i32
 
 // Erreur gérée par ?
-s |> i32 ?{ # => 0, v => v }    // si parse échoue : 0
+s |> i32 ?{ # : 0, v : v }    // si parse échoue : 0
 ```
 
 ### Interpolation : `$()` dans `""`
@@ -983,91 +988,91 @@ regex = '^\d{3}-\d{2}-\d{4}$'
 
 ### Table complète (D1-D83)
 
-| # | Nom | Résumé | Statut |
-|----|-----|--------|--------|
-| **D1** | Function composition | `A B = A(B)` est la règle unique | ✓ Approuvée |
-| **D2** | No keywords | `:` suffit, zéro mot-clé | ✓ Approuvée |
-| **D3** | Arenas | `{}` = scope auto-free O(1) | ✓ Approuvée |
-| **D4** | Zero-cost abstractions | Pas d'overhead d'arènes | ✓ Approuvée |
-| **D5** | Move semantics | Defaut : tout est mové (Pauli) | ✓ Approuvée |
-| **D6** | No null | Utilise `option(A)` ou `#` | ✓ Approuvée |
-| **D7** | Pattern matching | `?{}` pour tous les cas | ✓ Approuvée |
-| **D8** | Immutability by default | `@@` = mutable explicite | ✓ Approuvée |
-| **D9** | Raw strings | `''` sans échappement | ✓ Approuvée |
-| **D10** | Stream fusion | `\|*` `\|-` `\|+` = une boucle | ✓ Approuvée |
-| **D11** | No GC | Arènes + move semantics | ✓ Approuvée |
-| **D12** | Sugar system | Transduction boson↔mot | ✓ Approuvée |
-| **D13** | Deterministic conversion | Même AST pour tous sugars | ✓ Approuvée |
-| **D14** | Lexical scoping | Scope explicite `{}` | ✓ Approuvée |
-| **D15** | No exceptions | Utilise `result(A, E)` ou `?` | ✓ Approuvée |
-| **D16** | Structural typing | Traits = interfaces + data | ✓ Approuvée |
-| **D17** | No inheritance chain | `:` héritage simple | ✓ Approuvée |
-| **D18** | Diamond resolution | Union explicite ou erreur | ✓ Approuvée |
-| **D19** | Operator precedence | Défini par tier (s,p,d,f) | ✓ Approuvée |
-| **D20** | Time-travel semantics | `.!` snapshot, branching merges | ✓ Approuvée |
-| **D21** | Bubble-up arenas | Arène callee reste si valeur retour existe | ✓ Approuvée |
-| **D22** | Referential transparency | Pas d'état global mutable | ✓ Approuvée |
-| **D23** | Deterministic hashing | Parité byte à byte | ✓ Approuvée |
-| **D24** | Bitwise operations | `~`, `^`, `&`, `\|` = bosons + compositions | ✓ Approuvée |
-| **D25** | Boolean algebra | `+` = OR, `-` = AND (De Morgan) | ✓ Approuvée |
-| **D26** | Lazy evaluation | `!?` = defer, `!{}` = defer-block | ✓ Approuvée |
-| **D27** | Type inference | Inférence bidirectionnelle (hindley-milner) | ✓ Approuvée |
-| **D28** | Bit/trit/qbit agnostic | ~1/~2/~4 → spin adaptatif | ✓ Approuvée |
-| **D29** | Fractional indexing | `a[1.5]` = interpolation | ✓ Approuvée |
-| **D30** | Tuple unpacking | `(a, b, c) = (1, 2, 3)` | ✓ Approuvée |
-| **D31** | Variadic generics | `[n]T` = array taille n | ✓ Approuvée |
-| **D32** | First-class modules | `\|>` import, scope comme value | ✓ Approuvée |
-| **D33** | HKT (Higher-Kinded Types) | Traits paramétrés : `Functor(F)` | ✓ Approuvée |
-| **D34** | Dependent types | Range types : `0..150` = type ET valeur | ✓ Approuvée |
-| **D35** | Type/trait as sugar | Optionnels, désucrés en `:{}`/`#key` | ✓ Approuvée |
-| **D36** | Implicit copy | ≤64 bits sans `@` = copy (D5 émergent) | ✓ Approuvée |
-| **D37** | FIFO borrows | `@` lecture, `@@` écriture exclusive séquentielle | ✓ Approuvée |
-| **D38** | Warnings as optimizations | Warn → AST fold | ✓ Approuvée |
-| **D39** | Compile-time constants | Expressions pures calculées tôt | ✓ Approuvée |
-| **D40** | No implicit side effects | I/O explicite via `<>`/`>>`/`<<` | ✓ Approuvée |
-| **D41** | Algebraic effects | `?` + `#` + `+`/`-` = effet implicite | ✓ Approuvée |
-| **D42** | No borrow checker | Arènes + FIFO à la place | ✓ Approuvée |
-| **D43** | Linear types | `@` borrow implicite linear | ✓ Approuvée |
-| **D44** | Existential types | `∃A.` pour types masqués | ✓ Approuvée |
-| **D45** | Intersection types | `A & B` = à la fois A et B | ✓ Approuvée |
-| **D46** | Union types | `A \| B` = A ou B | ✓ Approuvée |
-| **D47** | Quantified constraints | `∀A. Trait(A) => ...` | ✓ Approuvée |
-| **D48** | Opaque types | `type Name = ...` cachée | ✓ Approuvée |
-| **D49** | Generic specialization | Monomorphisation auto | ✓ Approuvée |
-| **D50** | Inlining | `#{ inline: always }` ou auto | ✓ Approuvée |
-| **D51** | Sugar per-block | `#{ sugar: lang }` par bloc | ✓ Approuvée |
-| **D52** | Emergent const | `@@ never taken` = const implicit | ✓ Approuvée |
-| **D53** | Smart pointers | `@` borrow remplace Box/Rc/Arc | ✓ Approuvée |
-| **D54** | Phantom types | Types érased en compile, zéro runtime | ✓ Approuvée |
-| **D55** | Unsized types | `str`, arrays dynamiques supportés | ✓ Approuvée |
-| **D56** | Never type | `#` = bottom type | ✓ Approuvée |
-| **D57** | Trait objects | Pas d'objets, structuraux only | ✓ Approuvée |
-| **D58** | Associated types | `Trait{ type T; }` | ✓ Approuvée |
-| **D59** | Const generics | `[const N : nat]T` | ✓ Approuvée |
-| **D60** | Lifetime parameters | Implicites via arènes | ✓ Approuvée |
-| **D61** | Borrow granularity | Struct-level, pas field-level | ✓ Approuvée |
-| **D62** | Split borrows | `{ @.x, @.y }` = deux borrows | ✓ Approuvée |
-| **D63** | Reborrow | `@(@x)` relax pour lecture | ✓ Approuvée |
-| **D64** | Interior mutability | `@@x` mutation en contexte read-only | ✓ Approuvée |
-| **D65** | Variance | Covariant par défaut | ✓ Approuvée |
-| **D66** | Pauli exclusion | Inspire move semantics | ✓ Approuvée |
-| **D67** | Orbital tiers | s,p,d,f = usage frequency | ✓ Approuvée |
-| **D68** | Boson/gluon duality | Bosons + `{}` = gravitons | ✓ Approuvée |
-| **D69** | Orbital mechanics | Tiers = orbites atomiques | ✓ Approuvée |
-| **D70** | Autograd symbolic | `.~` dérivée, purement symbolique | ✓ Approuvée |
-| **D71** | Dual numbers | Nombre + dérivée accouplés | ✓ Approuvée |
-| **D72** | Backprop | Reverse-mode auto via dual numbers | ✓ Approuvée |
-| **D73** | AD composition | Dérivée de dérivée = nat | ✓ Approuvée |
-| **D74** | Type as constraint | Type ≠ représentation, type = contrainte | ✓ Approuvée |
-| **D75** | Decimal exact | 0.1 + 0.2 = 0.3, défaut | ✓ Approuvée |
-| **D76** | Range types | `age : 0..150` = type et contrainte | ✓ Approuvée |
-| **D77** | Geometric algebra | Émerge de bosons (wedge, dot, reverse) | ✓ Approuvée |
-| **D78** | SDL3 + wgpu | Stack : fenêtre, GPU, framework | ✓ Approuvée |
-| **D79** | REPL interactive | Session figée, replay possible | ✓ Approuvée |
-| **D80** | Riemann sphere | `∞`, `#` = fermions, pas crash | ✓ Approuvée |
-| **D81** | Annotations #{} | Scopées, clés extensibles (D81 = annotations) | ✓ Approuvée |
-| **D82** | Diamond type algebra | `+` = union, compilateur résout | ✓ Approuvée |
-| **D83** | Hardware concurrency | Mapping complet threads/SIMD/QPU | ✓ Approuvée |
+| # | Décision | Statut |
+|----|----------|--------|
+| D1 | Tout est onde (sphère de Bloch) | ✓ SOLIDE |
+| D2 | 1 règle : A B = A(B) | ✓ SOLIDE |
+| D3 | Fermions / Bosons / Gluons | ✓ SOLIDE |
+| D4 | {} = arène mémoire | ✓ SOLIDE |
+| D5 | Types linéaires (MOVE default) | ✓ SOLIDE |
+| D6 | << return, >< break, >> continue | ✓ SOLIDE |
+| D7 | ? = if, ?? = while | ✓ SOLIDE |
+| D8 | \| = pipe async, >< = pass-through sync | ✓ SOLIDE |
+| D9 | '' = raw string (5ème gluon) | ✓ SOLIDE |
+| D10 | >> = continue (pas break) | ✓ SOLIDE |
+| D11 | !? = defer | ✓ SOLIDE |
+| D12 | Sugar = plugin, pas hardcodé | ✓ SOLIDE |
+| D13 | Conversion inter-dev = feature CORE | ✓ CONCEPT |
+| D14 | ^ = boson SUPERPOSER (QPU) | ✓ SOLIDE |
+| D15 | ^{} = quantum block | ✓ CONCEPT |
+| D16 | ^^ = quantum measure | ✓ CONCEPT |
+| D17 | % = 18ème boson PROPORTIONNER | ✓ SOLIDE |
+| D18 | $ = interpolation dans strings | ✓ SOLIDE |
+| D19 | 4 spins réels (2 bits) + * flag | ✓ SOLIDE |
+| D20 | Stack : Rust → LLVM → SDL3/wgpu → self-host | ✓ SOLIDE |
+| D21 | Bubble-up par défaut | ✓ SOLIDE |
+| D22 | Portes quantiques émergentes | ✓ THÉORIE |
+| D23 | Debug universel via sugar | ✓ CONCEPT |
+| D24 | Visualisation programme | ✓ CONCEPT |
+| D25 | \` = potentiel gluon CODE | 🔍 DIFFÉRÉ |
+| D26 | / = 19ème boson DIVISER | ✓ SOLIDE |
+| D27 | Commentaires émergents | ✓ SOLIDE |
+| D28 | Agnosticisme bit/trit/qbit | ✓ CONCEPT |
+| D29 | Pipeline de traçabilité | ✓ SOLIDE |
+| D30 | 342-IR custom (physique) | ✓ CONCEPT |
+| D31 | Compositions à profondeur N | ✓ SOLIDE |
+| D32 | Bitwise émergent via bits:: | ✓ SOLIDE |
+| D33 | Paradigme = computation universelle | ✓ VISION |
+| D34 | Classes/structs = type + trait + impl | ✓ SOLIDE |
+| D35 | Zéro keywords — type/trait émergents de : | ✓ SOLIDE |
+| D36 | Copy émergent (≤64 bits + pas de @) | ✓ SOLIDE |
+| D37 | @@ séquentiel, pas bloquant | ✓ CONCEPT |
+| D38 | Warnings → optimisations AST | ✓ SOLIDE |
+| D39 | Typed holes via _ | ✓ SOLIDE |
+| D40 | ~~Gravitons = catégorie séparée~~ | ⚠️ OBSOLÈTE |
+| D41 | Parallélisme via gravitons + pipe | ✓ CONCEPT |
+| D42 | Arena-scoped access control | ✓ CONCEPT |
+| D43 | Cranelift/QBE proto, LLVM prod | ✓ SOLIDE |
+| D44 | Sphère = organisation, pas mémoire | ✓ SOLIDE |
+| D45 | Symétrie CPU des bosons | ✓ SOLIDE |
+| D46 | Graviton = boson + gluon (émergent) | ✓ SOLIDE |
+| D47 | :. = accès natif sans keyword | ✓ CONCEPT |
+| D48 | Portes logiques complètes | ✓ SOLIDE |
+| D49 | .. = remonter au parent (INTÉRIEUR²) | ✓ CONCEPT |
+| D50 | Mutex émergent de @@ + pipe | ✓ CONCEPT |
+| D51 | Sugar = dictionnaire boson→mot | ✓ VISION |
+| D52 | Const émergent (pas de keyword) | ✓ SOLIDE |
+| D53 | 18 gravitons complets (3 tiers) | ✓ SOLIDE |
+| D54 | Transducteurs pipe \|* \|- \|+ | ✓ SOLIDE |
+| D55 | , reste séparateur syntaxique | ✓ SOLIDE |
+| D56 | Génériques via () pas <> | ✓ SOLIDE |
+| D57 | 18 gravitons = 3 tiers | ✓ SOLIDE |
+| D58 | Stream fusion via transducteurs | ✓ SOLIDE |
+| D59 | Trio compute × suffixes = matrice | ✓ SOLIDE |
+| D60 | !{} defer vs !? lazy = coexistence | ✓ SOLIDE |
+| D61 | Borrow granularity = struct-level | ✓ SOLIDE |
+| D62 | Real-time debug = Diffable + Énergie | ✓ SOLIDE |
+| D63 | ; reclassé en ponctuation | ✓ SOLIDE |
+| D64 | Autograd natif via Diffable | ✓ CONFIRMÉ |
+| D65 | CORRIGÉ: séquentiel = défaut | ✓ CORRIGÉ |
+| D66 | MOVE = Pauli | ✓ PROFOND |
+| D67 | 4 tiers = orbitales atomiques | ✓ SOLIDE |
+| D68 | Classification par spin physique | ✓ PROFOND |
+| D69 | Tiers = remplissage orbital | ✓ SOLIDE |
+| D70 | Autograd purement symbolique | ✓ ÉLÉGANT |
+| D71 | Spin = profondeur de composition | ✓ COHÉRENT |
+| D72 | Meta-spins agnostiques | ✓ ÉLÉGANT |
+| D73 | \| = connexion universelle | ✓ SOLIDE |
+| D74 | Typage numérique auto-optimisé | ✓ ÉLÉGANT |
+| D75 | Décimal exact par défaut | ✓ SOLIDE |
+| D76 | Range types natifs | ✓ SOLIDE |
+| D77 | Algèbre géométrique émergente | ✓ ÉMERGENT |
+| D78 | Stack : SDL3 + wgpu + Cranelift | ✓ SOLIDE |
+| D79 | Accessibilité par construction | ✓ SOLIDE |
+| D80 | Division par zéro = ∞ (Riemann) | ✓ ÉMERGENT |
+| D81 | #key = trait émergent | ✓ ÉLÉGANT |
+| D82 | . = INTÉRIEUR (renommé) | ✓ ÉMERGENT |
+| D83 | Mapping hardware complet (threads CPU) | ✓ SOLIDE |
 
 ### Propositions rejetées
 
@@ -1203,7 +1208,7 @@ Voici comment les **42 projets** de l'école 42 se mappent aux features de 3.42 
      - Expressions simples : `1 + 2`
      - Compositions : `f \| g`
      - Range types : `age : 0..150`
-     - Match : `x ?{ 0 => a, 1..10 => b }`
+     - Match : `x ?{ 0 : a, 1..10 : b }`
      - Threads : `t = \|{ compute() }; r = t \|;`
      - Autograd : `grad = f.~`
      - Annotations : `#{ precision: exact }`
@@ -1237,13 +1242,13 @@ Voici comment les **42 projets** de l'école 42 se mappent aux features de 3.42 
 Type : { x : i32, y : i32 }
 
 // 2. ?{}
-result ?{ 0 => "zéro", 1..10 => "petit", _ => "grand" }
+result ?{ 0 : "zéro", 1..10 : "petit", _ : "grand" }
 
 // 3. |{}
 t = |{ heavy_compute() }; r = t |;
 
 // 4. ~{}
-~{ [1,2,3] |* (x => x * 2) }
+~{ [1,2,3] |* {x |> x * 2} }
 
 // 5. ^{}
 q = |00⟩; q = ^! q;
@@ -1261,7 +1266,7 @@ q = |00⟩; q = ^! q;
 content = <> "file.txt"; >{} content
 
 // 10. .{}, +{}, -{}, *{}
-p.move_by(3, 4); arr |* (x => x * 2); result |+ (a, b => a + b)
+p.move_by(3, 4); arr |* {x |> x * 2}; result |+ {a, b |> a + b}
 ```
 
 ### Phase 4 : Optimisations (Semaine 7-8)
@@ -1279,8 +1284,8 @@ p.move_by(3, 4); arr |* (x => x * 2); result |+ (a, b => a + b)
 ### Phase 5 : Benchmarks et autograd (Semaine 9-10)
 
 **9. Autograd POC**
-   - Dérivée simple : `(x => x * x).~`
-   - Chaîne : `(f \| g).~ = g.~ \| f.~`
+   - Dérivée simple : `{x |> x * x}.~`
+   - Chaîne : `(f |> g).~ = g.~ |> f.~`
    - Nombres duels (dual numbers)
    - Comparaison TensorFlow/PyTorch
 

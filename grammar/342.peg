@@ -1,24 +1,25 @@
 # ============================================================
-#  3.42 — Grammaire PEG Formelle — Checkpoint CP-2
-#  "19 bosons. 5 gluons. 4 spins. 1 règle. Tout émerge."
+#  3.42 — Grammaire PEG Formelle — Checkpoint CP-3
+#  "18 bosons. 5 gluons. 3 séparateurs. 1 règle. Tout émerge."
 #
 #  PARADIGME : MODÈLE PARTICULES
 #    Fermions = données (valeurs, expressions)
-#    Bosons = opérations (19 symboles-forces)
+#    Bosons = opérations (18 symboles-forces)
 #    Gluons = conteneurs ({} () [] "" '')
+#    Séparateurs = ponctuations (,, :, .)
 #    Règle : Boson(X) = appliquer la force sur X
 #
-#  19 BOSONS :
-#    < SORTIR      > ENTRER       . ACCÉDER     ? MESURER
-#    ! INVERSER    | CONNECTER    ~ DIFFUSER    ^ SUPERPOSER
+#  18 BOSONS CORRECTS (D1-D83) :
+#    < ENTRER      > SORTIR       . INTÉRIEUR   ? MESURER
+#    ! INVERSER    | CONNECTER    ~ ONDULER     ^ SUPERPOSER
 #    % PROPORTIONNER              / DIVISER
-#    : DÉFINIR     = LIER         ; TERMINER    + ACCUMULER
-#    - RÉDUIRE     * TRANSFORMER  # MARQUER     _ IGNORER
+#    : DÉFINIR     = LIER         + ACCUMULER
+#    - RÉDUIRE     * TRANSFORMER  # CONFIGURER  _ IGNORER
 #    @ RÉFÉRENCER
 #
 #  TRIO COMPUTE : | CPU, ~ GPU, ^ QPU
 #
-#  4 SPINS (2 bits) : + (positif) - (négatif) # (erreur) _ (void)
+#  3 SPINS (2 bits) : + (positif) - (négatif) # (erreur) _ (void)
 #  * = flag "any" (wildcard en pattern, boson TRANSFORMER sinon)
 #
 #  AGNOSTICISME COMPUTE :
@@ -27,26 +28,37 @@
 #    Quantum (1 qubit) : + = |0⟩, - = |1⟩, # = |err⟩, _ = |void⟩
 #    Le code 342 reste identique. Backend choisit l'encoding.
 #
-#  KEYWORDS : 2 base + 6 sucre
-#    base  : type, trait
-#    sucre : true(+), false(-), void(_), any(*),
-#            continue(>>), defer(!?)
+#  KEYWORDS : sucre optionnel
+#    type, trait = concepts fondamentaux (sucre pour Name : { ... })
+#    true(+), false(-), void(_), any(*) = sucre spin
+#    continue(>>), defer(!?) = sucre contrôle
 #
-#  CHANGEMENTS CP-1 → CP-2 :
-#    / ajouté       : 19ème boson DIVISER (division, commentaires émergent)
-#    // émerge      : DIVISER(DIVISER) = séparer du code = commentaire
-#    /* */ émerge   : DIVISER + gluon = bloc commentaire
-#    Agnosticisme   : bit/trit/qbit configurable au backend
-#    Traçabilité    : 342 → AST → 342-IR → LLVM IR → Assembly → Binaire
-#    Compositions N : profondeur arbitraire (pas limité à 4)
+#  CHANGEMENTS CP-2 → CP-3 (D1-D83) :
+#    ~ ONDULER : GPU/parallèle/SIMD, PAS mutabilité (D65)
+#    Pas de `mut` keyword : mutabilité émergente via @@ (D83)
+#    Pas de :: (ModuleDecl) : imports via |> (D73)
+#    Pas de @extend : héritage via : (D35)
+#    ; = ponctuation (D63), retiré des bosons
+#    Autograd : .~, .!, .= (D64)
+#    Ranges : age : 0..150 (D74-D76)
+#    CGA : *^, *. (D77)
+#    Annotations #key : #{key: value} (D81)
+#    Transducteurs : |*, |-, |+ (D54)
+#    Imports : |> (D73)
+#    Threads : |{}, t |;, |!{}, @@ FIFO (D83)
+#    Match : x ?{ 0 : "zéro"; 1..10 : "petit"; _ : "grand" }
+#    Closures : {x |> x * 2}, {x |> x > 0}, {0; {a, b |> a + b}}
+#    Self : @ au lieu de self
+#    Type fields : séparés par ; pas ,
 #
 #  HÉRITAGE complet :
-#    v5: module(::) return(<<) break(><) mut(~) copy(**) cast(:>)
+#    v5: return(<<) break(><) copy(**) cast(:>)
 #    v6: {} universel, a..b range, ..field parent, a >< b pass-through
 #    v7: ''(raw) >>(continue) !?(defer) sugar keywords
 #    v8: ^(QPU) ^{}(quantum block) ^^(quantum measure)
 #    CP-1: %(proportion) $(interpolation) 4 spins(2-bit)
 #    CP-2: /(diviser) commentaires émergents, agnosticisme compute
+#    CP-3: ~ ONDULER, |> imports, @@ threads, refactoring bosons
 # ============================================================
 #
 #  Convention PEG :
@@ -71,14 +83,12 @@ Program          <- Spacing (Statement Spacing)* EOF
 #  STATEMENTS (instructions)
 # ============================================================
 
-Statement        <- ModuleDecl
-                  / TypeDecl
+Statement        <- TypeDecl
                   / TraitDecl
                   / ImplDecl
-                  / ExtendDecl
+                  / ImportDecl
                   / AnnotatedStatement
                   / DestructAssign
-                  / MutDecl
                   / ReturnStmt
                   / BreakStmt
                   / ContinueSugar
@@ -89,25 +99,20 @@ Statement        <- ModuleDecl
                   / Assignment
                   / ExpressionStmt
 
-# v8.0 NOUVEAU — ^ = SUPERPOSER = QPU boson (17ème)
+# CP-3 MODIFIÉ — ^ = SUPERPOSER = QPU boson (17ème)
 # ^{} = bloc quantique : contenu en superposition
 # ^^ = mesure quantique (collapse de la superposition)
-# Trio compute unifié : | CPU (connecter), ~ GPU (diffuser), ^ QPU (superposer)
-# CPU : pas d'équivalent direct (concept quantique)
-# Classique : simule via probabilités ou tenseurs
-# Émergence : SUPERPOSER = maintenir plusieurs états simultanés
-# ^{a, b, c} = superposition de a, b, c
-# ^^expr = mesurer/collapser expr (choisir un état)
+# Trio compute unifié : | CPU (connecter), ~ GPU (onduler), ^ QPU (superposer)
 QuantumBlock     <- '^' Spacing '{' Spacing (Statement Spacing)* Expression? Spacing '}'
 QuantumMeasure   <- '^^' Spacing UnaryExpr
 
-# v5.0 : module → ::name {}
-# '::' en début de statement = déclaration module
-# '::' entre identifiers (a::b) = chemin (expression)
-ModuleDecl       <- '::' Spacing Identifier Spacing
-                    '{' Spacing (Statement Spacing)* '}'
+# CP-3 NOUVEAU — imports via |> (D73)
+# |> module/path ou |> Identifier
+ImportDecl       <- '|>' Spacing (StringLiteral / Identifier) Spacing Semicolon
 
+# CP-3 REFACTORISÉ — TypeDecl (sucre pour Name : { ... })
 TypeDecl         <- 'type' Spacing Identifier GenericParams? Spacing TypeBody
+                  / Identifier Spacing ':' Spacing TypeBody
 
 GenericParams    <- '(' Spacing GenericParam (Spacing ',' Spacing GenericParam)* Spacing ')'
 GenericParam     <- Identifier (Spacing ':' Spacing TraitBound)?
@@ -117,6 +122,7 @@ TypeBody         <- '{' Spacing (FieldDecl Spacing)* '}'
                   / '=' Spacing VariantList
                   / ':' Spacing TraitBound Spacing '{' Spacing (Statement Spacing)* '}'
 
+# CP-3 REFACTORISÉ — fields séparés par ; pas ,
 FieldDecl        <- Identifier Spacing ':' Spacing TypeExpr Semicolon
 
 VariantList      <- Variant (Spacing '|' Spacing Variant)*
@@ -128,12 +134,12 @@ Variant          <- SpinPattern? Spacing Identifier
 TraitDecl        <- 'trait' Spacing Identifier GenericParams? Spacing
                     '{' Spacing (TraitMethod Spacing)* '}'
 
-TraitMethod      <- Identifier Spacing '=' Spacing
+TraitMethod      <- Identifier Spacing ':' Spacing
                     '(' Spacing ParamList? Spacing ')'
                     (Spacing ':' Spacing TypeExpr)? Semicolon
 
 # --- IMPL (implémentation de trait pour un type) ---
-# self = binding implicite (le compilateur l'injecte comme @ à l'instance)
+# self = @ (self-reference dans les méthodes)
 
 ImplDecl         <- Identifier Spacing ':' Spacing TypePath Spacing
                     '{' Spacing (Statement Spacing)* '}'
@@ -149,20 +155,18 @@ ListDestructure  <- '[' Spacing Identifier (Spacing ',' Spacing Identifier)*
                     (Spacing ',' Spacing '...' Identifier)? Spacing ']'
                     Spacing '=' Spacing Expression Semicolon
 
-ExtendDecl       <- '@extend' Spacing Identifier Spacing
-                    '{' Spacing (Statement Spacing)* '}'
+# CP-3 SUPPRIMÉ — @extend n'existe pas, héritage via :
 
-# Annotations : UNIQUEMENT @extend et @comptime
+# Annotations : @key, @comptime, etc.
 AnnotatedStatement <- Annotation+ Spacing Statement
 Annotation       <- '@' Identifier ('(' Spacing ArgList? Spacing ')')? Spacing
 
-# Assignment APRÈS MutDecl dans l'ordre des alternatives
-# car MutDecl <- '~' Spacing Assignment et ~ ne matche pas Assignment
+# Assignment avec type optionnel
 Assignment       <- Identifier Spacing (':' Spacing TypeExpr Spacing)?
                     '=' Spacing Expression Semicolon
 
-# ~ remplace mut
-MutDecl          <- '~' Spacing Assignment
+# CP-3 SUPPRIMÉ — ~ n'est PAS mut, c'est ONDULER (GPU/parallèle)
+# Mutabilité émerge via @@ (mutex FIFO, D83)
 
 # << remplace return
 # En début de statement = return
@@ -170,7 +174,6 @@ MutDecl          <- '~' Spacing Assignment
 ReturnStmt       <- '<<' Spacing SpinReturn? Spacing Expression? Semicolon
 SpinReturn       <- SpinPattern !'='
 
-# v6.0 : >< remplace >> pour break
 # >< = ENTRER(SORTIR) = entrer dans la sortie = quitter le contexte
 # Supporte spin + valeur (comme return) :
 #   >< ;           → break simple
@@ -179,24 +182,18 @@ SpinReturn       <- SpinPattern !'='
 #   >< expr ;      → break avec valeur (spin + par défaut)
 BreakStmt        <- '><' Spacing SpinReturn? Spacing Expression? Semicolon
 
-# v7.0 NOUVEAU — >> = continue = ENTRER(ENTRER) = re-entrer dans la boucle
+# >> = continue = ENTRER(ENTRER) = re-entrer dans la boucle
 # CPU : JMP LOOP_START (saut inconditionnel vers le début de la boucle)
-# Émergence : ENTRER appliqué à ENTRER = re-entrer = recommencer l'itération
 # Supporte spin optionnel (rare mais cohérent) :
 #   >> ;           → continue simple (skip to next iteration)
 #   >> + ;         → continue avec signal positif (filter pattern)
-# Sucre : continue = >>
-# Sucre : continue = >> (keyword → symbole)
 ContinueSugar    <- 'continue' ![a-zA-Z0-9_] Spacing SpinReturn? Spacing Expression? Semicolon
 ContinueStmt     <- '>>' !'=' Spacing SpinReturn? Spacing Expression? Semicolon
 
-# v7.0 NOUVEAU — !? = defer = INVERSER(MESURER) = évaluer plus tard
+# !? = defer = INVERSER(MESURER) = évaluer plus tard
 # CPU : PUSH cleanup_addr sur defer stack, POP+CALL à la sortie du scope
-# Émergence : INVERSER le moment de MESURE = exécuter à l'envers (en sortant)
 # Utilisé pour : fermer fichiers, libérer ressources, cleanup
 # Le bloc est exécuté quand le scope englobant se termine (LIFO)
-# Sucre : defer = !?
-# Sucre : defer = !? (keyword → symbole)
 DeferSugar       <- 'defer' ![a-zA-Z0-9_] Spacing Block
 DeferStmt        <- '!?' Spacing Block
 
@@ -209,25 +206,41 @@ ExpressionStmt   <- Expression Semicolon
 Expression       <- PipeExpr
 
 # --- PIPE SPSC : parallélisme émergent (async, buffered) ---
-PipeExpr         <- PassThroughExpr (Spacing '|' !'|' Spacing PassThroughExpr)*
+# |> = import (traité au niveau Statement, pas ici)
+# | = connecter/pipe (async, SPSC ring buffer)
+# |* = map (transducteur, D54)
+# |- = filter (transducteur, D54)
+# |+ = fold (transducteur, D54)
+# |{} = spawn (threads, D83)
+# t |; = wait (threads, D83)
+# |!{} = detach (threads, D83)
+PipeExpr         <- PassThroughExpr (Spacing PipeOp Spacing PassThroughExpr)*
+
+PipeOp           <- '|*' / '|-' / '|+' / '|{' / '|!' / '|;' / '|' !'>' !'*' !'-' !'+'
 
 # v6.0 NOUVEAU — pass-through : a >< b (sync, direct, sans buffer)
 # >< en expression = ENTRER(SORTIR) = traverser
 # Différence avec | :
 #   a | b  = connecter a et b (async, SPSC ring buffer, green threads)
 #   a >< b = a traverse b (sync, direct, même thread, transformation)
-# Précédence : juste en-dessous de | (pipe)
 PassThroughExpr  <- RangeExpr (Spacing '><' Spacing RangeExpr)*
 
-# v6.0 FIX — range comme opérateur infixe (plus dans PrimaryExpr)
-# a..b = range de a à b (optionnel, pas chaînable)
-# Précédence basse : au-dessus de broadcast, en-dessous de pass-through
-# Pour open ranges : a..* (a vers any), *..b (any vers b, rare)
-# SliceAccess gère les ranges dans [] : list[a..b]
+# CP-3 — ranges auto-typés (D74-D76)
+# age : 0..150  → typage auto-optimisé
+# a..b = range de a à b
 RangeExpr        <- BroadcastExpr (Spacing '..' Spacing BroadcastExpr)?
 
-# --- BROADCAST SPMC : diffusion 1→N ---
-BroadcastExpr    <- MeasureExpr (Spacing '~' Spacing MeasureExpr)?
+# --- BROADCAST SPMC : diffusion 1→N via ONDULER (GPU) ---
+# ~ = ONDULER (parallélisation GPU/SIMD, pas mutabilité)
+BroadcastExpr    <- AutogradExpr (Spacing '~' Spacing AutogradExpr)?
+
+# CP-3 NOUVEAU — Autograd (D64)
+# .~ = dérivée (gradient)
+# .! = snapshot (capture state)
+# .= = apply (appliquer résultat)
+AutogradExpr     <- MeasureExpr (Spacing AutogradOp)*
+
+AutogradOp       <- '.~' / '.!' / '.='
 
 # --- MESURE : ? et ?? (le cœur du langage) ---
 MeasureExpr      <- LogicalOrExpr (Spacing MeasureSuffix)?
@@ -241,17 +254,22 @@ SingleMeasure    <- '?' !'?' Spacing MeasureBlock?
 
 ContinuousMeasure <- '??' Spacing MeasureBlock
 
-MeasureBlock     <- '{' Spacing MeasureBranch+ Spacing '}'
+# CP-3 REFACTORISÉ — match syntax utilise : pas =>
+# x ?{ 0 : "zéro"; 1..10 : "petit"; _ : "grand" }
+MeasureBlock     <- '{' Spacing (MeasureBranch Spacing)+ '}'
 
 MeasureBranch    <- SpinBranch
                   / ConditionBranch
+                  / RangeBranch
                   / WildcardBranch
 
 # SpinBranch avec MatchBody (destructuring de variants)
 SpinBranch       <- SpinPattern Spacing MatchBody? Spacing
                     FilterExpr? Spacing ':' Spacing BranchBody
-                  / Binding Spacing FilterExpr? Spacing ':'
-                    Spacing BranchBody
+
+# CP-3 NOUVEAU — RangeBranch pour pattern matching sur ranges (D74-D76)
+RangeBranch      <- RangePattern Spacing ':' Spacing BranchBody
+RangePattern     <- NumberLiteral '..' NumberLiteral
 
 MatchBody        <- VariantMatch
                   / StringLiteral
@@ -269,14 +287,12 @@ WildcardBranch   <- '_' Spacing ':' Spacing BranchBody
 
 SpinPattern      <- '+' / '-' / '*' / '#'
 
-Binding          <- Identifier '?'
+Binding          <- Identifier '?'?
 
 FilterExpr       <- '(' Spacing Expression Spacing ')'
 
 # BranchBody utilise BlockExpr
-# Permet : + : { y = 5; y + 1 }  (statements + expression finale)
-# Et aussi : + : expr;            (expression simple avec ;)
-BranchBody       <- BlockExpr / Expression Semicolon
+BranchBody       <- BlockExpr / (Expression Spacing)? Semicolon
 
 # Block = alias pour BlockExpr (compatibilité interne)
 Block            <- BlockExpr
@@ -288,10 +304,8 @@ Block            <- BlockExpr
 LogicalOrExpr    <- LogicalAndExpr (Spacing '||' Spacing LogicalAndExpr)*
 LogicalAndExpr   <- QuantumExpr (Spacing '&&' Spacing QuantumExpr)*
 # | est le pipe, pas bitwise OR → bitwise OR via bits::or()
-# v8.0 : ^ libéré pour QPU → XOR bitwise via bits::xor()
-# QuantumExpr remplace BitwiseXorExpr dans la chaîne de précédence
-# Note : ^^ (QuantumMeasure) est géré dans UnaryExpr, pas ici.
-# Ce niveau de précédence est réservé pour de futures extensions quantiques infixes.
+# ^ est réservé pour QPU → XOR bitwise via bits::xor()
+# QuantumExpr remplace BitwiseXorExpr
 QuantumExpr      <- BitwiseAndExpr
 BitwiseAndExpr   <- EqualityExpr (Spacing '&' !'&' Spacing EqualityExpr)*
 EqualityExpr     <- ComparisonExpr (Spacing EqOp Spacing ComparisonExpr)*
@@ -299,13 +313,11 @@ ComparisonExpr   <- ShiftExpr (Spacing CmpOp Spacing ShiftExpr)*
 ShiftExpr        <- AdditiveExpr (Spacing ShiftOp Spacing AdditiveExpr)*
 AdditiveExpr     <- MultiplicativeExpr (Spacing AddOp Spacing MultiplicativeExpr)*
 MultiplicativeExpr <- UnaryExpr (Spacing MulOp Spacing UnaryExpr)*
+# CP-3 NOUVEAU — CGA (Clifford Geometric Algebra, D77)
+# *^ = wedge product (geometric product)
+# *. = dot product (inner product)
+# Traités comme des opérateurs postfix
 
-# Ordre de précédence unaire :
-#   1. UnaryOp (!, -, +) → classique
-#   2. CopyExpr (**) → deep copy
-#   3. SpinExpr (*, #) → constructeur variant
-#   4. PostfixExpr → tout le reste
-# v8.0 : QuantumMeasure (^^) ajouté avant CopyExpr
 # Ordre de précédence unaire :
 #   0. QuantumMeasure (^^) → collapse
 #   1. FormatExpr (%"") → printf émergent
@@ -322,24 +334,22 @@ UnaryExpr        <- QuantumMeasure
                   / SpinExpr
                   / PostfixExpr
 
-# ** pour copie profonde (remplace copy())
+# ** pour copie profonde
 CopyExpr         <- '**' Spacing UnaryExpr
 
-# CP-1 : FormatExpr = %"pattern" = PROPORTIONNER(TEXTE) = printf émergent
-# %"valeur: $x"  → formater la string selon le pattern
-# %%expr         → normaliser expr (double proportion)
+# FormatExpr = %"pattern" = PROPORTIONNER(TEXTE) = printf émergent
 FormatExpr       <- '%' Spacing StringLiteral
 NormalizeExpr    <- '%%' Spacing UnaryExpr
 
 # Expressions avec spin préfixe (constructeurs de variantes)
 # * Leaf → variante any
 # # Error("msg") → variante erreur
-# + et - sont gérés par UnaryOp
 SpinExpr         <- ('*' !'=' !'*' / '#') Spacing PostfixExpr
 
 PostfixExpr      <- PrimaryExpr (Spacing Postfix)*
 
-Postfix          <- DotAccess
+Postfix          <- CGAProduct
+                  / DotAccess
                   / DotMeasure
                   / FunctionCall
                   / IndexAccess
@@ -349,10 +359,11 @@ Postfix          <- DotAccess
                   / CastExpr
                   / BorrowSuffix
 
+# CP-3 NOUVEAU — CGA products (D77)
+# *^ = wedge product, *. = dot product
+CGAProduct       <- ('*^' / '*.') Spacing PostfixExpr
+
 DotAccess        <- '.' !'.' !'?' Identifier
-# v6.0 NOTE : ParentAccess (..) est dans PrimaryExpr (prefix), pas Postfix
-# Car en Postfix, a..b serait ambigu avec range (a..b)
-# Solution : ..field est un PrimaryExpr (prefix), a..b est RangeExpr (infix)
 DotMeasure       <- '.?' Spacing MeasureBlock?
 FunctionCall     <- '(' Spacing ArgList? Spacing ')'
 IndexAccess      <- '[' Spacing Expression Spacing ']'
@@ -360,22 +371,19 @@ SliceAccess      <- '[' Spacing Expression? Spacing '..' Spacing Expression? Spa
 InlineMeasureBlock <- MeasureBlock
 CompoundAssign   <- AssignOp Spacing Expression
 
-# :> remplace 'as'
-# Pas de Spacing initial : PostfixExpr gère déjà le spacing avant chaque Postfix
+# :> pour cast
 CastExpr         <- ':>' Spacing TypeExpr
 
 # ============================================================
 #  EXPRESSIONS PRIMAIRES
 # ============================================================
 
-# BlockExpr en premier — {} comme expression universelle
-# Un bloc retourne la valeur de sa dernière expression
-# Combinable avec tout : << {}, ** {}, x = {}, | {} etc.
 PrimaryExpr      <- BlockExpr
                   / GroupExpr
-                  / FunctionLiteral
+                  / ClosureLiteral
                   / ListLiteral
                   / MapLiteral
+                  / AnnotationLiteral
                   / ParentAccessExpr
                   / ProbLiteral
                   / NumberLiteral
@@ -388,29 +396,34 @@ PrimaryExpr      <- BlockExpr
                   / Identifier
 
 # Bloc comme expression (conteneur universel)
-# Le bloc retourne la valeur de sa dernière expression
-# Si la dernière instruction n'est pas une expression, retourne _ (void)
 BlockExpr        <- '{' Spacing (Statement Spacing)* Expression? Spacing '}'
 
 GroupExpr        <- '(' Spacing Expression Spacing ')'
 
-FunctionLiteral  <- '(' Spacing ParamList? Spacing ')'
-                    (Spacing ':' Spacing TypeExpr)?
-                    Spacing Block
+# CP-3 NOUVEAU — Closures avec syntaxe {params |> body} (D54, D73)
+# {x |> x * 2}           → map/transform
+# {x |> x > 0}           → filter
+# {0; {a, b |> a + b}}   → fold avec initial value
+ClosureLiteral   <- '{' Spacing ClosureParam Spacing '|>' Spacing ClosureBody Spacing '}'
+ClosureParam     <- Identifier (Spacing ',' Spacing Identifier)*
+ClosureBody      <- Expression
 
+# Paramètres avec types optionnels
 ParamList        <- Param (Spacing ',' Spacing Param)*
 Param            <- Identifier Spacing (':' Spacing TypeExpr)?
 
 ListLiteral      <- '[' Spacing (Expression (Spacing ',' Spacing Expression)*)? Spacing ']'
 
-MapLiteral       <- '[' Spacing MapEntry (Spacing ',' Spacing MapEntry)* Spacing ']'
+MapLiteral       <- '{' Spacing MapEntry (Spacing ',' Spacing MapEntry)* Spacing '}'
 MapEntry         <- Expression Spacing ':' Spacing Expression
 
-# v6.0 NOUVEAU — ..field = accéder au scope parent
+# CP-3 NOUVEAU — Annotations scopées #{ key: value } (D81)
+AnnotationLiteral <- '#{' Spacing AnnotationEntry (Spacing ',' Spacing AnnotationEntry)* Spacing '}'
+AnnotationEntry   <- Identifier Spacing ':' Spacing Expression
+
+# ..field = accéder au scope parent
 # Prefix uniquement (pas postfix, pour éviter le conflit avec range a..b)
 # .. seul (sans identifier) = l'objet parent lui-même
-# ..field = le champ 'field' du scope parent
-# Analogue à 'cd ..' dans un filesystem
 ParentAccessExpr <- '..' Identifier?
 
 ProbLiteral      <- FloatLiteral 'p'
@@ -418,8 +431,8 @@ ProbLiteral      <- FloatLiteral 'p'
 # **(expr) aussi valide comme alternative fonctionnelle
 CopyExprParen    <- '**' '(' Spacing Expression Spacing ')'
 
-# v6.0 — spin comme valeur littérale + sucre syntaxique
-# Atomes spin (les 5 spins possibles) :
+# spin comme valeur littérale + sucre syntaxique
+# Atomes spin (les 4 spins possibles) :
 #   + = positif (true, succès)
 #   - = négatif (false, échec)
 #   * = any/tout (wildcard, tout est possible)
@@ -428,8 +441,8 @@ CopyExprParen    <- '**' '(' Spacing Expression Spacing ')'
 # Sucre optionnel :
 #   true  → +
 #   false → -
-#   any   → *   (v6.0 NOUVEAU)
-#   void  → _   (v6.0 : maps to _ maintenant, plus *)
+#   any   → *
+#   void  → _
 SpinLiteral      <- '+' !'+'
                   / '-' !'-'
                   / '*' !'*'
@@ -440,9 +453,9 @@ SpinLiteral      <- '+' !'+'
                   / 'void' ![a-zA-Z0-9_]
                   / 'any' ![a-zA-Z0-9_]
 
-# Struct literal : Type { champ: valeur, ... }
-StructLiteral    <- TypePath Spacing '{' Spacing FieldInit
-                    (Spacing ',' Spacing FieldInit)* Spacing '}'
+# Struct literal : Type { field: value; ... }
+# CP-3 REFACTORISÉ — fields séparés par ; pas ,
+StructLiteral    <- TypePath Spacing '{' Spacing (FieldInit Spacing)* '}'
 FieldInit        <- Identifier Spacing ':' Spacing Expression
 
 # ============================================================
@@ -454,7 +467,7 @@ SimpleType       <- TypePath GenericArgs?
 GenericArgs      <- '(' Spacing TypeList Spacing ')'
 FunctionType     <- '(' Spacing TypeList? Spacing ')' Spacing ':' Spacing TypeExpr
 TupleType        <- '(' Spacing TypeExpr Spacing ',' Spacing TypeList Spacing ')'
-TypePath         <- Identifier ('::' Identifier)*
+TypePath         <- Identifier (Spacing '::' Spacing Identifier)*
 TypeList         <- TypeExpr (Spacing ',' Spacing TypeExpr)*
 
 # Type de retour multi-spin
@@ -462,32 +475,27 @@ TypeList         <- TypeExpr (Spacing ',' Spacing TypeExpr)*
 SpinReturnType   <- SpinPattern? SimpleType (Spacing '|' Spacing SpinPattern? SimpleType)*
 
 # Type avec emprunt pour les signatures
-BorrowType       <- SimpleType ('@@' / '@')
+# @@ = mutex FIFO (D83), @ = emprunt simple
+BorrowType       <- SimpleType ('@@' / '@')?
 
 # ============================================================
 #  OPÉRATEURS — TERMINAUX
 # ============================================================
 
 EqOp             <- '==' / '!='
-CmpOp            <- '<=' / '>=' / '<' !'<' / '>' !'>'
+CmpOp            <- '<=' / '>=' / '<' !'<' !'>' / '>' !'>' !'<'
 # ShiftOp : << (shift left) et >> (shift right)
-# v6.0 : << en statement = return (ReturnStmt, testé AVANT ExpressionStmt)
-# v7.0 : >> en statement = continue (ContinueStmt, testé AVANT ExpressionStmt)
-#         >> en expression (entre deux valeurs) = shift right (inchangé)
-#         Clé : ContinueStmt <- '>>' !'=' ... essayé AVANT ExpressionStmt
-#               >>= reste un AssignOp (shift-assign), d'où le !'='
+# << en statement = return (ReturnStmt, testé AVANT ExpressionStmt)
+# >> en statement = continue (ContinueStmt, testé AVANT ExpressionStmt)
+# >> en expression (entre deux valeurs) = shift right (inchangé)
 ShiftOp          <- '<<' / '>>' !'='
 # ++ pour concaténation, testé avant + et -
 AddOp            <- '++' / '+' !'+' / '-' !'-'
 # * ne matche PAS ** (pour ne pas confondre avec copy)
-# CP-1 : % = boson PROPORTIONNER mais reste dans MulOp en infixe
-# (comme + est boson ACCUMULER mais reste dans AddOp en infixe)
-# % en infixe = modulo (proportion). % en préfixe/composition = autres sens.
-# %% = normaliser, %? = probabilité, %"fmt" = format string (émergent)
 MulOp            <- '*' !'=' !'*' / '/' / '%'
 # Unaire : !, -, + (spin + et - aussi via UnaryOp, le type system résout)
 UnaryOp          <- '!' / '-' !'-' / '+' !'+'
-# v8.0 : ^= retiré (^ = QPU, plus XOR)
+# Compound assign
 AssignOp         <- '+=' / '-=' / '*=' / '/=' / '%='
                   / '&=' / '<<=' / '>>='
 
@@ -495,17 +503,16 @@ AssignOp         <- '+=' / '-=' / '*=' / '/=' / '%='
 #  LEXÈMES (tokens)
 # ============================================================
 
-# v7.0 : Keywords = 2 base + 6 sucre
 Identifier       <- !Keyword [a-zA-Z_] [a-zA-Z0-9_]*
 
 # Keywords protégés :
-#   type, trait = fondamentaux (concepts math universels, irremplaçables)
+#   type, trait = fondamentaux (concepts math universels)
 #   true, false, void, any = sucre spin (alias pour +, -, _, *)
 #   continue, defer = sucre contrôle (alias pour >>, !?)
 Keyword          <- ('type' / 'trait' / 'true' / 'false' / 'void' / 'any'
                   / 'continue' / 'defer') ![a-zA-Z0-9_]
 
-ModulePath       <- Identifier ('::' Identifier)*
+ModulePath       <- Identifier (Spacing '::' Spacing Identifier)*
 
 IdentList        <- Identifier (Spacing ',' Spacing Identifier)*
 
@@ -528,17 +535,8 @@ HexLiteral       <- '0x' [0-9a-fA-F] [0-9a-fA-F_]*
 BinLiteral       <- '0b' [01] [01_]*
 TernLiteral      <- '0t' [012] [012_]*
 
-# CP-1 : interpolation via $ (plus explicite que {})
-# "hello $name"        → interpolation simple (identifiant)
-# "hello ${expr + 1}"  → interpolation complexe (expression)
-# "literal \$"         → échapper le $ (littéral)
-# $?name dans string   → conditionnel (inclure si pas void)
-# $!name dans string   → échapper/raw (pas d'interp)
+# CP-3 — interpolation via $ (identique à CP-1/CP-2)
 StringLiteral    <- '"' StringChar* '"'
-# $ suivi de { = interpolation complexe (${expr})
-# $ suivi d'identifier = interpolation simple ($name)
-# $ seul (fin de string, suivi de " ou espace) = littéral $
-# \$ = échapper le $ explicitement
 StringChar       <- '\\' EscapeChar
                   / '$' '{' Spacing Expression Spacing '}'
                   / '$' &[a-zA-Z_] Identifier
@@ -547,20 +545,15 @@ StringChar       <- '\\' EscapeChar
 
 EscapeChar       <- 'n' / 't' / 'r' / '\\' / '"' / '0' / '$'
 
-# v7.0 NOUVEAU — '' = texte brut (gluon, pas d'interpolation ni d'escape)
-# Différence avec "" :
-#   "hello {name}\n"  → interpolation + escape sequences
-#   'hello {name}\n'  → littéral brut, {name} et \n restent tels quels
-# Utile pour : regex, chemins Windows, templates, SQL, shell
-# Analogue au single-quote en bash : pas d'expansion
+# '' = texte brut (gluon, pas d'interpolation ni d'escape)
 RawStringLiteral <- ['] RawStringChar* [']
 RawStringChar    <- !['] .
 
 # ============================================================
 #  ESPACES ET COMMENTAIRES
-#  CP-2 : Les commentaires ÉMERGENT du boson / (DIVISER)
+#  CP-3 : Les commentaires ÉMERGENT du boson / (DIVISER)
 #  // = DIVISER(DIVISER) = double séparation = séparer du code
-#  /* */ = DIVISER + gluon * = section séparée avec délimiteurs
+#  /* */ = DIVISER + gluon {} = section séparée avec délimiteurs
 #  Le parsing les traite comme espaces (le code séparé n'existe plus)
 # ============================================================
 
@@ -574,136 +567,183 @@ Semicolon        <- Spacing ';'
 EOF              <- !.
 
 # ============================================================
-#  NOTES DE DESIGN v6.0
+#  NOTES DE DESIGN CP-3 (D1-D83)
 # ============================================================
 #
 #  PARADIGME : Fractal Composition
 #  ================================
 #
 #  Le langage 3.42 n'a PAS de syntaxe traditionnelle.
-#  Il a 18 verbes (atomes) et UNE règle : A(B) = "A appliqué à B".
+#  Il a 18 bosons (atomes) et UNE règle : A(B) = "A appliqué à B".
 #  Tout le reste — return, break, if, while, pipe, thread — ÉMERGE.
+#
+#  18 BOSONS (D1-D83) :
+#  ====================
+#
+#  < ENTRER      > SORTIR       . INTÉRIEUR   ? MESURER    (D1-D4)
+#  ! INVERSER    | CONNECTER    ~ ONDULER     ^ SUPERPOSER (D5-D8)
+#  % PROPORTIONNER               / DIVISER                   (D9-D10)
+#  : DÉFINIR     = LIER         + ACCUMULER                  (D11-D13)
+#  - RÉDUIRE     * TRANSFORMER  # CONFIGURER  _ IGNORER     (D14-D17)
+#  @ RÉFÉRENCER                                              (D18)
+#
+#  CHANGEMENTS CP-2 → CP-3 :
+#  =========================
+#
+#  1. Header : "19 bosons" → "18 bosons"
+#     Le ; a été reclassé en ponctuation (D63).
+#
+#  2. Noms de bosons corrects (D1-D18) :
+#     < ENTRER (était: SORTIR)
+#     > SORTIR (était: ENTRER)
+#     . INTÉRIEUR (était: ACCÉDER)
+#     ~ ONDULER (était: DIFFUSER)
+#     # CONFIGURER (était: MARQUER)
+#     ; RETIRÉ (ponctuation, D63)
+#
+#  3. MutDecl SUPPRIMÉ (D65)
+#     ~ n'est PAS mut, c'est ONDULER = parallèle/GPU/SIMD
+#     Pas de keyword mut
+#     Mutabilité émerge via @@ (mutex FIFO, D83)
+#
+#  4. ModuleDecl SUPPRIMÉ (D73)
+#     :: n'existe pas dans les décisions
+#     Imports via : ImportDecl <- '|>' ... (D73)
+#
+#  5. @extend SUPPRIMÉ (D35)
+#     Héritage via :
+#
+#  6. type/trait comme sucre optionnel (D35)
+#     Vrai mécanisme : Name : { ... }
+#     Keywords gardés pour compatibilité
+#
+#  7. Features ajoutées :
+#     D64 Autograd : .~ (dérivée), .! (snapshot), .= (apply)
+#     D74-D76 Range types : age : 0..150, typage auto-optimisé
+#     D77 CGA : *^ (wedge), *. (dot product)
+#     D81 Annotations scopées : #{ key: value }
+#     D54 Transducteurs : |* (map), |- (filter), |+ (fold)
+#     D73 Import : |> module/path
+#     D83 Threads : |{} (spawn), t |; (wait), |!{} (detach), @@ (mutex FIFO)
+#
+#  8. Match syntax (D33) : utilise : pas =>
+#     x ?{ 0 : "zéro"; 1..10 : "petit"; _ : "grand" }
+#
+#  9. Lambda/closure syntax (D54) : {params |> body}
+#     data |* {x |> x * 2}
+#     data |- {x |> x > 0}
+#     data |+ {0; {a, b |> a + b}}
+#
+#  10. Self = @ (D1)
+#      @ est self-reference dans les méthodes
+#
+#  11. Type/struct fields (D35) : séparés par ;
+#      Point : { x : i32; y : i32 }
+#      Pas de , entre fields
 #
 #  AST = 3 types de nœuds :
 #    Atom(symbol)               — un seul atome
 #    Compose(ASTNode, ASTNode)  — A appliqué à B
 #    Sphere(spin, value, children) — une sphère avec état
 #
-#  DISAMBIGUATION v6.0 :
+#  TRIO COMPUTE (D8, D65, D77) :
+#  =============================
+#
+#  | = CONNECTER = CPU = async SPSC pipe
+#  ~ = ONDULER = GPU = parallèle SIMD
+#  ^ = SUPERPOSER = QPU = quantum superposition
+#
+#  Nota : ~ n'est PAS mut. C'est GPU parallelization.
+#          Mutabilité émerge via @@ (mutex FIFO).
+#
+#  TRANSDUCTEURS (D54) :
+#  ====================
+#
+#  |*  = map        : data |* {x |> x * 2}
+#  |-  = filter     : data |- {x |> x > 0}
+#  |+  = fold       : data |+ {0; {a, b |> a + b}}
+#
+#  CLOSURES (D54, D73) :
+#  ====================
+#
+#  Syntaxe : {params |> body}
+#  {x |> x * 2}           → transformation simple
+#  {x, y |> x + y}        → multiple params
+#  {0; {a, b |> a + b}}   → fold avec accumulator initial
+#
+#  THREADS (D83) :
+#  ==============
+#
+#  |{}         = spawn
+#  t |;        = wait (join)
+#  |!{}        = detach
+#  @@ (BorrowType) = mutex FIFO (mutual exclusion)
+#
+#  DISAMBIGUATION CP-3 :
+#  =====================
 #
 #  1. << (return vs shift left)
 #     Statement level : ReturnStmt <- '<<' ... essayé AVANT ExpressionStmt
 #     Expression level : ShiftOp <- '<<' (entre deux expressions)
-#     Clé : PEG ordered choice dans Statement alternatives
 #
 #  2. >< (break vs pass-through)
 #     Statement level : BreakStmt <- '><' SpinReturn? Expression? Semicolon
 #     Expression level : PassThroughExpr <- a >< b (infixe entre expressions)
-#     Clé : BreakStmt essayé AVANT ExpressionStmt.
-#           En début de statement, >< suivi de ; ou spin = break.
-#           En expression (entre deux valeurs), >< = pass-through.
-#     Note : PipeExpr contient PassThroughExpr, donc a >< b est parsé
-#            comme expression avant d'atteindre Statement level.
 #
 #  3. >> (continue vs shift right)
-#     v5.1 : >> = break. v6.0 : >> libéré. v7.0 : >> = continue.
 #     Statement level : ContinueStmt <- '>>' !'=' SpinReturn? Expression? Semicolon
 #     Expression level : ShiftOp <- '>>' !'=' (entre deux expressions)
-#     Clé : ContinueStmt essayé AVANT ExpressionStmt.
-#           >> en début de statement = continue (re-entrer la boucle).
-#           >> entre deux valeurs (a >> b) = shift right.
-#           >>= reste un CompoundAssign (shift-assign).
 #
-#  4. ~ (mut vs broadcast)
-#     Statement level : MutDecl <- '~' Spacing Assignment
-#     Expression level : BroadcastExpr <- MeasureExpr '~' MeasureExpr (infixe)
-#     Clé : MutDecl essayé avant ExpressionStmt. ~ en début + Assignment = mut.
+#  4. ~ (onduler/GPU vs broadcast)
+#     Expression : BroadcastExpr <- MeasureExpr '~' MeasureExpr (infixe)
+#     Pas de mutabilité. Mutabilité = @@.
 #
 #  5. + - (spin literal vs unaire vs addition)
 #     Primaire (seul) : SpinLiteral <- '+' !'+'  (dans PrimaryExpr)
-#     Préfixe : UnaryOp <- '+' !'+' (dans UnaryExpr, essayé AVANT PostfixExpr)
-#     Infixe : AddOp <- '+' !'+' (dans AdditiveExpr, ENTRE deux expressions)
-#     Clé : UnaryOp échoue si + n'est pas suivi d'expression → fallback SpinLiteral
+#     Préfixe : UnaryOp <- '+' !'+' (dans UnaryExpr)
+#     Infixe : AddOp <- '+' !'+' (dans AdditiveExpr)
 #
 #  6. * (any vs multiplication vs copy vs variant)
 #     ** expr : CopyExpr <- '**' (essayé en premier dans UnaryExpr)
 #     * expr : SpinExpr <- '*' !'=' !'*' (essayé après CopyExpr)
-#     a * b : MulOp <- '*' !'=' !'*' (infixe, ENTRE deux expressions)
-#     * seul : SpinLiteral <- '*' !'*' (dans PrimaryExpr, dernier recours)
-#     *= : CompoundAssign (postfixe, '*=' testé comme AssignOp)
+#     a * b : MulOp <- '*' !'=' !'*' (infixe)
+#     * seul : SpinLiteral <- '*' !'*' (dans PrimaryExpr)
 #
 #  7. _ (void literal vs wildcard)
-#     En MeasureBranch : WildcardBranch <- '_' ':' ... (catch-all dans ? {})
+#     En MeasureBranch : WildcardBranch <- '_' ':' ... (catch-all)
 #     En Expression : SpinLiteral <- '_' ![a-zA-Z0-9_] (void value)
-#     Clé : contextes différents (MeasureBranch vs PrimaryExpr)
-#     Note : _foo reste un identifiant valide (_ suivi de chars = pas SpinLiteral)
 #
-#  8. :: (module decl vs path)
-#     Statement : ModuleDecl <- '::' Identifier '{' ... (début de statement)
+#  8. :: (path only, module removed)
 #     Expression : ModulePath <- Identifier '::' Identifier (ENTRE identifiers)
+#     Statement : ImportDecl <- '|>' (remplace l'ancien ModuleDecl)
 #
 #  9. . vs .. (access vs parent vs range)
 #     DotAccess <- '.' !'.' !'?' Identifier (Postfix, un seul point)
 #     ParentAccessExpr <- '..' Identifier? (PrimaryExpr, prefix)
 #     RangeExpr <- expr '..' expr (infixe, entre PassThrough et Broadcast)
-#     Clé : DotAccess négate '..' via !'.' → pas d'ambiguïté.
-#           ParentAccessExpr est PrimaryExpr (prefix, pas de left operand).
-#           RangeExpr est infixe (a left operand, entre deux BroadcastExpr).
-#           Donc ..field = parent access, a..b = range. Zéro conflit.
 #
-#  10. :> (cast — aucun conflit)
-#     Postfixe : CastExpr <- ':>' TypeExpr
-#     Aucun autre opérateur ne commence par :>
+#  10. ^ (quantum — v8.0)
+#      Statement level : QuantumBlock <- '^' '{' ... '}' (bloc quantique)
+#      Expression level : QuantumMeasure <- '^^' UnaryExpr (collapse)
+#      XOR bitwise → bits::xor() (libère ^ totalement)
 #
-#  11. !? (defer — v7.0)
-#     Statement level : DeferStmt <- '!?' Block
-#     Expression level : '!' est UnaryOp, '?' est MeasureSuffix
-#     Clé : '!?' est un token de 2 chars, testé comme Statement AVANT ExpressionStmt.
-#           DeferStmt exige un Block ({}) après !?, pas une expression.
-#           !expr et expr? restent inchangés (UnaryOp et MeasureSuffix).
-#           Pas de conflit : !? est toujours suivi de { (Block).
+#  11. % (proportion/modulo)
+#      Infixe : MulOp <- ... / '%' (entre deux expressions = modulo)
+#      Préfixe : FormatExpr <- '%' StringLiteral (format string)
+#      Préfixe : NormalizeExpr <- '%%' UnaryExpr (normaliser)
 #
-#  12. '' (raw string — v7.0)
-#     RawStringLiteral <- ['] RawStringChar* [']
-#     StringLiteral <- '"' StringChar* '"'
-#     Clé : caractère délimiteur différent (' vs "). Zéro conflit.
-#           '' = texte brut (pas d'interpolation, pas d'escape).
-#           "" = texte avec interpolation ({expr}) et escape (\n, \t, etc.).
+#  12. / (diviser)
+#      Infixe : MulOp <- ... / '/' (entre deux expressions = division)
+#      Commentaire : '//' = DIVISER(DIVISER) (parsé dans Spacing)
+#      Commentaire bloc : '/*' ... '*/' (parsé dans Spacing)
 #
-#  13. ^ (quantum — v8.0)
-#     Statement level : QuantumBlock <- '^' '{' ... '}' (bloc quantique)
-#     Expression level : QuantumMeasure <- '^^' UnaryExpr (collapse)
-#     Clé : QuantumBlock essayé AVANT ExpressionStmt.
-#           ^{} = superposition (Statement), ^^ = mesure (UnaryExpr).
-#           XOR bitwise → bits::xor() (libère ^ totalement).
-#           '^' seul suivi de '{' = QuantumBlock. '^^' = mesure.
-#           Aucun conflit : ^ n'est plus opérateur infixe.
+#  13. | (connecter/pipe)
+#      PipeExpr <- PassThroughExpr ('|' PassThroughExpr)*
+#      Avec variantes : |*, |-, |+, |{}, |!, |;
 #
-#  14. % (proportion — CP-1)
-#     Infixe : MulOp <- ... / '%' (entre deux expressions = modulo)
-#     Préfixe : FormatExpr <- '%' StringLiteral (format string)
-#     Préfixe : NormalizeExpr <- '%%' UnaryExpr (normaliser)
-#     Clé : % suivi de " = FormatExpr (testé dans UnaryExpr AVANT PostfixExpr).
-#           %% = NormalizeExpr (testé avant).
-#           % entre deux valeurs (a % b) = MulOp = modulo.
-#           Comme + : boson ET opérateur arithmétique selon contexte.
-#
-#  15. $ (interpolation — CP-1)
-#     UNIQUEMENT dans les strings "" (pas un opérateur global).
-#     "$name" = interpolation simple (identifier après $)
-#     "${expr}" = interpolation complexe (expression dans ${})
-#     "\$" = échapper le $ (littéral)
-#     Clé : $ n'existe QUE dans StringChar. Pas d'ambiguïté globale.
-#           En dehors des strings, $ n'a pas de sens syntaxique.
-#
-#  16. / (diviser — CP-2)
-#     Infixe : MulOp <- ... / '/' (entre deux expressions = division)
-#     Commentaire : '//' = DIVISER(DIVISER) = séparer du code (parsé dans Spacing)
-#     Commentaire bloc : '/*' ... '*/' = DIVISER + gluon (parsé dans Spacing)
-#     Clé : // et /* sont consommés par Spacing AVANT que l'expression parser les voie.
-#           / seul entre deux expressions = MulOp = division.
-#           Comme % : boson ET opérateur arithmétique selon contexte.
-#           Les commentaires ÉMERGENT de la composition / + / et / + gluon.
+#  14. ; (séparateur de champs/ponctuation)
+#      Ponctuation (D63), retiré de la liste de bosons
+#      Utilisé pour : FieldDecl, statement terminator
 #
 #  MULTI-SPIN RETURN, BREAK, CONTINUE :
 #  ======================================
@@ -712,7 +752,6 @@ EOF              <- !.
 #  BreakStmt    <- '><' SpinReturn? Expression?
 #  ContinueStmt <- '>>' SpinReturn? Expression?
 #  DeferStmt    <- '!?' Block
-#  SpinReturn   <- SpinPattern !'='
 #
 #  << + expr;  → retourne expr avec spin + (succès)
 #  << - expr;  → retourne expr avec spin - (échec)
@@ -725,12 +764,12 @@ EOF              <- !.
 #  >< # err;   → break avec erreur
 #
 #  >> ;        → continue (skip to next iteration)
-#  >> + ;      → continue avec signal positif
+#  >> + ;      → continue avec signal positif (filter pattern)
 #
 #  !? { cleanup(); };  → defer (exécuté à la sortie du scope, LIFO)
 #
-#  SPIN LITERALS CP-1 :
-#  ======================
+#  SPIN LITERALS CP-3 :
+#  =====================
 #
 #  4 SPINS RÉELS (2 bits hardware) :
 #  + = positif (true, success)        → bits 00
@@ -741,27 +780,61 @@ EOF              <- !.
 #  * = PAS un 5ème spin. C'est le boson TRANSFORMER.
 #  En pattern matching, * signifie "match any spin" = OR mask = don't care.
 #  En expression, * = constructeur wildcard variant.
-#  La distinction : 4 spins = états hardware (2 bits), * = méta-flag logiciel.
 #
 #  Sucre spin  : true(+), false(-), any(*), void(_)
 #  Sucre ctrl  : continue(>>), defer(!?)
 #
-#  x = +;     → x est positif
-#  y = _;     → y est void
-#  z = *;     → z est any (wildcard)
-#  flag = -;  → flag est négatif (false)
-#
-#  STRING LITERALS CP-1 :
-#  =======================
+#  STRING LITERALS CP-3 :
+#  ========================
 #
 #  "" = string interpolée (gluon avec expansion)
 #       "hello $name\n"   → interpolation via $ + escape
 #       "calc: ${x + 1}"  → interpolation complexe via ${}
 #       "literal \$"      → $ échappé
 #  '' = raw string (gluon brut, pas d'expansion)
-#       'hello $name\n'   → texte littéral tel quel (pas d'interp)
+#       'hello $name\n'   → texte littéral tel quel
 #  %"" = format string (émergent, PROPORTIONNER + TEXTE)
 #       %"valeur: $x"     → printf émergent
+#
+#  AUTOGRAD (D64) :
+#  ================
+#
+#  .~  = dérivée (gradient automatique)
+#  .!  = snapshot (capture de l'état)
+#  .=  = apply (appliquer le résultat)
+#
+#  x = value;
+#  grad = x.~;      → gradient de x
+#  snap = x.!;      → snapshot de x
+#  result = x.=;    → apply x
+#
+#  RANGES (D74-D76) :
+#  ===================
+#
+#  age : 0..150        → range type auto-optimisé
+#  a..b = range de a à b
+#  match value ?{ 0..10 : "petit"; 11..100 : "moyen"; _ : "grand" }
+#
+#  CGA (D77) :
+#  ============
+#
+#  *^  = wedge product (geometric product)
+#  *.  = dot product (inner product)
+#
+#  v1 *^ v2           → wedge
+#  v1 *. v2           → dot product
+#
+#  ANNOTATIONS SCOPÉES (D81) :
+#  ==============================
+#
+#  #{key: value}      → annotation avec scope
+#  #{x: 10; y: "test"}  → multiple entries
+#
+#  IMPORTS (D73) :
+#  ================
+#
+#  |> "module/path"   → import string path
+#  |> ModuleName      → import identifier
 #
 #  PASS-THROUGH vs PIPE :
 #  =======================
@@ -771,7 +844,4 @@ EOF              <- !.
 #
 #  Pipe crée un canal SPSC avec ring buffer entre deux green threads.
 #  Pass-through appelle directement, transformation synchrone.
-#
-#  data | transform | output;      // 3 green threads, 2 buffers
-#  data >< transform >< output;   // 1 thread, 0 buffer, appels directs
 #
