@@ -17,12 +17,11 @@
 
 ### Pourquoi « 3.42 » ?
 
-Le nom encode trois références fondamentales :
+Le nom est une fusion directe de deux sources :
 - **π = 3.14** — le nombre irrationnel omniprésent en physique, infini et fractal comme le langage lui-même
-- **3 × 14 = 42** — la réponse à la vie, l'univers et tout le reste (Douglas Adams, *H2G2*)
-- **42** — l'école 42 (Paris), où le projet est né
+- **42** — l'école 42 (Paris), où le projet est né. Et si on prend π = 3.**14** → 3 × 14 = **42** (Douglas Adams, *H2G2* — la réponse à la vie, l'univers et tout le reste)
 
-3.42 = π × 42 : un langage mathématiquement fondé, culturellement ancré, et infiniment extensible.
+**3.14** → on garde le **3.** et on remplace **14** par **42** → **3.42**. Le nom encode π, l'école 42, et le nombre d'Adams en un seul identifiant.
 
 ### Philosophie
 3.42 rejette la complexité accumulée des langages traditionnels. Inspiré par le Modèle Standard de la physique, chaque symbole a un rôle quantiquement déterminé. Le compilateur résout les ambiguïtés ; le développeur écrit l'intention.
@@ -221,6 +220,12 @@ Un méson = boson + boson. Composition transitoire, souvent utilisée puis disso
 
 **Propriété mésonique** : un méson `A B` est éphémère — il existe le temps d'une expression puis se décompose. C'est le principe `A B = A(B)` appliqué entre deux bosons.
 
+**Émergence des commentaires** : les commentaires ne sont PAS une convention arbitraire empruntée au C. Ils émergent naturellement du système de bosons :
+- `//` = DESCENDRE+DESCENDRE (meson) : double descente = sortie complète du flux d'exécution → commentaire ligne
+- `/{}` = DESCENDRE+CORPS (graviton) : le contenu du bloc "descend" hors exécution → commentaire bloc
+- Symétrie `\{}` ↔ `/{}` : MONTER+CORPS (sandbox isolé) ↔ DESCENDRE+CORPS (commentaire bloc) — même tier 3/f, même famille Espace, antiparticules
+- La forme canonique du commentaire bloc en 3.42 est `/{ ... }`, pas `/* ... */`. Le `/* */` du C nécessiterait que `*` serve de délimiteur, ce qui viole son rôle (TRANSFORMER). En 3.42, **tous les blocs utilisent `{}`** — les commentaires ne font pas exception.
+
 #### Baryons (3+ bosons — stables, spin 3/2)
 
 Un baryon = 3 bosons (ou plus) formant un **motif stable récurrent**. Les baryons sont les idiomes du langage.
@@ -270,24 +275,51 @@ Un **graviton** combine un boson avec le gluon `{}` pour créer un contexte loca
 ```
 :{} ={} !{} ?{} @{} .{}
 ```
+- `:{}`  : DÉFINIR+CORPS = définition de type/trait (contenu décide : champs = type, signatures = trait)
+- `={}`  : LIER+CORPS = closure (capture l'environnement dans un bloc, comme Rust `move || {}`)
+- `!{}`  : INVERSER+CORPS = defer (exécuté à la sortie du scope, LIFO)
+- `?{}`  : MESURER+CORPS = match/switch (pattern matching sur spins `+`/`-`/`#`/`_`)
+- `@{}`  : POINTER+CORPS = scope immutable (tout est `@` lecture seule, thread-safe par construction)
+- `.{}`  : PROJETER+CORPS = destructuration/with-block (ouvre les champs dans le scope)
 
 #### Tier 2 (6 gravitons — flux de données)
 ```
 <{} >{} +{} -{} *{} ${}
+```
+- `<{}`  : ENTRER+CORPS = scope de lecture/réception (arène interne, données entrent dans le bloc, reset O(1) à la sortie)
+- `>{}`  : SORTIR+CORPS = générateur/writer (tout est streamé vers la sortie, buffered)
+- `+{}`  : ACCUMULER+CORPS = fold/accumulate (transducteur avec valeur initiale)
+- `-{}`  : RÉDUIRE+CORPS = filter/diff (garde éléments passant le test)
+- `*{}`  : TRANSFORMER+CORPS = map/transform (transforme chaque élément)
+- `${}`  : INJECTER+CORPS = scope de template/interpolation (injection de valeurs dans un contexte)
+
+Stream fusion : `*{} -{} +{}` composent en **une seule passe** sans collection intermédiaire :
+```
+result = data *{ (x) { x * 2 } } -{ (x) { x > 0 } } +{ 0; (acc, x) { acc + x } };
+// Compilé en UNE boucle : acc=0; for x in data { t=x*2; if t>0 { acc+=t; } }
+```
+
+Fractal sur 3 paradigmes (mêmes suffixes, 3 backends) :
+```
+data |* double |- positive |+ sum;   // CPU (pipe séquentiel)
+data ~* double ~- positive ~+ sum;   // GPU (parallèle)
+data ^* rotate ^- measure ^+ collapse; // QPU (quantique)
 ```
 
 #### Tier 3 (4 gravitons — méta)
 ```
 #{} _{} \{} /{}
 ```
-- `#{}` : annotations block
-- `\{}` : sandbox block (contexte isolé)
+- `#{}` : MARQUER+CORPS = annotations/métadonnées (compile-time, introspectable)
+- `_{}` : IGNORER+CORPS = sandbox/discard (exécute mais ignore le résultat, dry-run)
+- `\{}` : MONTER+CORPS = contexte isolé/sandbox (échappement, environnement isolé)
+- `/{}` : DESCENDRE+CORPS = commentaire bloc (forme canonique — le contenu "descend" hors de l'exécution)
 
 #### Majorana (1 graviton)
 ```
 %{}
 ```
-- `%{}` : meta/probabilité block
+- `%{}` : PROPORTIONNER+CORPS = scope probabiliste/pondéré (branches par probabilité, IA/ML sampling, loot tables)
 
 Total : 4+6+6+4+1 = **21 gravitons** (miroir exact des 21 bosons).
 
@@ -313,6 +345,31 @@ result ?{
 Structure palindrome : **4-6-6-4-1** — symétrique autour du Majorana `%`.
 
 Chaque paire antiparticule est dans le **même tier** (cohérence physique : particule et antiparticule ont la même masse/énergie).
+
+### Émergence hardware — les instructions CPU émergent des compositions
+
+Le compilateur ne hardcode PAS les instructions CPU. Il reconnaît des **patterns de composition** et émet les instructions correspondantes. Si aucun pattern ne matche → interprétation générique (toujours valide).
+
+| Composition | Sémantique | Instruction CPU émise |
+|-------------|-----------|----------------------|
+| `a >< b` | SORTIR+ENTRER (swap) | XCHG / 3×MOV |
+| `!|` | INVERSER+CONNECTER (fence mémoire) | MFENCE |
+| `!>` | INVERSER+SORTIR (load fence) | LFENCE |
+| `!<` | INVERSER+ENTRER (store fence) | SFENCE |
+| `?=` | MESURER+LIER (compare-and-swap) | CMPXCHG (atomic CAS) |
+| `>!` | SORTIR+INVERSER (load acquire) | LOAD ACQUIRE |
+| `<!` | ENTRER+INVERSER (store release) | STORE RELEASE |
+| `*?` | TRANSFORMER+MESURER (aléatoire) | RDRAND (hardware RNG) |
+| `>.` | SORTIR+PROJETER (prefetch cache) | PREFETCH |
+| `<.` | ENTRER+PROJETER (flush cache) | CLFLUSH |
+| `~` expr | ONDULER (broadcast SIMD) | VPBROADCAST |
+| `|~` coll | CONNECTER+ONDULER (scatter) | VPSCATTER |
+| `~|` coll | ONDULER+CONNECTER (gather) | VPGATHER |
+| `@#` | POINTER+MARQUER (tagged memory) | MTE tag check |
+| `.#` | PROJETER+MARQUER (perf counter) | RDPMC / RDTSC |
+| `@@ ! {}` | emprunt exclusif+inversé+corps | SGX enclave (TEE) |
+
+**Principe d'Aufbau du compilateur** : comme un électron remplit les orbitales de la plus basse énergie, le compilateur réduit le code de la plus haute énergie (AST brut, compositions explicites) vers l'état fondamental (instructions machine optimales). Chaque étape de réduction correspond à un remplissage de couche : s (bosons seuls → instructions atomiques), p (compositions doubles → fusions), d (compositions triples), f (compositions quadruples+). Seules les compositions stables (basse énergie) survivent.
 
 ---
 
@@ -1538,6 +1595,458 @@ p.move_by(3, 4); arr |* {x |> x * 2}; result |+ {a, b |> a + b}
 
 ---
 
+## §17 — PARTICLEIR : REPRÉSENTATION INTERMÉDIAIRE (Q19)
+
+### Architecture SSA 2 niveaux
+
+**ParticleIR (haut)** préserve la sémantique bosons/fermions/gluons en format SSA strict.
+**MachineIR (bas)** traduit vers LLVM IR. Le lowering (abaissement) est progressif : ParticleIR → MachineIR → LLVM IR, sans perte d'information critique.
+
+### Format canonique
+
+```
+; Opération boson
+result = BOSON(operand1, operand2) -> value : type @arena #spin
+
+; Fermion (donnée SSA)
+fermion(literal_or_ref) : type @arena #spin
+
+; Gluon (conteneur)
+gluon.KIND { contents... }
+
+; Sphère (état quantique)
+sphere(theta, phi, radius, spin) : type @arena
+```
+
+### Table boson → IR
+
+| Boson | Verbe | ParticleIR | MachineIR | CPU |
+|-------|-------|-----------|-----------|-----|
+| `<` | ENTRER | `ENTRER(src)` | `load` / `read [stdin]` | MOV/PUSH |
+| `>` | SORTIR | `SORTIR(val)` | `ret` / `store [stdout]` | RET/MOV |
+| `.` | PROJETER | `PROJETER(base, field)` | `getelementptr` | LEA |
+| `?` | MESURER | `MESURER(val)` | `cmp` / `test` | CMP/TEST |
+| `!` | INVERSER | `INVERSER(val)` | `not` / `neg` | NOT/NEG |
+| `\|` | CONNECTER | `CONNECTER(src, fn)` | `call` + async buffer | CALL |
+| `~` | ONDULER | `ONDULER(val, fn)` | `broadcast` | GPU dispatch |
+| `^` | SUPERPOSER | `SUPERPOSER(amps...)` | tensor ops / QPU | Hadamard/CNOT |
+| `&` | UNIR | `UNIR(tasks...)` | `barrier` / `join` | FENCE/JOIN |
+| `%` | PROPORTIONNER | `PROPORTIONNER(a, b)` | `urem` / `srem` | DIV (remainder) |
+| `/` | DESCENDRE | `DESCENDRE(a, b)` | `udiv` / `sdiv` | DIV (quotient) |
+| `\` | MONTER | `MONTER(val)` | escape sequence / sandbox | ESCAPE |
+| `$` | INJECTER | `INJECTER(template, val)` | string interpolation / subst | SUBST |
+| `:` | DÉFINIR | `DÉFINIR(name, type)` | `alloca` + type | label/MOV |
+| `=` | LIER | `LIER(name, val)` | `store` | MOV |
+| `+` | ACCUMULER | `ACCUMULER(a, b)` | `add` | ADD/INC |
+| `-` | RÉDUIRE | `RÉDUIRE(a, b)` | `sub` | SUB/DEC |
+| `*` | TRANSFORMER | `TRANSFORMER(a, b)` | `mul` | MUL/IMUL |
+| `#` | MARQUER | `MARQUER(val)` | set overflow flag | TAG |
+| `_` | IGNORER | `IGNORER(val)` | nop | NOP |
+| `@` | POINTER | `POINTER(val)` | `lea` / borrow | LEA |
+
+### Spins en IR
+
+| Spin | Bits | Sémantique | Usage |
+|------|------|-----------|-------|
+| `+` | 00 | succès / positif | retour normal |
+| `-` | 01 | échec / négatif | erreur |
+| `#` | 10 | erreur / overflow | exception |
+| `_` | 11 | void / ignoré | discard |
+| `*` | flag | indéterminé | quantique / wildcard |
+
+### Gluons structurants en IR
+
+- `gluon.body` : scope (arène standard `{}`)
+- `gluon.function` : fonction (paramètres + corps)
+- `gluon.branch` : branche conditionnelle (spin-conditioned)
+- `gluon.quantum` : scope QPU (simulation ou hardware)
+
+### Exemple : Hello World
+
+```
+// Source 342
+msg = "Bonjour le monde";
+>{} msg;
+
+// ParticleIR
+%arena_main = gluon.body {
+    %msg = fermion("Bonjour le monde") : String @arena_main #_
+    %0 = SORTIR(%msg) -> () : void @arena_main #+
+}
+
+// LLVM IR (via MachineIR)
+define i32 @main() {
+entry:
+    %arena = call ptr @arena_alloc(i64 256)
+    %msg = call ptr @arena_store_str(ptr %arena, ptr @.str.hello)
+    call void @io_print(ptr %msg)
+    call void @arena_free(ptr %arena)
+    ret i32 0
+}
+```
+
+### Exemple : Pipe chain avec stream fusion
+
+```
+// Source 342
+data = [1, 2, 3, 4, 5];
+result = data | (x) { << + (x * 2); } | (x) { x ? { + : << + x; }; } | collect;
+
+// ParticleIR : 3 pipes → CONNECTER chaînés
+%mapped = CONNECTER(%data, %map_fn) -> [i64] @arena_pipe #_
+%filtered = CONNECTER(%mapped, %filter_fn) -> [i64] @arena_pipe #_
+%result = CONNECTER(%filtered, fermion(collect)) -> [i64] @arena_pipe #+
+```
+
+### Propriétés du format
+
+1. **SSA strict** : chaque `%var` assignée une seule fois
+2. **Sémantique préservée** : SORTIR/ENTRER/MESURER = vocabulaire 3.42
+3. **Arènes explicites** : `@arena_name` sur chaque opération
+4. **Spins tracés** : `#spin` sur chaque résultat
+5. **Compositions visibles** : `SORTIR(SORTIR(x))` = `<< x` = return
+6. **Lowering progressif** : ParticleIR → MachineIR → LLVM IR
+
+> **Référence complète** : `archive/designs/Q19-PARTICLEIR-SPEC.md` (356 lignes, 5 exemples détaillés : Hello World, Fibonacci, Pipe chain, Circuit quantique, Arènes imbriquées)
+
+---
+
+## §18 — SYSTÈME DIFFABLE ET DIFF-CHAIN (Q20)
+
+### Résumé
+
+Le trait `Diffable` est le fondement de la **diff-chain** (Git universel intégré au langage). Il émerge de 3 primitives existantes : arènes (D4), types linéaires (D5), gluons. Chaque valeur `T: Diffable` peut être snapshottée (capturée) en O(1) avec CoW (Copy-on-Write), différenciée via delta encoding (encodage par différence), versionnée dans `History<T>` (undo/redo universel), signée cryptographiquement pour blockchain.
+
+### Interface minimale du trait
+
+```342
+trait Diffable {
+  type DIFF DIFFABLE         // delta minimal entre deux valeurs
+  type SNAP DIFFABLE         // copie complète ou CoW
+
+  :snapshot (self) SNAP      // capturer l'état actuel
+  :diff (old SNAP, new SNAP) DIFF  // calculer le delta
+  :patch (snap SNAP, delta DIFF) SNAP  // appliquer un delta
+  :size_estimate () u32      // coût mémoire estimé
+}
+```
+
+### Contrats sémantiques (garanties)
+
+1. **Identité** : `patch(snap, diff(snap, snap)) = snap`
+2. **Composabilité** : `patch(snap1, compose(delta12, delta23)) = patch(patch(snap1, delta12), delta23)`
+3. **Invertibilité** (pour undo) : `patch(snap2, invert(delta)) = snap1` si `delta = diff(snap1, snap2)`
+4. **Efficacité** : `size(delta) << size(snap)` pour petits changements
+
+### Types Snapshot<T> et Diff<T>
+
+- **Snapshot<T>** : valeur + timestamp + hash256 + arène + politique de rétention. CoW pour O(1).
+- **Diff<T>** : opération (SET/REPLACE/INSERT/DELETE/TRANSFORM/COMMENT) + operande + timestamp + auteur + hash chaîné. Chaque opération de diff correspond à un boson (`<` = SET, `:` = REPLACE, `^` = INSERT, `|` = DELETE, `*` = TRANSFORM, `_` = COMMENT).
+
+### Conteneur History<T>
+
+```342
+type History { T : Diffable }
+  = snapshots Vec { Snapshot { T } }
+    diffs Vec { Diff { T } }
+    current_idx u64
+    arena Arena              // dédiée aux diffs/snapshots
+    retention RetentionPolicy
+    branches Map { String, History { T } }
+
+  :record (new_val T) Unit   // enregistrer modification
+  :current () T              // valeur actuelle
+  :at (idx u64) T ?          // voyager dans le temps
+  :undo () T                 // annuler dernière modif
+  :redo () T                 // rejouer modif annulée
+  :branch (name String) History  // timeline alternative
+  :merge (other History) History // fusion 3-way merge
+  :compress () Unit          // fusionner petits diffs
+  :to_certified_chain () Vec { CertifiedDiff { T } }  // export blockchain
+```
+
+### Politiques de rétention
+
+| Politique | Comportement |
+|-----------|-------------|
+| `FOREVER` | garder tout |
+| `LAST_N { count }` | garder N derniers snapshots |
+| `TTL { max_age_ns }` | garder pendant T secondes |
+| `COMPRESSED { every_n }` | snapshot tous les N, reste = diffs |
+| `SMART { sample_rate }` | compression selon usage pattern |
+
+### Implémentations concrètes
+
+- **i32** : diff triviale (old/new), 8 bytes par diff
+- **String** : LCS (Longest Common Subsequence — plus longue sous-séquence commune), opérations REPLACE/INSERT/DELETE
+- **Array<T>** : Myers diff, opérations SET/INSERT/DELETE/MOVE, CoW pour éléments partagés
+- **Struct** : `#[derive(Diffable)]` génère diff par champ, seuls les champs modifiés produisent un delta
+
+### Lazy evaluation et arènes dédiées
+
+- **LazyDiff** : delta calculé seulement si accédé. Éviction automatique si peu utilisé.
+- Chaque `History<T>` possède sa propre arène → libération O(1) de tout l'historique.
+- **Interdiction cross-arène** : un snapshot ne peut pas référencer une valeur d'une autre arène (même règle que §19).
+
+### Propriété fractale : History<History<T>>
+
+`History<T>` implémente lui-même `Diffable` → on peut versionner un historique. C'est un **Git intégré au langage** :
+
+```
+Repository = History<History<CodeModule>>
+  → Chaque commit = snapshot de l'état complet
+  → diff de diffs = git diff entre branches
+  → merge 3-way natif
+```
+
+### Émergence des bosons dans les diffs
+
+Chaque Diff est une application d'un boson à des fermions différentiels. Les diffs composent comme les bosons : `delta1 >> delta2` = composition simplifiable.
+
+### Performance
+
+| Type | Snapshot | Diff | Patch |
+|------|----------|------|-------|
+| i32 | 4 B | 8 B | O(1) |
+| String 1KB | 1 KB | 50-200 B | O(len) |
+| Array 1K elt | 4 KB | 32 B | O(1) CoW |
+| Struct | variable | per-field | O(fields) |
+
+> **Référence complète** : `archive/designs/Q20-DIFFABLE-TRAIT-SYSTEM.md` (1603 lignes, 15 parties, code complet de toutes les implémentations)
+
+---
+
+## §19 — SÉCURITÉ MÉMOIRE FORMELLE (Q21)
+
+### Objectif
+
+Formaliser un système **sound** (cohérent) et **complete** (exhaustif) éliminant 7 catégories de bugs mémoire :
+
+| Bug | Mitigation |
+|-----|-----------|
+| Use-after-free (UAF) | Types linéaires + borrow checker |
+| Double free | Allocateur d'arènes (reset O(1)) |
+| Dangling pointers (pointeurs pendants) | Interdiction cross-arène + vérification `@` |
+| Buffer overflow (débordement de tampon) | Accès indexé vérifié + bounds checking |
+| Memory leak (fuite mémoire) | Auto-free au scope exit |
+| Data race (accès concurrent) | `@@` emprunt exclusif + `!\|` fences |
+| Stack overflow | TCO + limites configurables |
+
+### 3 vulnérabilités clés des arènes et leurs mitigations
+
+**1. Cross-arena references** : arène A → objet dans arène B, B droppée → UAF.
+→ **RULE 6-CA1** : une référence `@` ou `@@` ne peut pointer que vers une arène de lifetime (durée de vie) ≥ à celle du créateur. `arena(target) ≤ arena(creator)`.
+
+**2. Dangling pointers post-dealloc** : arène libérée mais pointeur conservé.
+→ Types linéaires : MOVE par défaut, `y` inaccessible après `x = y`. COPY explicite avec `.!`. Borrow `@` expire à la fin du scope.
+
+**3. Aliasing violations** : arènes chevauchantes créant accès simultanés.
+→ `@@` emprunt exclusif XOR `@` lectures multiples (INV-A4).
+
+### Modèle formel de l'arène
+
+```
+Arena = (name, parent, base_ptr, size, lifetime, objects)
+  objects : HashMap<VarId, AllocInfo>
+  AllocInfo = { var_id, offset, type_tag, size, spin, owner, borrows }
+  BorrowInfo = { lifetime, mode (Read|Write), borrower }
+```
+
+**4 invariants d'arène** :
+- **INV-A1** (Contiguïté) : tous les objets contigus en mémoire
+- **INV-A2** (Fermeture atomique) : toute la mémoire libérée en O(1) au scope exit
+- **INV-A3** (Propriété unique) : chaque objet a exactement 1 propriétaire
+- **INV-A4** (Emprunt XOR) : `@@` exclusif OU N×`@` lecture, jamais les deux
+
+### Système de types linéaires — Règles formelles
+
+```
+(T-MOVE)    Γ ⊢ y : T  →  Γ[y : ⊥] ⊢ (x = y)  Γ[x : T]
+(T-COPY)    Γ ⊢ y : T@A  →  allocate in arena(x)  →  Γ[x : T@arena(x), y : T@A]
+(T-BORROW)  Γ ⊢ y : T@'a  →  push borrow(Read, 'scope)  →  Γ[ref : &'scope T]
+(T-EXCL)    Γ ⊢ y : T@'a  →  ¬borrowed(y)  →  push borrow(Write, 'scope)  →  Γ[ref : &mut'scope T]
+(T-EXPIRE)  current_scope ≥ 'lifetime  →  COMPILE ERROR: borrow expired
+```
+
+### Algorithme du borrow checker
+
+Pour chaque statement : vérifier ownership (propriété), invalider les moves, pousser/popper les borrows, vérifier les lifetimes, libérer l'arène au scope exit. Lifetime inference (inférence de durée de vie) : `'static` (global), `'param` (fonction), `'scope` (local), `'borrow` (référence), `'bubble` (return via `.`).
+
+### Bubble-up comme exception contrôlée
+
+Le return (`<<`) transfère l'ownership via l'opérateur `.`. C'est un MOVE explicite, pas une référence cross-arène. Les types linéaires empêchent l'aliasing après MOVE.
+
+### 7 invariants mémoire formels
+
+- **INV-M1** (No UAF) : si ref valide, target non moved et arena.lifetime > t
+- **INV-M2** (No double free) : arena dealloc = O(1) reset, pas de free par objet
+- **INV-M3** (No dangling) : arena(obj).lifetime ≤ lifetime(ref), garanti par RULE 6-CA1
+- **INV-M4** (No overflow) : `0 ≤ idx < len(array)`, vérifié compile-time + runtime
+- **INV-M5** (No leak) : arena fermée = tous objets libérés (INV-A2)
+- **INV-M6** (No data race) : types linéaires + `@@` exclusif + `!|` fences
+- **INV-M7** (No stack overflow) : TCO + limites configurables
+
+### Sketch de preuve de solidité (soundness)
+
+**Théorème principal** : le système combiné (types linéaires + arènes + cross-arena prohibition + borrow checker + bounds checking) garantit ∀ programme bien typé : ¬(UAF ∨ double-free ∨ dangling ∨ overflow ∨ leak ∨ race).
+
+**5 lemmes clés** :
+1. **Preservation** : si `Γ ⊢ e : T` et `e → e'`, alors `Γ ⊢ e' : T`
+2. **Progress** : tout programme bien typé peut stepper ou terminer
+3. **Arena preservation** : valeur accessible tant que l'arène existe
+4. **Borrow expiration** : ref invalide après scope exit → compile error
+5. **Exclusive write** : `@@` actif → aucun autre borrow possible
+
+### Comparaison avec Rust
+
+| Aspect | 3.42 | Rust |
+|--------|------|------|
+| Allocation | Arènes (contigus, O(1) free) | Heap (scattered, O(n) drop) |
+| Lifetimes | Implicites (inférés du scope) | Explicites (`&'a T`) |
+| Copy | Explicite `.!` | Implicite si `impl Copy` |
+| Dealloc | Reset arène O(1) | Drop par objet O(n) |
+| Cache locality | Excellent | Variable |
+| Bubble-up | Via `.` (MOVE auto) | Via return + destructure |
+| Learning curve | Plus court | Plus long |
+
+> **Référence complète** : `archive/designs/MEMORY_SAFETY_FORMAL_Q21.md` (1340 lignes, 12 sections, edge cases détaillés : récursion, closures, async, structs, exceptions)
+
+---
+
+## §20 — OPTIMISATION DES TYPES NUMÉRIQUES (D74-D75)
+
+### Principe : le compilateur choisit la représentation
+
+Le programmeur écrit des **nombres**, pas des types machine. Le compilateur analyse les bornes (range analysis) et choisit la représentation optimale :
+
+```
+x = 42;           // compilateur → i8 (42 tient dans 8 bits)
+y = 3.14;          // compilateur → rational exact (314/100) ou f64 si non-critique
+z = x * 1000000;   // compilateur → i32 (42M tient dans 32 bits)
+```
+
+### Deux modes de typage
+
+- **Mode implicite (défaut)** : le compilateur infère et optimise automatiquement
+- **Mode explicite (contrainte)** : `a : i32 = 42;` force la représentation
+
+### Range analysis à 3 niveaux (D74)
+
+**Niveau 1 — IDE realtime (LSP)** : pendant la frappe, l'IDE affiche bornes + taille + risques :
+```
+x : 0..100 = input();     // IDE: [u8, 1 byte]
+y = x * 3;                // IDE: [0..300, u16, 2 bytes]
+z = y - 50;               // IDE: [-50..250, i16, 2 bytes]
+overflow_risk = z * z;     // IDE: [2500..62500, u16, ⚠️ overflow si z > 255]
+```
+
+**Niveau 2 — Compile-time** : vérification formelle, choix optimal, erreur si overflow non géré.
+
+**Niveau 3 — Runtime (debug)** : valeurs réelles superposées aux bornes théoriques.
+
+### Décimal exact par défaut (D75)
+
+```
+// En C/Python/JS/Rust : 0.1 + 0.2 = 0.30000000000000004 (FAUX)
+// En 342 : 0.1 + 0.2 = 0.3 EXACTEMENT
+
+// Le compilateur utilise :
+// 1. Arithmétique rationnelle (1/10 + 2/10 = 3/10) si exact requis
+// 2. decimal128 (IEEE 754-2008) si rationnel trop lourd
+// 3. f64 seulement si explicitement demandé ou contexte GPU (~f64)
+```
+
+### Range comme type natif
+
+```
+age : 0..150;              // → u8
+temperature : -273.15..+∞; // → rational ou f64
+pourcentage : 0.0..1.0;    // → fixed-point optimal
+```
+
+### Hiérarchie des types numériques
+
+Les types ne sont pas des catégories mais des **bornes**. `byte/int/long` = même concept (entier), le compilateur choisit i8/i16/i32/i64/i128/bigint. `float/double/decimal` = même concept (nombre à virgule), le compilateur choisit rational/decimal64/decimal128/f64.
+
+> **Référence** : `archive/checkpoint-history/CP-3.9-CONVERGENCE.md` §1-§2
+
+---
+
+## §21 — VERDICTS DE RECHERCHE
+
+### Évaluations de viabilité (Février 2026, v1 + v2)
+
+Recherche approfondie sur chaque pilier technique : v1 (10/02/2026, 15 sujets) puis v2 (13/02/2026, révisions après discussion + 12 approfondissements). Légende : ✅ Viable | ⚠️ Défis identifiés, solutions proposées. Chaque idée originale a été soit confirmée soit évoluée vers une solution viable — **aucune impasse**.
+
+### ⚠️ Défis identifiés, solutions proposées
+
+| Sujet | Verdict v1 → v2 | Détails et preuves |
+|-------|-----------------|-------------------|
+| **Ternaire hardware** | ❌→⚠️ | **v1** : émulation sur binaire = pénalité ~50000x. **v2 (révision)** : Alexis ne veut pas émuler, il veut les niveaux de tension natifs. **Preuves** : CNTFET 3 états natifs (Science Advances 2024, 100% précision classification, 12.42% + rapide en quaternaire 28nm, 25.64% + efficace énergie). PAM-3 Ethernet en production depuis 1995. Memristors Ag/Al₂O₃/Ta₂O₅/Pt : 3 états naturels, portes NOT/NAND/NOR démontrées (2025). Flash NAND TLC gère 8 niveaux → 3 niveaux physiquement démontré. **Défi** : marge de bruit V_DD/3 vs V_DD/2. **Solutions prouvées** : codage trellis (+6 dB), FEC, DFE (Ethernet depuis 30 ans). **Approche** : Phase 1 abstraction ternaire en Rust/binaire (D97), Phase 2 simulation FPGA, Phase 3 portage CNTFET/memristor (horizon 5-10 ans). Le code 3.42 compile vers binaire AUJOURD'HUI, ternaire natif DEMAIN. |
+| **Sphère de Bloch** | ❌→⚠️ | **v1** : pas une structure de données universelle (N qubits = 4^N-1 dims). **v2 (révision)** : excellent pour la **visualisation** (debug, monitoring, probabilités) et les **conteneurs sphériques hiérarchiques** (BVH sphériques O(log N)). Harmoniques sphériques = standard dans tous les moteurs de jeux (éclairage ambiant). Quaternions = standard rotation 3D (pas de gimbal lock). Bloch uniquement pour visualiser 1 qubit (θ, φ, r). Architecture : sphères imbriquées (qubit → micro → méso → macro) comme conteneurs logiques et visuels. |
+| **SDF rendu hybride** | ⚠️→✅ | **Confirmé production**. Claybook (2018) = premier jeu 100% SDF. Horizon Zero Dawn / Flight Simulator = nuages volumétriques ray-marchés temps réel. Shadertoy = millions de shaders SDF. HPG 2025 : 3 papiers BVH GPU (DOBB-BVH, Fused Collapsing, UBVH) + SH exponentials pour réflexions glossy. RTX 40/50 = accélération hardware BVH 10-100×. Architecture 3.42 : SDF pour maths/science/debug/UI + mesh pour géométrie complexe/personnages. |
+| **Blockchain DAG** | ❌→✅ | **v1 (rejeté)** : blockchain pour PI juridique = aucune valeur légale. **v2 (résolu + confirmé)** : PI via C2PA + Git signé + Convention de Berne. Blockchain uniquement pour traçabilité et identité. **Hedera Hashgraph** (2025) : capacité 10K TPS, prod ~708K tx/jour, pic 3302 TPS mesuré, finalité 2.9s, 39 nœuds (Google, IBM, Boeing), 68% crypto + 20% smart contracts. QRL = blockchain post-quantique, testnet Q1 2026, XMSS. **Usage 3.42** : SBT identité + traçabilité Git+C2PA + récompenses RPGF + crypto post-quantique (ML-DSA/XMSS). Stack complète et prouvée. |
+| **Harmoniques + wavelets + NN** | ⚠️→✅ | **v1** : métaphore HHG à retirer. **v2** : la combinaison wavelets + NN est de pointe. COOL-CHIC = 30% meilleure compression que H.266/VVC, décodeur 1000 mult/pixel, 720p en 100ms CPU. COIN/COIN++ = stocker les poids d'un MLP au lieu des pixels, bat JPEG aux faibles débits. Scattering networks = 0 paramètres apprenables, équivalent CNN. WKAN-UNet (2026) = wavelets + Kolmogorov-Arnold. Mitsuba 3 = rendu entièrement différentiable (hash grid encoding, tensor cores GPU). **Connexion L'Huillier** : le parallèle mathématique (décomposition en harmoniques simples → complexité) est réel. La différence : HHG est non-linéaire, le computing est linéaire. Garder comme philosophie d'émergence. |
+| **LOD physique (dezoom d'émergence)** | nouveau ⚠️ | Concept "Google Earth de la physique" = novateur, pas de solution complète, mais les briques existent. **AdResS** : MD avec résolution variable, particules changent de résolution en mouvement, 10-100× accélération. **Barnes-Hut** : octree O(N log N) au lieu de O(N²), GPU 5M corps en 1.5s, paramètre θ = LOD naturel. **Groupe de renormalisation** (Wilson, Nobel 1982) : 5 transformations = 10⁶× réduction des degrés de liberté. **Neural coarse-graining** (2025) : CGNet, SchNet = 100-1000× plus rapide que atomistique, reproduit repliement de protéines. **Architecture** : atomistique (100K, 1ms) → CG neural (10K, 0.1ms) → continuum SPH (1K, 0.01ms) → rigid body (100, 0.001ms) → agents (1K, 0.1ms) → grille globale (0.001ms). Total ~2ms/frame. Synchronisation chaque 1 ps. Conservation énergie par Lagrangien total aux frontières. |
+| **Moteur physique émergent** | ❌→✅ | **v1 (rejeté)** : atomes→univers complet irréaliste. **v2 (confirmé 2025)** : émergence **locale** prouvée. LJ GPU : 108M particules sur 3375 GPUs (benchmarks 2025). NVIDIA PhysicsNeMo = GNN+LJ en production. Viscosité **émerge** : N>10K convergence. VR moléculaire 20K molécules temps réel. **Quasi-particules** (phonons, magnons, plasmons) = émergence parfaite (règles simples → comportements complexes). Potentiels effectifs suffisent pour jeu/visu. |
+| **Hash modulaire** | ❌→✅ | **v1 (rejeté)** : Hash27 totalement insuffisant. **v2 (confirmé)** : Hash162 (162 trits ≈ 257 bits) = suffisant pour 10¹² objets. BLAKE3 = 4× plus rapide que SHA3-256, structure Merkle tree parallélisable, 128 bits post-quantique suffisant. Troika (CYBERCRYPT 2018) = hash ternaire natif, concours 200K€, pas de failles trouvées. **Approche** : BLAKE3 aujourd'hui, sponge construction modulaire, hash ternaire-natif basé Troika pour le hardware ternaire. NTT (FFT sur corps finis) = piste pour hash ternaire optimisé. |
+| **Token d'identité** | ❌→✅ | **v1 (rejeté)** : 1 humain = 1 token = inflation. **v2 (confirmé)** : le token n'est PAS une monnaie, c'est un **nœud dans un graphe d'identité** non-transférable. **Soulbound Tokens (SBT)** — Vitalik Buterin 2022 : ERC-5192 **FINAL** (NFT non-transférables, `locked(tokenId)`), ERC-6239 **FINAL** (sémantique, triplets RDF). Implémentation référence GitHub (attestate/ERC5192). **Modèle 3.42** : SBT non-transférable + statut + liens parentaux + contributions hashées + transfert propriétés numériques aux enfants à la mort. Économie séparée : contribution vérifiée, pas existence. |
+
+### ✅ Viable — Confirmés
+
+| Sujet | Note et preuves |
+|-------|----------------|
+| **SDL3 + wgpu** | Combinaison optimale : SDL3 (fenêtrage, input, audio) + wgpu (rendu, compute GPU). Pas de changement. |
+| **Types linéaires / no-GC** | Modèle prouvé (Rust en production, Austral référence académique). 3.42 = arènes + ownership + borrowing (§19). |
+| **Crypto post-quantique** | Standards NIST finalisés août 2024 : ML-KEM (Kyber), ML-DSA (Dilithium), SLH-DSA (SPHINCS+). liboqs disponible. Signal utilise ML-KEM en production. QRL testnet Q1 2026 (XMSS). BlackRock a signalé le risque quantique pour BTC/ETH (mai 2025). |
+| **AST temps réel depuis texte** | ⚠️→✅ (v2). **Tree-sitter** : parse chaque frappe en <1ms (52.8× optimisé sur Haskell), 200+ langages, récupération d'erreurs automatique (code incomplet parsé). Utilisé par Neovim, Helix, Zed, GitHub. **LSP** : diagnostics à chaque frappe, 50ms vs 45s en recherche texte (900×). **Hazel** (POPL 2024) : "Total Type Error Localization and Recovery with Holes" — AST toujours valide, trous typés, exécution de code incomplet. **Roslyn** (C#) : compilation incrémentale en microsecondes. L'éditeur 3.42 = texte (.342t) + Tree-sitter custom + LSP custom + typed holes + visu SDF/wgpu intégrée. |
+| **Identité étatique (eIDAS 2.0)** | nouveau ✅. **eIDAS 2.0** : tous les états membres UE doivent fournir un portefeuille d'identité numérique fin 2026. ARF v2.0 publié, divulgation sélective, ZK Proofs supportées, fonctionne hors ligne (NFC challenge-response). **France Identité** : en production depuis février 2024, disponible 18+, activation en mairie (31/03/2025), carte d'identité + Vitale + permis numériques, accepté par SNCF TGV. **Anon Aadhaar** (Inde) : prouver "je suis adulte" sans révéler l'identité (zk-SNARK). **3.42** : intégration eIDAS 2.0 + couche ZK + mode anonyme (capacités réduites) + ML-DSA pour toutes les signatures. |
+| **Économie par contribution** | ✅ (révisé v2). Le token d'identité n'est pas de l'argent → pas d'inflation. **Gitcoin RPGF** : récompense l'impact prouvé, pas les promesses. **Financement quadratique** : √contributions additionnées puis² → petites contributions de beaucoup > grosse contribution d'un seul. Déjà déployé par Gitcoin, Optimism, Arbitrum. Identité (SBT) et économie (crypto 3.42) strictement séparées. |
+| **NN pour N-body** | nouveau ✅. **GNS** (DeepMind 2020) : particules=nœuds, interactions=arêtes, généralise de milliers à 10K+ sans réentraînement. **FNO** (Fourier Neural Operator) : Navier-Stokes 1000× plus vite, invariant en résolution. **MACE** (2023) : messages corps 2-4, 10× plus rapide que NequIP, 4-5× meilleur en précision 4-body. **FMM GPU** : O(N), 30-60× accélération, 48M particules 6 chiffres de précision. **PINN** : lois physiques (EDP) dans la fonction de perte, mesh-free. **Wavelet Neural Operator** : multi-échelle, meilleur pour discontinuités. |
+| **CAS pour versioning** | Git prouvé, adaptable avec BLAKE3 (structure Merkle tree parallélisable). |
+| **C ABI pour interop** | Standard universel, FFI directe. |
+| **Émergence comme philosophie** | Principe validé (Conway 1970, fractales, quasi-particules, `A B = A(B)`). La viscosité émerge des interactions LJ. Les phonons/magnons/plasmons émergent du collectif. |
+| **SDF + mesh hybride** | ✅ confirmé. Ray-marching GPU mature (Shadertoy). SDF pour maths/science + mesh pour géométrie complexe. |
+
+### Impact sur 3.42
+
+Ces verdicts (v1 + v2) sont intégrés dans les décisions D1-D97. Points clés :
+- Le balanced ternary (D97) est une **sémantique** (`+`/`_`/`-`/`#`), compilée en binaire aujourd'hui, prête pour le ternaire natif demain (CNTFET/memristors)
+- La simulation quantique (`^{}`) reste comme paradigme de programmation
+- L'émergence `A B = A(B)` est validée par la physique (quasi-particules) et l'informatique (automates cellulaires)
+- L'identité utilise **eIDAS 2.0 + SBT + ZK**, infrastructure existante
+- L'économie est par **contribution vérifiée** (Gitcoin RPGF), pas par existence
+
+### Architecture recommandée (6 couches, synthèse v2)
+
+```
+COUCHE 6 — APPLICATIONS : IDE unifié (texte+AST live+visu SDF+debug) + simulateur physique LOD + interface navigable
+COUCHE 5 — SERVICES : Identité (SBT+eIDAS 2.0+ZK) + traçabilité (Git+C2PA) + économie (RPGF+quadratique) + blockchain (Hashgraph-like, post-quantique)
+COUCHE 4 — VISU/PHYSIQUE : wgpu+SDF/mesh+harmoniques sphériques + wavelets+NN (COOL-CHIC) + GNS+FMM+FNO+LJ GPU + LOD (AdResS+Barnes-Hut+neural CG) + conteneurs sphériques
+COUCHE 3 — LANGAGE 3.42 : texte (.342t)→AST live (Tree-sitter) + types linéaires (Rust) + syntaxe unifiée + LSP+typed holes (Hazel) + FFI C ABI
+COUCHE 2 — RUNTIME : binaire (cible actuelle) + abstraction ternaire + CAS BLAKE3→hash ternaire + crypto post-quantique (ML-KEM+ML-DSA+SLH-DSA)
+COUCHE 1 — FONDATION : Rust (bootstrap) → self-hosting + wgpu GPU + SDL3 système + FPGA recherche ternaire
+```
+
+### Différences v1 → v2
+
+| Aspect | v1 | v2 |
+|--------|-----|-----|
+| Ternaire | v1 rejeté (émulation 50000×) | ⚠️ Abstraction ternaire + recherche CNTFET/FPGA |
+| Bloch | v1 rejeté (pas universel) | ⚠️ Conteneurs sphériques + visu harmoniques |
+| Physique | v1 rejeté (O(N²) impossible) | ⚠️ LOD émergent (AdResS + neural CG) |
+| AST | ⚠️ Projectionnel | ✅ Texte + AST live (Tree-sitter + Hazel) |
+| Identité | Token ? | ✅ SBT (ERC-5192/6239) + eIDAS 2.0 + ZK |
+| Économie | v1 rejeté (inflation) | ✅ Contribution-based + RPGF + quadratique |
+| Hash | v1 rejeté (Hash27 insuffisant) | ✅ Hash162/243 + BLAKE3 + Troika |
+| Harmoniques | ⚠️ Métaphore | ✅ Wavelets + NN (COOL-CHIC, COIN) |
+| Blockchain PI | v1 rejeté (pas juridique) | ✅ C2PA + Git + Hedera + QRL |
+| N-body | Non évalué | ✅ GNS + FNO + MACE + FMM |
+
+> **Références complètes** : `archive/seeds/342-RECHERCHE-VERDICTS-v1.md` (551 lignes, 15 sujets) + `archive/seeds/342-RECHERCHE-VERDICTS-v2.md` (849 lignes, 18 sujets, 80+ publications analysées)
+
+---
+
 ## COMPTEURS FINAUX
 
 ### Symboles
@@ -1546,7 +2055,7 @@ p.move_by(3, 4); arr |* {x |> x * 2}; result |+ {a, b |> a + b}
 - **6 gluons** : délimiteurs (`` {} () [] "" '' ` ` ``)
 - **3 séparateurs** : ponctuation (`;,` espace)
 - **21 gravitons** : bosons + `{}` (Tier 0: 4, Tier 1: 6, Tier 2: 6, Tier 3: 4, Majorana: 1)
-- **~20 mesons** : compositions 2-bosons éphémères (`||`, `&&`, `*^`, `.~`, etc.)
+- **~21 mesons** : compositions 2-bosons éphémères (`||`, `&&`, `*^`, `.~`, `**`, `.!`, etc.)
 - **~7 baryons** : compositions 3+ bosons stables (`<|>`, `?:=`, `.~=`, etc.)
 
 ### Tiers orbitaux (SOLIDE) — 4-6-6-4-1
@@ -1617,7 +2126,7 @@ Chaque symbole a un rôle quantiquement déterminé. Les compositions multi-boso
 
 ---
 
-**Document généré** : 06/03/2026
-**État** : CP-4.1 COMPLET — TABLE ÉTENDUE (21 bosons, 6 gluons, hadrons, Majorana)
+**Document généré** : 08/03/2026
+**État** : CP-4.7 COMPLET — 21 bosons, 6 gluons, hadrons, Majorana, émergence hardware (16 CPU patterns), émergence commentaires (// /{}) + §21 VERDICTS : 17 ✅ + 3 ⚠️ + 0 ❌ (80+ publications, 142 claims vérifiées) + Principe d'Aufbau compilateur + Nom « 3.42 » clarifié
 **Auteur** : Claude Opus 4.6
 **License** : CC0 (domaine public)
